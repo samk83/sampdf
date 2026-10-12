@@ -70,3 +70,23 @@ public sealed class EnumToVisibilityConverter : IValueConverter
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }
+
+/// <summary>엔진 색(RgbColor) → WPF 붓.</summary>
+public sealed class RgbColorToBrushConverter : IValueConverter
+{
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is DrawingReview.Engine.Markups.RgbColor c ? Controls.DraftRenderer.Brush(c, 1) : null;
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}
+
+/// <summary>숫자 → "1.5 pt" 같은 표시.</summary>
+public sealed class PointsConverter : IValueConverter
+{
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        value is double d ? d.ToString("0.##", culture) + " pt" : "";
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+        throw new NotSupportedException();
+}

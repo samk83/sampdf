@@ -13,6 +13,8 @@
             <conv:BoolToVisibilityConverter x:Key="BoolToVisible"/>
             <conv:BoolToVisibilityConverter x:Key="BoolToCollapsed" Invert="True"/>
             <conv:NotNullToVisibilityConverter x:Key="NotNullToVisible"/>
+            <conv:RgbColorToBrushConverter x:Key="RgbToBrush"/>
+            <conv:PointsConverter x:Key="Points"/>
             <conv:EnumToVisibilityConverter x:Key="EnumToVisible"/>
             <conv:EnumToVisibilityConverter x:Key="EnumToCollapsed" Invert="True"/>
         </ResourceDictionary>

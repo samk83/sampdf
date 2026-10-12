@@ -1,0 +1,114 @@
+<UserControl x:Class="DrawingReview.App.Views.PropertiesPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DrawingReview.App.Core.ViewModels;assembly=DrawingReview.App.Core"
+             x:Name="Root">
+    <!-- DataContext: PropertiesViewModel -->
+    <DockPanel Background="{StaticResource PanelBrush}">
+        <Border DockPanel.Dock="Top" Height="34" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel>
+                <TextBlock Style="{StaticResource PanelHeader}" Text="PROPERTIES"/>
+                <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="{Binding Header}" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Border>
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="12">
+                <TextBlock Text="{Binding Hint}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,0,12"
+                           Visibility="{Binding Hint, Converter={StaticResource NotNullToVisible}}"/>
+
+                <StackPanel Visibility="{Binding HasTarget, Converter={StaticResource BoolToVisible}}">
+                    <StackPanel IsEnabled="{Binding CanEdit}">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Subject"/>
+                        <TextBox Text="{Binding Subject, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10"/>
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Author"/>
+                        <TextBox Text="{Binding Author, UpdateSourceTrigger=LostFocus}" Margin="0,0,0,10"/>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Color"/>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <Border Width="30" Height="30" CornerRadius="6" BorderBrush="White" BorderThickness="2" Margin="0,0,10,0"
+                                    Background="{Binding StrokeColor, Converter={StaticResource RgbToBrush}}" ToolTip="Current color"/>
+                            <ItemsControl ItemsSource="{x:Static vm:PropertiesViewModel.Palette}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:ColorSwatch}">
+                                        <Button Width="26" Height="26" Margin="0,0,4,4" ToolTip="{Binding Name}" Cursor="Hand"
+                                                Command="{Binding DataContext.PickColorCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="5" BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1"
+                                                            Background="{Binding Color, Converter={StaticResource RgbToBrush}}"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <TextBlock Text="Recent" Foreground="{StaticResource MutedTextBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <ItemsControl ItemsSource="{Binding RecentColors}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Width="18" Height="18" Margin="0,0,4,0" Cursor="Hand" ToolTip="Recent color"
+                                                Command="{Binding DataContext.PickRecentCommand, ElementName=Root}" CommandParameter="{Binding}">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border CornerRadius="4" BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1"
+                                                            Background="{Binding Converter={StaticResource RgbToBrush}}"/>
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <StackPanel Visibility="{Binding ShowLineWidth, Converter={StaticResource BoolToVisible}}">
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Line width"/>
+                                <ComboBox ItemsSource="{x:Static vm:PropertiesViewModel.LineWidths}" SelectedItem="{Binding LineWidth}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding Converter={StaticResource Points}}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2" Visibility="{Binding ShowFontSize, Converter={StaticResource BoolToVisible}}">
+                                <TextBlock Style="{StaticResource FieldLabel}" Text="Font size"/>
+                                <ComboBox ItemsSource="{x:Static vm:PropertiesViewModel.FontSizes}" SelectedItem="{Binding FontSize}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate><TextBlock Text="{Binding Converter={StaticResource Points}}"/></DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Style="{StaticResource FieldLabel}">
+                            <Run Text="Opacity "/><Run Text="{Binding OpacityPercent, Mode=OneWay, StringFormat={}{0:0}%}"/>
+                        </TextBlock>
+                        <Slider Minimum="5" Maximum="100" Value="{Binding OpacityPercent, Delay=250}" Margin="0,0,0,10" IsMoveToPointEnabled="True"/>
+
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="{Binding CommentLabel}"/>
+                        <TextBox Text="{Binding Comment, UpdateSourceTrigger=LostFocus}" AcceptsReturn="True" TextWrapping="Wrap"
+                                 MinHeight="64" VerticalContentAlignment="Top" Margin="0,0,0,10"/>
+                    </StackPanel>
+
+                    <StackPanel Visibility="{Binding IsSelectionMode, Converter={StaticResource BoolToVisible}}">
+                        <TextBlock Style="{StaticResource FieldLabel}" Text="Status"/>
+                        <ComboBox ItemsSource="{Binding Statuses}" SelectedItem="{Binding Status}" Margin="0,0,0,10"/>
+                        <CheckBox Content="Lock markup (prevent move / delete / edit)" IsChecked="{Binding IsLocked}"/>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

@@ -30,6 +30,60 @@ public sealed partial class MainViewModel : ObservableObject
         ReviewList = new ReviewListViewModel(dialogs);
         ReviewList.NavigateRequested += (_, item) => ActiveDocument?.RevealMarkup(item);
         ToolDefaults = new ToolDefaults(Environment.UserName);
+        Properties = new PropertiesViewModel(this);
+    }
+
+    /// <summary>오른쪽 속성 패널.</summary>
+    public PropertiesViewModel Properties { get; }
+
+    /// <summary>저장된 설정을 화면 상태에 적용한다 (프로그램 시작 시).</summary>
+    public void ApplySettings(AppSettings s)
+    {
+        if (!string.IsNullOrWhiteSpace(s.Author)) ToolDefaults.Author = s.Author;
+        foreach (var (tool, preset) in s.Tools)
+            if (preset?.Style != null && !string.IsNullOrEmpty(preset.Subject)) ToolDefaults.Set(tool, preset);
+        Properties.RecentColors.Clear();
+        foreach (var c in s.RecentColors.Take(5)) Properties.RecentColors.Add(c);
+        KeepToolActive = s.KeepToolActive;
+        IsLeftPanelVisible = s.IsLeftPanelVisible;
+        IsRightPanelVisible = s.IsRightPanelVisible;
+        IsReviewListVisible = s.IsReviewListVisible;
+        RecentFiles.Clear();
+        foreach (var f in s.RecentFiles.Take(10)) RecentFiles.Add(f);
+    }
+
+    /// <summary>현재 화면 상태를 설정으로 모은다 (프로그램 종료 시 저장).</summary>
+    public AppSettings CaptureSettings() => new()
+    {
+        Author = ToolDefaults.Author,
+        Tools = Enum.GetValues<ToolKind>().Where(ToolInfo.CreatesMarkup).ToDictionary(t => t, ToolDefaults.Get),
+        RecentColors = Properties.RecentColors.ToList(),
+        KeepToolActive = KeepToolActive,
+        IsLeftPanelVisible = IsLeftPanelVisible,
+        IsRightPanelVisible = IsRightPanelVisible,
+        IsReviewListVisible = IsReviewListVisible,
+        RecentFiles = RecentFiles.ToList(),
+    };
+
+    /// <summary>최근 연 파일 (File 메뉴).</summary>
+    public ObservableCollection<string> RecentFiles { get; } = [];
+
+    [RelayCommand]
+    private async Task OpenRecentAsync(string path)
+    {
+        if (File.Exists(path)) await OpenPathAsync(path);
+        else
+        {
+            RecentFiles.Remove(path);
+            _dialogs.ShowError("File not found", path);
+        }
+    }
+
+    private void AddRecent(string path)
+    {
+        RecentFiles.Remove(path);
+        RecentFiles.Insert(0, path);
+        while (RecentFiles.Count > 10) RecentFiles.RemoveAt(RecentFiles.Count - 1);
     }
 
     /// <summary>도구별 기본 스타일·작성자. 설정 파일에서 불러오고 저장한다.</summary>
@@ -209,6 +263,7 @@ public sealed partial class MainViewModel : ObservableObject
             Documents.Add(doc);
             ActiveDocument = doc;
             StatusMessage = $"Opened {doc.FileName} ({doc.Pages.Count} pages)";
+            AddRecent(full);
             var warnings = pdf.Security.Warnings().Where(w => !w.Contains("password", StringComparison.OrdinalIgnoreCase)).ToList();
             if (warnings.Count > 0)
                 _dialogs.ShowInfo("Document notice", string.Join(Environment.NewLine, warnings));

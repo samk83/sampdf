@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Threading;
+using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.App.Services;
 using DrawingReview.Engine.MuPdf;
@@ -16,7 +17,15 @@ public partial class App : Application
         MainWindow? window = null;
         var dialogs = new WpfDialogService(() => window);
         var vm = new MainViewModel(new MuPdfEngine(), dialogs);
+        var settings = new SettingsStore(System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DrawingReview", "settings.json"));
+        vm.ApplySettings(settings.Load());
         window = new MainWindow(vm);
+        window.Closed += (_, _) =>
+        {
+            try { settings.Save(vm.CaptureSettings()); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { /* 설정 저장 실패는 무시 */ }
+        };
         MainWindow = window;
         window.Show();
 

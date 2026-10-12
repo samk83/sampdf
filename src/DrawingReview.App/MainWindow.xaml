@@ -54,6 +54,15 @@
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}"/>
                 <MenuItem Header="Save _As…" InputGestureText="Ctrl+Shift+S" Command="{Binding SaveAsCommand}"/>
                 <Separator/>
+                <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
+                    <MenuItem.ItemContainerStyle>
+                        <Style TargetType="MenuItem" BasedOn="{StaticResource {x:Type MenuItem}}">
+                            <Setter Property="Header" Value="{Binding}"/>
+                            <Setter Property="Command" Value="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}"/>
+                            <Setter Property="CommandParameter" Value="{Binding}"/>
+                        </Style>
+                    </MenuItem.ItemContainerStyle>
+                </MenuItem>
                 <MenuItem Header="_Close Tab" InputGestureText="Ctrl+W" Command="{Binding CloseDocumentCommand}"/>
                 <Separator/>
                 <MenuItem Header="E_xit" Click="OnExit"/>
@@ -308,15 +317,7 @@
             <GridSplitter Grid.Column="4" Width="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
             <!-- 오른쪽 속성 패널 -->
-            <Border Grid.Column="5" Background="{StaticResource PanelBrush}">
-                <DockPanel>
-                    <Border DockPanel.Dock="Top" Height="34" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
-                        <TextBlock Style="{StaticResource PanelHeader}" Text="PROPERTIES"/>
-                    </Border>
-                    <TextBlock Margin="16" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
-                               Text="Select a markup to edit its color, line width, text and status."/>
-                </DockPanel>
-            </Border>
+            <views:PropertiesPanel Grid.Column="5" DataContext="{Binding Properties}"/>
         </Grid>
 
         <GridSplitter Grid.Row="4" Height="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
