@@ -134,6 +134,7 @@ public sealed partial class MainViewModel : ObservableObject
                 return null;
             }
             var doc = new DocumentViewModel(pdf, full);
+            await doc.LoadMarkupsAsync();
             Documents.Add(doc);
             ActiveDocument = doc;
             StatusMessage = $"Opened {doc.FileName} ({doc.Pages.Count} pages)";
