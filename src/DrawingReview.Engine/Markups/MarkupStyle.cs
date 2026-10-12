@@ -21,4 +21,7 @@ public sealed record MarkupStyle
     public RgbColor TextColor { get; init; } = RgbColor.Red;
 
     public static readonly MarkupStyle Default = new();
+
+    /// <summary>영역 하이라이트 기본값: 노란색 40% (Multiply 혼합으로 도면 선이 비쳐 보인다).</summary>
+    public static readonly MarkupStyle Highlighter = new() { StrokeColor = RgbColor.Yellow, Opacity = 0.4, LineWidth = 0 };
 }

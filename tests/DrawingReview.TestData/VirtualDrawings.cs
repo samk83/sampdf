@@ -33,25 +33,25 @@ public static class VirtualDrawings
         using var doc = new Document();
 
         doc.NewPage(width: ArchDWidth, height: ArchDHeight);
-        DrawFloorPlan(doc[PlanSetPages.FloorPlan], ArchDWidth, ArchDHeight, "A-101", "FIRST FLOOR PLAN / 1층 평면도");
+        DrawFloorPlan(doc, PlanSetPages.FloorPlan, ArchDWidth, ArchDHeight, "A-101", "FIRST FLOOR PLAN / 1층 평면도");
 
         doc.NewPage(width: ArchDHeight, height: ArchDWidth);
-        DrawFloorPlan(doc[PlanSetPages.Rotated90], ArchDHeight, ArchDWidth, "A-102", "ROOF FRAMING PLAN / 지붕 구조 평면도");
+        DrawFloorPlan(doc, PlanSetPages.Rotated90, ArchDHeight, ArchDWidth, "A-102", "ROOF FRAMING PLAN / 지붕 구조 평면도");
         doc[PlanSetPages.Rotated90].SetRotation(90);
 
         doc.NewPage(width: A3Width, height: A3Height);
-        DrawFloorPlan(doc[PlanSetPages.CroppedA3], A3Width, A3Height, "S-301", "SECTION DETAIL / 단면 상세");
+        DrawFloorPlan(doc, PlanSetPages.CroppedA3, A3Width, A3Height, "S-301", "SECTION DETAIL / 단면 상세");
         doc[PlanSetPages.CroppedA3].SetCropBox(new Rect(60, 40, A3Width - 30, A3Height - 50));
 
         doc.NewPage(width: A4Width, height: A4Height);
-        DrawSpecSheet(doc[PlanSetPages.KoreanSpec]);
+        DrawSpecSheet(doc, PlanSetPages.KoreanSpec);
 
         doc.NewPage(width: A3Width, height: A3Height);
-        DrawFloorPlan(doc[PlanSetPages.Rotated180], A3Width, A3Height, "M-201", "MECHANICAL PLAN / 기계 평면도");
+        DrawFloorPlan(doc, PlanSetPages.Rotated180, A3Width, A3Height, "M-201", "MECHANICAL PLAN / 기계 평면도");
         doc[PlanSetPages.Rotated180].SetRotation(180);
 
         doc.NewPage(width: A3Height, height: A3Width);
-        DrawFloorPlan(doc[PlanSetPages.Rotated270], A3Height, A3Width, "E-401", "ELECTRICAL PLAN / 전기 평면도");
+        DrawFloorPlan(doc, PlanSetPages.Rotated270, A3Height, A3Width, "E-401", "ELECTRICAL PLAN / 전기 평면도");
         doc[PlanSetPages.Rotated270].SetRotation(270);
 
         AddPreexistingItems(doc);
@@ -89,8 +89,9 @@ public static class VirtualDrawings
         return doc.Write(garbage: true, deflate: true);
     }
 
-    private static void DrawFloorPlan(Page page, float w, float h, string sheet, string title)
+    private static void DrawFloorPlan(Document doc, int pageIndex, float w, float h, string sheet, string title)
     {
+        var page = doc[pageIndex];
         var s = page.NewShape();
         float m = Math.Min(w, h) * 0.03f;
 
@@ -145,14 +146,13 @@ public static class VirtualDrawings
         s.InsertText(new Point(tb.X0 + 10, tb.Y0 + tb.Height * 0.85f), $"SHEET {sheet}", fontSize: m * 0.6f);
         s.Commit();
 
-        // 한글 제목은 CJK 글꼴(뷰어 제공, 비포함)로 넣는다: 파일 크기를 작게 유지한다.
-        page.InsertText(new Point(tb.X0 + tb.Width * 0.45f, tb.Y0 + tb.Height * 0.85f), title,
-            fontSize: m * 0.4f, fontName: "korea");
+        // 한글 제목은 CJK 글꼴 참조(비포함)로 넣는다: 파일 크기를 작게 유지한다.
+        KoreanText.Insert(doc, pageIndex, tb.X0 + tb.Width * 0.45f, tb.Y0 + tb.Height * 0.85f, title, m * 0.4f);
     }
 
-    private static void DrawSpecSheet(Page page)
+    private static void DrawSpecSheet(Document doc, int pageIndex)
     {
-        page.InsertText(new Point(50, 70), "GENERAL NOTES / 일반 사항", fontSize: 18, fontName: "korea");
+        KoreanText.Insert(doc, pageIndex, 50, 70, "GENERAL NOTES / 일반 사항", 18);
         string[] lines =
         [
             "1. 모든 치수는 현장에서 확인한다. VERIFY ALL DIMENSIONS IN FIELD.",
@@ -162,7 +162,7 @@ public static class VirtualDrawings
             "4. See sheet A-101 for floor plan. 평면도는 A-101 참조.",
         ];
         for (int i = 0; i < lines.Length; i++)
-            page.InsertText(new Point(50, 120 + i * 24), lines[i], fontSize: 11, fontName: "korea");
+            KoreanText.Insert(doc, pageIndex, 50, 120 + i * 24, lines[i], 11);
     }
 
     private static void AddPreexistingItems(Document doc)

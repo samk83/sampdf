@@ -39,5 +39,9 @@ public sealed record CloudDraft(IReadOnlyList<PagePoint> Vertices, double Intens
 /// <summary>자유곡선 펜 (PDF Ink). 획(stroke)마다 점 목록 하나.</summary>
 public sealed record InkDraft(IReadOnlyList<IReadOnlyList<PagePoint>> Strokes) : MarkupDraft;
 
-/// <summary>영역 하이라이트 (PDF Highlight).</summary>
+/// <summary>
+/// 영역 하이라이트. PDF에는 채움 사각형(Square) + Multiply 혼합 + 앱 전용 표시(/DRKind /Highlight)로 저장한다.
+/// PDF Highlight 하위 유형은 글자 위 하이라이트용이라 도면 영역에서는 모양이 왜곡되므로 쓰지 않는다.
+/// Style.StrokeColor가 채움 색이 된다. 보통 MarkupStyle.Highlighter를 쓴다.
+/// </summary>
 public sealed record HighlightDraft(PageRect Rect) : MarkupDraft;

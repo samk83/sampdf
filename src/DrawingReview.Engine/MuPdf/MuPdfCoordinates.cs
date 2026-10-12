@@ -9,7 +9,8 @@ namespace DrawingReview.Engine.MuPdf;
 /// 0단계 검증 결과(docs/engine-validation.md):
 /// - Square/Circle/Line/Polygon 생성 함수는 보이는 좌표를 받아 내부에서 회전을 처리한다.
 /// - Ink/Highlight/FreeText 생성 함수는 회전 전(unrotated) 좌표를 받으므로 DerotationMatrix로 직접 바꿔야 한다.
-/// - Annot.Rect는 항상 회전 전 좌표로 돌아오므로 RotationMatrix를 곱해 보이는 좌표로 바꾼다.
+/// - Annot.Rect와 검색 결과는 회전 전 좌표로 돌아오므로 RotationMatrix를 곱해 보이는 좌표로 바꾼다.
+/// - FreeText 지시선(/CL)은 MuPDF.NET이 CropBox를 잘못 반영하므로 ToPdfSpace로 PDF 좌표를 직접 계산해 쓴다.
 /// </summary>
 internal static class MuPdfCoordinates
 {
@@ -20,6 +21,9 @@ internal static class MuPdfCoordinates
     public static Point ToUnrotated(Page page, PagePoint p) => ToMu(p) * page.DerotationMatrix;
 
     public static Rect ToUnrotated(Page page, PageRect r) => Normalize(ToMu(r) * page.DerotationMatrix);
+
+    /// <summary>보이는 좌표 → PDF 파일 안의 좌표(왼쪽 아래 원점, MediaBox 기준). PDF 사전에 직접 쓸 때 사용.</summary>
+    public static Point ToPdfSpace(Page page, PagePoint p) => ToMu(p) * page.DerotationMatrix * ~page.TransformationMatrix;
 
     public static PageRect FromUnrotated(Page page, Rect r) => FromMu(Normalize(r * page.RotationMatrix));
 

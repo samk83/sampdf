@@ -98,7 +98,8 @@ internal sealed class MuPdfDocument : IPdfDocument
     {
         if (string.IsNullOrEmpty(needle)) return [];
         var page = GetPage(pageIndex);
-        return page.SearchFor(needle, maxHits: 1000).Select(q => FromMu(q.Rect)).ToList();
+        // 검색 결과도 회전 전 좌표로 돌아오므로 보이는 좌표로 바꾼다.
+        return page.SearchFor(needle, maxHits: 1000).Select(q => FromUnrotated(page, q.Rect)).ToList();
     }
 
     public void SaveTo(string path)
@@ -134,7 +135,9 @@ internal sealed class MuPdfDocument : IPdfDocument
                 var ends = annot.LineEnds;
                 return ends is { } e && (e.Item1 != (int)PdfLineEnding.PDF_ANNOT_LE_NONE || e.Item2 != (int)PdfLineEnding.PDF_ANNOT_LE_NONE)
                     ? MarkupKind.Arrow : MarkupKind.Line;
-            case "Square": return MarkupKind.Rectangle;
+            case "Square":
+                var kind = annot.Parent!.Parent!.XrefGetKey(annot.Xref, MuPdfMarkupWriter.KindKey).Item2;
+                return kind is "/Highlight" ? MarkupKind.Highlight : MarkupKind.Rectangle;
             case "Circle": return MarkupKind.Ellipse;
             case "Polygon": return annot.Border?.Clouds > 0 ? MarkupKind.Cloud : MarkupKind.Polygon;
             case "Ink": return MarkupKind.Ink;
