@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\DrawingReview.Engine\DrawingReview.Engine.csproj" />
+    <ProjectReference Include="..\DrawingReview.Compare\DrawingReview.Compare.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -12,6 +13,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS9057</NoWarn>
   </PropertyGroup>
 
 </Project>

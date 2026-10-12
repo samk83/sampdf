@@ -7,6 +7,7 @@
     <!-- Linux에서도 컴파일 확인을 할 수 있게 한다 (실행은 Windows에서만 가능). -->
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <Nullable>enable</Nullable>
+    <NoWarn>$(NoWarn);CS9057</NoWarn>
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>DrawingReview</AssemblyName>
     <RootNamespace>DrawingReview.App</RootNamespace>

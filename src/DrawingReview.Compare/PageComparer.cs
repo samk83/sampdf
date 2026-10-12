@@ -84,10 +84,42 @@ public static class PageComparer
     }
 
     /// <summary>
+    /// 한 영역을 더 잘게 나눈다 (기획서 5장 Split): 묶기 거리를 줄여 다시 비교하고 그 영역 안의 결과만 돌려준다.
+    /// </summary>
+    public static IReadOnlyList<ChangeRegion> Split(PageSource oldPage, PageSource newPage, CompareSettings settings, AlignmentResult alignment, PageRect region)
+    {
+        var fine = settings with { GroupDistancePt = Math.Max(1, settings.GroupDistancePt / 4) };
+        var result = Compare(oldPage, newPage, fine, alignment);
+        return result.Regions.Where(r => region.Inflate(1).Contains(r.Bounds)).ToList();
+    }
+
+    /// <summary>여러 영역을 하나로 합친다 (기획서 5장 Merge).</summary>
+    public static ChangeRegion Merge(IReadOnlyList<ChangeRegion> regions, int number)
+    {
+        if (regions.Count == 0) throw new ArgumentException("Nothing to merge.", nameof(regions));
+        var b = regions.Select(r => r.Bounds).Aggregate((a, c) => new PageRect(Math.Min(a.X0, c.X0), Math.Min(a.Y0, c.Y0), Math.Max(a.X1, c.X1), Math.Max(a.Y1, c.Y1)));
+        var bo = regions.Select(r => r.BoundsInOld).Aggregate((a, c) => new PageRect(Math.Min(a.X0, c.X0), Math.Min(a.Y0, c.Y0), Math.Max(a.X1, c.X1), Math.Max(a.Y1, c.Y1)));
+        int added = regions.Sum(r => r.AddedPixels), removed = regions.Sum(r => r.RemovedPixels);
+        var kind = added > 0 && removed > 0 ? ChangeKind.Modified : added > 0 ? ChangeKind.Added : ChangeKind.Removed;
+        var confidence = regions.Any(r => r.Confidence == ChangeConfidence.High) ? ChangeConfidence.High : ChangeConfidence.Low;
+        return new ChangeRegion(number, kind, b, bo, added, removed, confidence);
+    }
+
+    /// <summary>렌더링 결과를 PNG 바이트로 (비교 이미지 내보내기).</summary>
+    public static byte[] EncodePng(RenderedImage image)
+    {
+        using var rgb = Mat.FromPixelData(image.Height, image.Width, MatType.CV_8UC3, image.Pixels, image.Stride);
+        using var bgr = new Mat();
+        Cv2.CvtColor(rgb, bgr, ColorConversionCodes.RGB2BGR);
+        Cv2.ImEncode(".png", bgr, out var bytes);
+        return bytes;
+    }
+
+    /// <summary>
     /// 겹쳐 보기 그림: 이전 도면만 있는 선 = 빨강, 개정 도면만 있는 선 = 파랑, 공통 = 진회색 (기획서 9장 기본 색).
     /// </summary>
     public static RenderedImage RenderOverlay(PageSource oldPage, PageSource newPage, AlignmentTransform transform, double zoom,
-        (byte R, byte G, byte B)? oldColor = null, (byte R, byte G, byte B)? newColor = null, int inkThreshold = 200)
+        (byte R, byte G, byte B)? oldColor = null, (byte R, byte G, byte B)? newColor = null, int inkThreshold = 200, bool showCommon = true)
     {
         var oc = oldColor ?? (220, 40, 40);
         var nc = newColor ?? (30, 90, 230);
@@ -106,6 +138,7 @@ public static class PageComparer
         {
             bool a = n[i] != 0, b = o[i] != 0;
             if (!a && !b) continue;
+            if (a && b && !showCommon) continue; // 차이만 보기: 공통 선은 그리지 않음
             var (r, g, bl) = a && b ? ((byte)60, (byte)60, (byte)60) : a ? nc : oc;
             pixels[i * 3] = r;
             pixels[i * 3 + 1] = g;
