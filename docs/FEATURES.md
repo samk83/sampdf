@@ -15,6 +15,8 @@
 | `src/DrawingReview.App` | WPF 화면 (창, 테마, 도면 캔버스, 대화상자) | **Windows만** (Linux는 컴파일만) |
 | `src/DrawingReview.Compare` | 도면 비교 엔진 (정렬, 차이, 글자 비교, 영역 묶기). 화면 없음 | Windows·Linux |
 | `tests/DrawingReview.Compare.Tests` | 비교 검수 테스트 (기획서 12장) | Windows·Linux |
+| `src/DrawingReview.Cad` | DWG/DXF 읽기·정규화·비교 (검증 단계, 화면 미연결) | Windows·Linux |
+| `tests/DrawingReview.Cad.Tests` | CAD 비교 검증 테스트 | Windows·Linux |
 
 ## Engine 모듈
 
@@ -100,3 +102,11 @@
 | 자동·수동 정렬 | `Aligner.cs` | OpenCV (ORB, RANSAC, ECC) | `PageComparer`, `CompareViewModel` |
 | 이미지 처리·영역 묶기 | `ImageOps.cs` | OpenCV | `PageComparer`, `Aligner` |
 | 단어 비교 | `TextDiff.cs` | `TextWord` | `PageComparer` |
+
+## Cad 모듈 (검증 단계)
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 기본 요소·변경 모델 | `CadModel.cs` | — | 아래 두 파일 |
+| DWG/DXF 읽기, 블록 펼치기, 단위 변환, 경고 | `CadLoader.cs` | ACadSharp | 테스트 (화면 연결 전) |
+| 짝 맞추기(ID 미사용), 이동·변경·추가·삭제 분류 | `CadComparer.cs` | — | 테스트 (화면 연결 전) |
