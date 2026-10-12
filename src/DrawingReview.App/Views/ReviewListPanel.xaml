@@ -1,0 +1,74 @@
+<UserControl x:Class="DrawingReview.App.Views.ReviewListPanel"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:DrawingReview.App.Core.ViewModels;assembly=DrawingReview.App.Core">
+    <!-- DataContext: ReviewListViewModel -->
+    <DockPanel Background="#202125">
+        <Border DockPanel.Dock="Top" Height="38" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left" Style="{StaticResource PanelHeader}" Text="REVIEW LIST" Margin="0,0,12,0"/>
+                <TextBlock DockPanel.Dock="Left" VerticalAlignment="Center" Text="{Binding SummaryText}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasHidden}" Value="True">
+                                    <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button DockPanel.Dock="Left" Style="{StaticResource TextButton}" Height="24" Margin="8,0,0,0" Content="Clear filters"
+                        Command="{Binding ClearFiltersCommand}" Visibility="{Binding HasHidden, Converter={StaticResource BoolToVisible}}"/>
+
+                <Button DockPanel.Dock="Right" Style="{StaticResource TextButton}" Content="Export CSV" Margin="8,0,0,0" Command="{Binding ExportCsvCommand}"/>
+                <Button DockPanel.Dock="Right" Style="{StaticResource TextButton}" Content="Set status ▾" Margin="8,0,0,0" Click="OnSetStatusClick" x:Name="SetStatusButton"/>
+                <TextBox DockPanel.Dock="Right" Width="180" MinHeight="26" Margin="8,0,0,0" Text="{Binding TextFilter, UpdateSourceTrigger=PropertyChanged}"
+                         ToolTip="Filter by subject, comment, author, type or status"/>
+                <CheckBox DockPanel.Dock="Right" Margin="12,0,0,0" Content="Current page" IsChecked="{Binding CurrentPageOnly}"/>
+                <ComboBox DockPanel.Dock="Right" Width="130" MinHeight="26" Margin="8,0,0,0" ItemsSource="{Binding StatusFilters}" SelectedItem="{Binding StatusFilter}"/>
+                <TextBlock DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="Status"/>
+            </DockPanel>
+        </Border>
+
+        <DataGrid x:Name="Grid" ItemsSource="{Binding Items}" Sorting="OnSorting" SelectionChanged="OnSelectionChanged" MouseDoubleClick="OnDoubleClick">
+            <DataGrid.ContextMenu>
+                <ContextMenu x:Name="RowMenu" Opened="OnRowMenuOpened"/>
+            </DataGrid.ContextMenu>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Page" Binding="{Binding Page}" Width="80" SortMemberPath="Page"/>
+                <DataGridTextColumn Header="Type" Binding="{Binding KindName}" Width="100" SortMemberPath="Type"/>
+                <DataGridTextColumn Header="Subject" Binding="{Binding Subject}" Width="130" SortMemberPath="Subject"/>
+                <DataGridTextColumn Header="Comment" Binding="{Binding Comment}" Width="*" SortMemberPath="Comment">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+                            <Setter Property="ToolTip" Value="{Binding Comment}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Author" Binding="{Binding Author}" Width="110" SortMemberPath="Author"/>
+                <DataGridTemplateColumn Header="Status" Width="120" SortMemberPath="Status">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate DataType="{x:Type vm:MarkupItemViewModel}">
+                            <StackPanel Orientation="Horizontal">
+                                <Border Style="{StaticResource StatusPill}">
+                                    <TextBlock Style="{StaticResource StatusPillText}" Text="{Binding Status}"/>
+                                </Border>
+                                <TextBlock Text="  Locked" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Visibility="{Binding IsLocked, Converter={StaticResource BoolToVisible}}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Modified" Binding="{Binding Modified}" Width="140" SortMemberPath="Modified">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</UserControl>
