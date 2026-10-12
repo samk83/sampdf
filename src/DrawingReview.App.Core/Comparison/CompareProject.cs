@@ -16,6 +16,8 @@ public sealed class CompareProject
     public int Version { get; set; } = 1;
     public string OldPath { get; set; } = "";
     public string NewPath { get; set; } = "";
+    /// <summary>CAD(DWG/DXF) 비교면 true. 다시 열 때 CAD 파일을 다시 읽어 같은 화면을 만든다.</summary>
+    public bool IsCad { get; set; }
     public List<PageEntry> Pages { get; set; } = [];
     public CloudOptions Clouds { get; set; } = new();
     public DateTimeOffset SavedAt { get; set; } = DateTimeOffset.Now;

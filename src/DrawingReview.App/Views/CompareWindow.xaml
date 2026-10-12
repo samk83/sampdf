@@ -107,6 +107,10 @@
                 <Button Style="{StaticResource TextButton}" Content="Export PDF…" Command="{Binding ExportPdfCommand}" Margin="0,0,6,0"/>
                 <Button Style="{StaticResource TextButton}" Content="Export list…" ToolTip="CSV or JSON" Command="{Binding ExportChangeListCommand}" Margin="0,0,6,0"/>
                 <Button Style="{StaticResource TextButton}" Content="Export image…" Command="{Binding ExportImageCommand}"/>
+                <Button Style="{StaticResource TextButton}" Content="Export clouds to DXF/DWG…" ToolTip="Adds accepted changes as clouds on a REVISION layer in a copy of the revised CAD drawing"
+                        Command="{Binding ExportCadCloudsCommand}" Margin="6,0,0,0" Visibility="{Binding IsCadMode, Converter={StaticResource BoolToVisible}}"/>
+                <Button Style="{StaticResource TextButton}" Content="CAD warnings…" ToolTip="Units, external references and object types that are not compared yet"
+                        Click="OnShowCadWarnings" Margin="6,0,0,0" Visibility="{Binding IsCadMode, Converter={StaticResource BoolToVisible}}"/>
             </WrapPanel>
         </Border>
 

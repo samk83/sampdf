@@ -8,14 +8,14 @@
 |---|---|---|
 | `src/DrawingReview.Engine` | PDF 엔진 경계와 MuPDF 구현. 화면과 무관한 PDF 처리 | Windows·Linux |
 | `tests/DrawingReview.Engine.Tests` | 엔진 자동 테스트 | Windows·Linux |
-| `tests/DrawingReview.TestData` | 가상 도면 생성기 (테스트·검증 도구 공용) | Windows·Linux |
+| `tests/DrawingReview.TestData` | 가상 도면 생성기: PDF (`VirtualDrawings`, `ComparePairs`), CAD (`CadSamples`) (테스트·검증 도구 공용) | Windows·Linux |
 | `tools/EngineSpike` | 0단계 검증 실행기: 샘플·결과 PDF·보고서 생성 | Windows·Linux |
 | `src/DrawingReview.App.Core` | 화면 상태·로직 (ViewModel, 확대·이동 계산). WPF에 의존하지 않음 | Windows·Linux |
 | `tests/DrawingReview.App.Core.Tests` | App.Core 자동 테스트 | Windows·Linux |
 | `src/DrawingReview.App` | WPF 화면 (창, 테마, 도면 캔버스, 대화상자) | **Windows만** (Linux는 컴파일만) |
 | `src/DrawingReview.Compare` | 도면 비교 엔진 (정렬, 차이, 글자 비교, 영역 묶기). 화면 없음 | Windows·Linux |
 | `tests/DrawingReview.Compare.Tests` | 비교 검수 테스트 (기획서 12장) | Windows·Linux |
-| `src/DrawingReview.Cad` | DWG/DXF 읽기·정규화·비교 (검증 단계, 화면 미연결) | Windows·Linux |
+| `src/DrawingReview.Cad` | DWG/DXF 읽기·정규화·비교·PDF로 그리기·Cloud 내보내기 | Windows·Linux |
 | `tests/DrawingReview.Cad.Tests` | CAD 비교 검증 테스트 | Windows·Linux |
 
 ## Engine 모듈
@@ -32,6 +32,9 @@
 | 문서 조작 (페이지 정보, 렌더링, 검색, 주석 조회·삭제, 저장, 보안 정보) | `MuPdf/MuPdfDocument.cs` | `SafeFileSaver`, `MuPdfCoordinates` | `IPdfDocument` 사용처 전체 |
 | 마크업 → 표준 PDF 주석 변환 | `MuPdf/MuPdfMarkupWriter.cs` | `MuPdfCoordinates` | `MuPdfDocument.AddMarkup` |
 | 보이는 좌표 ↔ MuPDF/PDF 좌표 변환 (회전·CropBox 보정) | `MuPdf/MuPdfCoordinates.cs` | — | Writer, Document |
+| 벡터 페이지 모델 (선·글자) | `Vector/VectorPage.cs` | 좌표 모델, `RgbColor` | `CadPlotter`, `WriteVectorPdf` |
+| 벡터 페이지 → 새 PDF (`IPdfEngine.WriteVectorPdf`) | `MuPdf/MuPdfVectorWriter.cs` | `KoreanCidFont`, `SafeFileSaver` | `CadComparison` |
+| 한글 글자용 CID 글꼴 참조 (글꼴 파일 미포함) | `MuPdf/KoreanCidFont.cs` | — | `MuPdfVectorWriter`, TestData `KoreanText` |
 
 ## 마크업 종류별 PDF 저장 형식
 
@@ -69,7 +72,8 @@
 | 자동 저장·복구 사본 | `Services/RecoveryService.cs` | — | `MainViewModel` |
 | 도면 비교 작업 공간 (짝, 비교 실행, 수동 정렬, 검토, 합치기·나누기, Cloud, 내보내기, 프로젝트) | `Comparison/CompareViewModel.cs` | Compare 엔진, `DocumentViewModel`, `MarkupInteraction` | WPF `CompareWindow` |
 | 비교 모델·Cloud 설정·동기화 | `Comparison/CompareModels.cs` | — | `CompareViewModel`, `CompareWindow` |
-| 비교 프로젝트 파일 (.drcompare) | `Comparison/CompareProject.cs` | `SafeFileSaver` | `CompareViewModel` |
+| 비교 프로젝트 파일 (.drcompare, CAD 여부 포함) | `Comparison/CompareProject.cs` | `SafeFileSaver` | `CompareViewModel` |
+| CAD 비교 한 번: 읽기·비교·화면용 PDF(임시 폴더)·변경 영역 변환 | `Comparison/CadComparison.cs` | Cad 모듈, `IPdfEngine.WriteVectorPdf` | `CompareViewModel.OpenCadAsync`, `ExportCadCloudsAsync` |
 | 검색·책갈피 | `ViewModels/SearchViewModel.cs` | `IPdfDocument.SearchText/GetWords/GetOutline` | WPF `SearchPanel`, `BookmarksPanel`, 캔버스 강조 |
 | Saved Tools (세트, 스타일/문구·모양 저장, 놓기, 가져오기·내보내기) | `ViewModels/SavedToolsViewModel.cs` | `ToolDefaults`, `MarkupInteraction.BeginPlacement` | WPF `SavedToolsPanel`, 설정 |
 | 인쇄 배치 (맞춤/실제 크기, 회전, 잘림 경고, 페이지 범위) | `Printing/PrintLayout.cs` | — | WPF `PrintWindow` |
@@ -88,7 +92,7 @@
 | 마크업 미리보기 그리기 | `Controls/DraftRenderer.cs` | — | `MarkupPageView`, `CompareCanvas` |
 | Review List 표 | `Views/ReviewListPanel.xaml(.cs)` | `ReviewListViewModel` | `MainWindow` |
 | 속성 패널 | `Views/PropertiesPanel.xaml` | `PropertiesViewModel` | `MainWindow` |
-| 비교 창·페이지 짝 창 | `Views/CompareWindow.xaml(.cs)`, `Views/PairWindow.xaml` | `CompareViewModel`, `ViewportSync` | `MainWindow` Compare 메뉴 |
+| 비교 창·페이지 짝 창 (CAD 모드: DXF/DWG Cloud 내보내기, CAD 경고 버튼) | `Views/CompareWindow.xaml(.cs)`, `Views/PairWindow.xaml` | `CompareViewModel`, `ViewportSync` | `MainWindow` Compare 메뉴 (Compare Drawings / Compare CAD Drawings) |
 | 비교 캔버스 (겹쳐 보기 그림, 변경 영역, 정렬 점) | `Controls/CompareCanvas.cs` | `MarkupPageView` | `CompareWindow` |
 | 검색·책갈피·Saved Tools 패널 | `Views/SearchPanel`, `Views/BookmarksPanel`, `Views/SavedToolsPanel` | 각 ViewModel | `MainWindow` 왼쪽 패널 |
 | 인쇄 미리보기·인쇄 | `Views/PrintWindow.xaml(.cs)` | `PrintLayout`, `DocumentViewModel.RenderPageAsync` | File → Print (Ctrl+P) |
@@ -103,10 +107,12 @@
 | 이미지 처리·영역 묶기 | `ImageOps.cs` | OpenCV | `PageComparer`, `Aligner` |
 | 단어 비교 | `TextDiff.cs` | `TextWord` | `PageComparer` |
 
-## Cad 모듈 (검증 단계)
+## Cad 모듈
 
 | 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
 |---|---|---|---|
-| 기본 요소·변경 모델 | `CadModel.cs` | — | 아래 두 파일 |
-| DWG/DXF 읽기, 블록 펼치기, 단위 변환, 경고 | `CadLoader.cs` | ACadSharp | 테스트 (화면 연결 전) |
-| 짝 맞추기(ID 미사용), 이동·변경·추가·삭제 분류 | `CadComparer.cs` | — | 테스트 (화면 연결 전) |
+| 기본 요소(선·원·호·폴리선·글자·치수)·변경 모델 | `CadModel.cs` | — | Cad 모듈 전체 |
+| DWG/DXF 읽기, 블록 펼치기(회전·대칭 반영), 치수, 단위 변환, 경고 | `CadLoader.cs` | ACadSharp | `CadComparison`, 테스트 |
+| 짝 맞추기(ID 미사용), 이동·변경·추가·삭제 분류, 치수 값·문자 비교 | `CadComparer.cs` | — | `CadComparison`, 테스트 |
+| 모델(mm) ↔ PDF 페이지(pt) 변환, CAD → 벡터 페이지 그리기 | `CadPlotter.cs` | `VectorPage` (Engine) | `CadComparison` |
+| 개정 도면 사본에 Revision Cloud 넣기 (DXF/DWG, REVISION 도면층) | `CadCloudExporter.cs` | ACadSharp, `SafeFileSaver` | `CompareViewModel.ExportCadCloudsAsync` |

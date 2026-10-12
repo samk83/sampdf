@@ -8,6 +8,7 @@ using DrawingReview.App.Core.Editing;
 using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
+using DrawingReview.Cad;
 using DrawingReview.Compare;
 using DrawingReview.Compare.Model;
 using DrawingReview.Engine.Documents;
@@ -27,6 +28,7 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
     private readonly IDialogService _dialogs;
     private readonly Dictionary<PagePair, PageState> _pageStates = new();
     private CancellationTokenSource? _cts;
+    private CadComparison? _cad;
 
     private sealed class PageState
     {
@@ -111,10 +113,68 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
         _ => "",
     };
 
+    /// <summary>CAD(DWG/DXF) 비교 중인지. 이때 화면의 PDF는 CAD에서 그린 임시 파일이고, 변경은 CAD 객체 비교 결과다.</summary>
+    public bool IsCadMode => _cad != null;
+
+    /// <summary>CAD 비교 경고 (단위·Xref·아직 비교하지 않는 객체 종류 등).</summary>
+    public IReadOnlyList<string> CadWarnings => _cad?.Result.Warnings ?? [];
+
     // ---- 열기 ----
 
     /// <summary>두 PDF를 연다. 원본은 읽기만 한다.</summary>
-    public async Task<bool> OpenAsync(string oldPath, string newPath)
+    public Task<bool> OpenAsync(string oldPath, string newPath)
+    {
+        DropCad();
+        return OpenPdfsAsync(oldPath, newPath);
+    }
+
+    /// <summary>
+    /// 두 CAD 도면(DWG/DXF)을 비교한다: 읽기 → 객체 비교 → 같은 좌표로 PDF 그리기 → 비교 화면에 열기.
+    /// 원본 CAD 파일은 읽기만 한다.
+    /// </summary>
+    public async Task<bool> OpenCadAsync(string oldPath, string newPath)
+    {
+        IsBusy = true;
+        Status = "Reading CAD drawings…";
+        try
+        {
+            var cad = await Task.Run(() => CadComparison.Run(_engine, oldPath, newPath));
+            DropCad();
+            if (!await OpenPdfsAsync(cad.OldPdfPath, cad.NewPdfPath))
+            {
+                cad.Dispose();
+                return false;
+            }
+            _cad = cad;
+            OldPath = cad.OldCadPath;
+            NewPath = cad.NewCadPath;
+            OnPropertyChanged(nameof(IsCadMode));
+            OnPropertyChanged(nameof(CadWarnings));
+            Status = $"Opened CAD drawings {Path.GetFileName(OldPath)} and {Path.GetFileName(NewPath)}.";
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Status = "Could not read CAD drawings.";
+            _dialogs.ShowError("Could not read CAD drawings", ex.Message);
+            return false;
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void DropCad()
+    {
+        if (_cad == null) return;
+        _cad.Dispose();
+        _cad = null;
+        OnPropertyChanged(nameof(IsCadMode));
+        OnPropertyChanged(nameof(CadWarnings));
+    }
+
+    private async Task<bool> OpenPdfsAsync(string oldPath, string newPath)
     {
         try
         {
@@ -221,7 +281,8 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
     public async Task RunCompareAsync()
     {
         if (SelectedPair is not { } pair || OldDocument == null || NewDocument == null) return;
-        await RunAsync(pair, CurrentSettings(), manualAlignment: null);
+        if (_cad != null) await RunCadAsync(pair, _cad);
+        else await RunAsync(pair, CurrentSettings(), manualAlignment: null);
     }
 
     [RelayCommand]
@@ -271,6 +332,28 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>CAD 비교 결과를 변경 목록으로 보여 준다. 두 PDF가 같은 좌표로 그려져 정렬은 항등 변환이다.</summary>
+    private async Task RunCadAsync(PagePair pair, CadComparison cad)
+    {
+        var settings = CurrentSettings();
+        var alignment = new AlignmentResult(AlignmentTransform.Identity, AlignmentMethod.Identity, 1, "CAD model coordinates");
+        var state = new PageState
+        {
+            Settings = settings,
+            Alignment = alignment,
+            Changes = cad.Regions(settings.IgnoreRegions).Select(r => new ChangeItemViewModel(r)).ToList(),
+        };
+        _pageStates[pair] = state;
+        Alignment = alignment;
+        Changes.Clear();
+        foreach (var c in state.Changes) Changes.Add(c);
+        OnPropertyChanged(nameof(ChangeCountText));
+        await RefreshOverlayAsync();
+        var r = cad.Result;
+        Status = $"CAD comparison: {state.Changes.Count} changes ({r.OldCount} → {r.NewCount} objects compared)." +
+            (r.Warnings.Count > 0 ? $" {r.Warnings.Count} warning(s): " + string.Join(" ", r.Warnings) : "");
+    }
+
     /// <summary>겹쳐 보기 그림을 다시 만든다 (모드·정렬이 바뀌었을 때).</summary>
     public async Task RefreshOverlayAsync()
     {
@@ -290,6 +373,11 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void BeginManualAlignment()
     {
+        if (IsCadMode)
+        {
+            Status = "CAD drawings are already aligned by their coordinates.";
+            return;
+        }
         ManualPoints.Clear();
         IsPickingAlignment = true;
         Mode = CompareViewMode.SideBySide;
@@ -467,6 +555,40 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
 
     // ---- 내보내기·저장 ----
 
+    /// <summary>
+    /// CAD 비교: 수락한 변경마다 Revision Cloud를 개정 CAD 도면의 사본(DXF 또는 DWG)에 넣는다.
+    /// 원본 CAD 파일은 바꾸지 않는다.
+    /// </summary>
+    [RelayCommand]
+    public async Task ExportCadCloudsAsync()
+    {
+        if (_cad is not { } cad) return;
+        var targets = Changes.Where(c => c.Status == ChangeStatus.Accepted).ToList();
+        if (targets.Count == 0) { Status = "Accept changes first, then export clouds."; return; }
+        var path = _dialogs.PickSavePath(Path.GetFileNameWithoutExtension(NewPath) + " (revision clouds).dxf", "Export revision clouds to DXF/DWG");
+        if (path == null) return;
+        if (SamePath(path, NewPath) || SamePath(path, OldPath))
+        {
+            _dialogs.ShowError("Choose another file", "Original drawings are never overwritten. Choose a new file name.");
+            return;
+        }
+        var clouds = targets.Select(c => new CadCloud(cad.ToModel(c.Bounds.Inflate(CloudOptions.MarginPt)), c.Number)).ToList();
+        IsBusy = true;
+        try
+        {
+            var n = await Task.Run(() => CadCloudExporter.Export(cad.NewCadPath, path, clouds));
+            Status = $"Exported {n} revision clouds to {Path.GetFileName(path)} (layer {CadCloudExporter.LayerName}). Check the copy in your CAD program.";
+        }
+        catch (Exception ex)
+        {
+            _dialogs.ShowError("Export failed", ex.Message);
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     /// <summary>Cloud가 들어간 개정 도면을 새 PDF로 내보낸다. 원본 개정 도면 파일은 바꾸지 않는다.</summary>
     [RelayCommand]
     public async Task ExportPdfAsync()
@@ -522,11 +644,11 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
         sb.AppendLine($"Alignment,{Csv(AlignmentText)}");
         sb.AppendLine($"Report time,{DateTimeOffset.Now:yyyy-MM-dd HH:mm zzz}");
         sb.AppendLine();
-        sb.AppendLine("Number,Kind,Confidence,Status,X0,Y0,X1,Y1,Old X0,Old Y0,Old X1,Old Y1");
+        sb.AppendLine("Number,Kind,Confidence,Status,X0,Y0,X1,Y1,Old X0,Old Y0,Old X1,Old Y1,Description");
         foreach (var c in Changes)
             sb.AppendLine(string.Join(",", c.Number, c.Kind, c.Confidence, c.Status,
                 F(c.Bounds.X0), F(c.Bounds.Y0), F(c.Bounds.X1), F(c.Bounds.Y1),
-                F(c.BoundsInOld.X0), F(c.BoundsInOld.Y0), F(c.BoundsInOld.X1), F(c.BoundsInOld.Y1)));
+                F(c.BoundsInOld.X0), F(c.BoundsInOld.Y0), F(c.BoundsInOld.X1), F(c.BoundsInOld.Y1), Csv(c.Description)));
         return sb.ToString();
     }
 
@@ -536,13 +658,13 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
         @new = NewPath,
         pages = SelectedPair?.ToString(),
         alignment = Alignment,
-        changes = Changes.Select(c => new { c.Number, Kind = c.Kind.ToString(), Confidence = c.Confidence.ToString(), Status = c.Status.ToString(), c.Bounds, c.BoundsInOld }),
+        changes = Changes.Select(c => new { c.Number, Kind = c.Kind.ToString(), Confidence = c.Confidence.ToString(), Status = c.Status.ToString(), c.Bounds, c.BoundsInOld, c.Description }),
     }, CompareProject.Json);
 
     /// <summary>비교 프로젝트 저장 (경로·짝·설정·정렬·변경 상태).</summary>
     public void SaveProject(string path)
     {
-        var project = new CompareProject { OldPath = OldPath, NewPath = NewPath, Clouds = CloudOptions };
+        var project = new CompareProject { OldPath = OldPath, NewPath = NewPath, IsCad = IsCadMode, Clouds = CloudOptions };
         foreach (var pair in PagePairs)
         {
             var entry = new CompareProject.PageEntry { OldPage = pair.OldPage, NewPage = pair.NewPage };
@@ -576,7 +698,7 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
             _dialogs.ShowError("Drawing not found", $"The project refers to files that no longer exist:\n{project.OldPath}\n{project.NewPath}");
             return false;
         }
-        if (!await OpenAsync(project.OldPath, project.NewPath)) return false;
+        if (!await (project.IsCad ? OpenCadAsync(project.OldPath, project.NewPath) : OpenAsync(project.OldPath, project.NewPath))) return false;
         CloudOptions = project.Clouds;
         PagePairs.Clear();
         _pageStates.Clear();
@@ -613,5 +735,6 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
         _cts?.Cancel();
         OldDocument?.Dispose();
         NewDocument?.Dispose();
+        _cad?.Dispose();
     }
 }

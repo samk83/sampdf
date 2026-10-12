@@ -208,6 +208,21 @@ public partial class MainWindow : Window
         if (await cmp.OpenAsync(oldPath, newPath)) await cmp.RunCompareAsync();
     }
 
+    /// <summary>DWG/DXF 두 개를 골라 CAD 비교를 연다 (같은 비교 창, CAD 모드).</summary>
+    private async void OnCompareCadDrawings(object sender, RoutedEventArgs e)
+    {
+        var dialogs = _vm.Dialogs;
+        var oldPath = dialogs.PickCadFile("Select the OLD (previous) DWG/DXF drawing");
+        if (oldPath == null) return;
+        var newPath = dialogs.PickCadFile("Select the NEW (revised) DWG/DXF drawing");
+        if (newPath == null) return;
+        var cmp = _vm.CreateCompare();
+        var window = new Views.CompareWindow(cmp, dialogs) { Owner = this };
+        window.Show();
+        if (await cmp.OpenCadAsync(oldPath, newPath)) await cmp.RunCompareAsync();
+        else window.Close();
+    }
+
     private async void OnOpenCompareProject(object sender, RoutedEventArgs e)
     {
         var path = _vm.Dialogs.PickCompareProject();

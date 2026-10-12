@@ -1,9 +1,9 @@
-# DWG/DXF 비교 0단계 검증 결과
+# DWG/DXF 비교 검증 결과와 개발 현황
 
 Drawing Difference Checker 기획서의 "DXF/DWG 비교 검증 → 판단 후 개발" 단계 결과다. 화면 없이 엔진만 시험했다.
 
 - 모듈: `src/DrawingReview.Cad` (C#, **ACadSharp 3.8.0, MIT**)
-- 테스트: `tests/DrawingReview.Cad.Tests/CadCompareTests.cs` — **17개 모두 통과** (Linux)
+- 테스트: `tests/DrawingReview.Cad.Tests/` — **29개 모두 통과** (Linux). 비교 창 CAD 모드 테스트 4개는 App.Core 테스트에 있음
 - 시험 도면: 테스트가 ACadSharp로 직접 만드는 가상 구조 평면 (그리드, 중첩 블록 기둥, 원, 호, 글자, 여러 줄 글자, 폴리선)
 - **실제 AutoCAD·Revit에서 저장한 DWG로는 아직 시험하지 않았다.** 가장 중요한 남은 검증이다.
 
@@ -45,11 +45,18 @@ Drawing Difference Checker 기획서의 "DXF/DWG 비교 검증 → 판단 후 �
 | 외부 참조(Xref) 내용 | 경고만 | 중간 |
 | 동적 블록의 상태별 모양 | 미검증 | 중간 |
 | 폴리선 볼록(bulge) 곡선 | 꼭짓점만 비교 | 낮음 |
-| 화면 표시 (DWG 렌더링) | 없음 | 높음: 결과를 보여 주려면 직접 그리는 렌더러가 필요 |
-| DXF로 Cloud 내보내기 | 미구현 | 중간 |
+| 화면 표시 (DWG 렌더링) | 간단한 선 렌더러: 선·폴리선·원·호·글자·치수를 한 색으로 PDF에 그려 비교 창에서 표시. 선 종류·도면층 색·해치·선 굵기는 그리지 않음 | 중간 |
+| DXF/DWG로 Cloud 내보내기 | 구현: 사본의 REVISION 도면층. 사본은 ACadSharp가 다시 쓴 파일이라 ACadSharp가 모르는 객체가 빠질 수 있음 | 중간: AutoCAD에서 열어 확인 필요 |
 
 ## 판단에 필요한 정보 (Owner 결정)
 
 - **가능성**: 기본 요소 비교는 정확하고 빠르다. ACadSharp만으로 DWG를 직접 읽을 수 있어 ODA 변환기 없이도 출발할 수 있다.
 - **가장 큰 위험**: ① 실제 DWG 파일 호환성, ② 치수 비교, ③ 결과를 보여 줄 DWG 화면 렌더러. 특히 ③은 지금까지의 PDF 기반 화면을 그대로 쓸 수 없어서 작업량이 크다.
 - **추천**: 실제 DWG 샘플 2~3쌍(개인 도면이라도 됨)을 받아 ①을 먼저 확인한다. 통과하면 치수 비교 → 간단한 선 렌더러(비교 결과 확인용) → DXF Cloud 내보내기 순서로 개발한다. 실패하면 ODA File Converter로 DWG→DXF를 변환하는 보조 경로를 검토한다.
+
+## 개발 현황 (Owner 결정 C안 이후)
+
+치수 비교 → 간단한 선 렌더러 → DXF/DWG Cloud 내보내기 → 비교 창 연결까지 구현했다. 실제 DWG 샘플 확인은 아직 남아 있다.
+
+- **화면 방식**: 두 CAD 도면을 같은 좌표 변환(`CadPageMapping`)으로 임시 PDF에 그려 기존 비교 창을 그대로 쓴다. 두 PDF가 정확히 겹치므로 자동 정렬을 하지 않는다. 변경 목록은 CAD 객체 비교 결과이며, 픽셀 비교는 쓰지 않는다.
+- **남은 확인 (Sam)**: ① 실제 AutoCAD DWG 2~3쌍으로 비교, ② 내보낸 Cloud 사본을 AutoCAD에서 열어 REVISION 도면층과 원래 내용이 그대로인지 확인, ③ Windows에서 비교 창 CAD 모드 동작.

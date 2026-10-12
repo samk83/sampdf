@@ -12,6 +12,9 @@ public interface IDialogService
     /// <summary>PDF 하나를 고른다 (제목으로 무엇을 고르는지 알려 준다). 취소하면 null.</summary>
     string? PickPdfFile(string title);
 
+    /// <summary>DWG 또는 DXF 하나를 고른다. 취소하면 null.</summary>
+    string? PickCadFile(string title);
+
     /// <summary>비교 프로젝트 파일을 고른다. 취소하면 null.</summary>
     string? PickCompareProject();
 

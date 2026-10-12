@@ -22,6 +22,12 @@ public sealed class WpfDialogService(Func<Window?> owner) : IDialogService
         return dlg.ShowDialog(owner()) == true ? dlg.FileName : null;
     }
 
+    public string? PickCadFile(string title)
+    {
+        var dlg = new OpenFileDialog { Filter = "CAD drawings (*.dwg;*.dxf)|*.dwg;*.dxf|All files (*.*)|*.*", Title = title };
+        return dlg.ShowDialog(owner()) == true ? dlg.FileName : null;
+    }
+
     public string? PickCompareProject()
     {
         var dlg = new OpenFileDialog { Filter = "Comparison project (*.drcompare)|*.drcompare", Title = "Open comparison project" };
@@ -37,6 +43,7 @@ public sealed class WpfDialogService(Func<Window?> owner) : IDialogService
             ".csv" or ".json" => "CSV (*.csv)|*.csv|JSON (*.json)|*.json",
             ".png" => "PNG image (*.png)|*.png",
             ".drcompare" => "Comparison project (*.drcompare)|*.drcompare",
+            ".dxf" or ".dwg" => "DXF drawing (*.dxf)|*.dxf|DWG drawing (*.dwg)|*.dwg",
             _ => PdfFilter,
         };
         var dlg = new SaveFileDialog

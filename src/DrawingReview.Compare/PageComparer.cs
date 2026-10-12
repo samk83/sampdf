@@ -101,8 +101,12 @@ public static class PageComparer
         var bo = regions.Select(r => r.BoundsInOld).Aggregate((a, c) => new PageRect(Math.Min(a.X0, c.X0), Math.Min(a.Y0, c.Y0), Math.Max(a.X1, c.X1), Math.Max(a.Y1, c.Y1)));
         int added = regions.Sum(r => r.AddedPixels), removed = regions.Sum(r => r.RemovedPixels);
         var kind = added > 0 && removed > 0 ? ChangeKind.Modified : added > 0 ? ChangeKind.Added : ChangeKind.Removed;
+        // 픽셀 수가 없는 영역(CAD 비교·수동 영역)은 원래 종류를 따른다: 모두 같으면 그 종류, 다르면 변경
+        if (added == 0 && removed == 0)
+            kind = regions.Select(r => r.Kind).Distinct().Count() == 1 ? regions[0].Kind : ChangeKind.Modified;
         var confidence = regions.Any(r => r.Confidence == ChangeConfidence.High) ? ChangeConfidence.High : ChangeConfidence.Low;
-        return new ChangeRegion(number, kind, b, bo, added, removed, confidence);
+        var description = string.Join("; ", regions.Select(r => r.Description).Where(d => d.Length > 0));
+        return new ChangeRegion(number, kind, b, bo, added, removed, confidence) { Description = description };
     }
 
     /// <summary>렌더링 결과를 PNG 바이트로 (비교 이미지 내보내기).</summary>

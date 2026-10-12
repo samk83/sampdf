@@ -58,6 +58,13 @@ public partial class CompareWindow : Window
         Dispatcher.BeginInvoke(SyncNow, System.Windows.Threading.DispatcherPriority.Loaded);
     }
 
+    /// <summary>CAD 비교 경고를 보여 준다 (조용히 무시하지 않음 — 기획서 7장).</summary>
+    private void OnShowCadWarnings(object sender, RoutedEventArgs e)
+    {
+        var warnings = _vm.CadWarnings;
+        _dialogs.ShowInfo("CAD comparison warnings", warnings.Count == 0 ? "No warnings." : string.Join("\n", warnings.Select(w => "• " + w)));
+    }
+
     // ---- 확대·이동 동기화 ----
 
     private void HookSync()

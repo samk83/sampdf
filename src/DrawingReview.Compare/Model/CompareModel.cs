@@ -100,6 +100,9 @@ public sealed record ChangeRegion(
     ChangeConfidence Confidence)
 {
     public ChangeStatus Status { get; init; } = ChangeStatus.Pending;
+
+    /// <summary>변경 설명 (CAD 비교: "Dimension \"6000\" → \"6500\"" 등). PDF 픽셀 비교는 비어 있다.</summary>
+    public string Description { get; init; } = "";
 }
 
 /// <summary>비교 설정. 결과와 함께 저장해 같은 조건으로 다시 비교할 수 있게 한다 (재현성 — 기획서 8장).</summary>

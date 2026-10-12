@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\DrawingReview.Engine\DrawingReview.Engine.csproj" />
     <ProjectReference Include="..\DrawingReview.Compare\DrawingReview.Compare.csproj" />
+    <ProjectReference Include="..\DrawingReview.Cad\DrawingReview.Cad.csproj" />
   </ItemGroup>
 
   <ItemGroup>

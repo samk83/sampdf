@@ -46,7 +46,7 @@ public sealed record PagePair(int OldPage, int NewPage)
 public sealed partial class ChangeItemViewModel(ChangeRegion region) : ObservableObject
 {
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Number), nameof(Kind), nameof(Confidence), nameof(Bounds), nameof(BoundsInOld), nameof(Summary), nameof(Location))]
+    [NotifyPropertyChangedFor(nameof(Number), nameof(Kind), nameof(Confidence), nameof(Bounds), nameof(BoundsInOld), nameof(Summary), nameof(Location), nameof(Description))]
     private ChangeRegion _region = region;
 
     [ObservableProperty]
@@ -65,8 +65,10 @@ public sealed partial class ChangeItemViewModel(ChangeRegion region) : Observabl
     public ChangeConfidence Confidence => Region.Confidence;
     public PageRect Bounds => Region.Bounds;
     public PageRect BoundsInOld => Region.BoundsInOld;
+    public string Description => Region.Description;
 
-    public string Location => $"x {Bounds.X0:0}, y {Bounds.Y0:0} pt";
+    /// <summary>둘째 줄: 설명이 있으면(CAD 비교) 설명, 없으면 위치.</summary>
+    public string Location => Description.Length > 0 ? Description : $"x {Bounds.X0:0}, y {Bounds.Y0:0} pt";
 
     public string Summary => $"{Kind}{(Confidence == ChangeConfidence.Low ? " · check" : "")}";
 }
