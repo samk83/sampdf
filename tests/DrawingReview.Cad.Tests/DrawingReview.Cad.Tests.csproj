@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DrawingReview.Cad\DrawingReview.Cad.csproj" />
+    <ProjectReference Include="..\DrawingReview.TestData\DrawingReview.TestData.csproj" />
   </ItemGroup>
 
 </Project>

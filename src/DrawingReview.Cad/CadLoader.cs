@@ -55,7 +55,11 @@ public static class CadLoader
     {
         var layer = e.Layer?.Name ?? "0";
         Pt P(XYZ v) { var w = t.ApplyTransform(v, false); return new Pt(w.X * toMm, w.Y * toMm); }
-        var scale = Math.Sqrt(Math.Abs(t.Matrix.M00 * t.Matrix.M11 - t.Matrix.M01 * t.Matrix.M10));
+        var det = t.Matrix.M00 * t.Matrix.M11 - t.Matrix.M01 * t.Matrix.M10;
+        var scale = Math.Sqrt(Math.Abs(det));
+        var mirrored = det < 0;
+        // 블록 회전(도): 행 벡터 방식이라 x축 (1,0)은 (M00, M01)로 옮겨진다
+        var rotation = Deg(Math.Atan2(t.Matrix.M01, t.Matrix.M00));
         switch (e)
         {
             case Line l:
@@ -68,9 +72,16 @@ public static class CadLoader
                     break;
                 }
             case Arc arc:
-                output.Add(new CadPrimitive(PrimitiveType.Arc, layer, [P(arc.Center)], arc.Radius * scale * toMm, "",
-                    arc.StartAngle * 180 / Math.PI, arc.EndAngle * 180 / Math.PI));
-                break;
+                {
+                    // 각도는 블록의 회전·대칭을 반영해 변환 후 실제 시작·끝점으로 다시 계산한다
+                    var c = P(arc.Center);
+                    var s0 = P(new XYZ(arc.Center.X + arc.Radius * Math.Cos(arc.StartAngle), arc.Center.Y + arc.Radius * Math.Sin(arc.StartAngle), 0));
+                    var s1 = P(new XYZ(arc.Center.X + arc.Radius * Math.Cos(arc.EndAngle), arc.Center.Y + arc.Radius * Math.Sin(arc.EndAngle), 0));
+                    double a0 = Deg(Math.Atan2(s0.Y - c.Y, s0.X - c.X)), a1 = Deg(Math.Atan2(s1.Y - c.Y, s1.X - c.X));
+                    if (mirrored) (a0, a1) = (a1, a0); // 대칭이면 반시계 방향이 뒤집힌다
+                    output.Add(new CadPrimitive(PrimitiveType.Arc, layer, [c], arc.Radius * scale * toMm, "", a0, a1));
+                    break;
+                }
             case Circle c:
                 output.Add(new CadPrimitive(PrimitiveType.Circle, layer, [P(c.Center)], c.Radius * scale * toMm));
                 break;
@@ -79,13 +90,13 @@ public static class CadLoader
                     pl.Vertices.Select(v => P(new XYZ(v.Location.X, v.Location.Y, 0))).ToList(), Closed: pl.IsClosed));
                 break;
             case TextEntity text:
-                output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(text.InsertPoint)], text.Height * scale * toMm, text.Value ?? "", text.Rotation));
+                output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(text.InsertPoint)], text.Height * scale * toMm, text.Value ?? "", Deg(text.Rotation) + rotation));
                 break;
             case MText mtext:
-                output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(mtext.InsertPoint)], mtext.Height * scale * toMm, mtext.Value ?? "", mtext.Rotation));
+                output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(mtext.InsertPoint)], mtext.Height * scale * toMm, mtext.Value ?? "", Deg(mtext.Rotation) + rotation, MTextVertical(mtext.AttachmentPoint)));
                 break;
             case Dimension dim:
-                output.Add(DimensionPrimitive(dim, layer, P, scale * toMm));
+                output.Add(DimensionPrimitive(dim, layer, P, scale * toMm, toMm));
                 break;
             case Insert insert when depth < 16:
                 {
@@ -97,7 +108,7 @@ public static class CadLoader
                         Add(child, combined, output, unsupported, toMm, depth + 1);
                     if (insert.Attributes != null)
                         foreach (var att in insert.Attributes)
-                            output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(att.InsertPoint)], att.Height * toMm, att.Value ?? "", att.Rotation));
+                            output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(att.InsertPoint)], att.Height * toMm, att.Value ?? "", Deg(att.Rotation)));
                     break;
                 }
             default:
@@ -111,8 +122,16 @@ public static class CadLoader
     /// 치수를 비교용 요소로 만든다. 치수의 그림 블록(*D)은 펼치지 않고 치수 자체의 값·문자·점을 쓴다.
     /// 선형·정렬 치수는 치수선 양 끝도 계산해 두어 화면에 다시 그릴 수 있게 한다.
     /// </summary>
-    private static CadPrimitive DimensionPrimitive(Dimension dim, string layer, Func<XYZ, Pt> P, double lengthScale)
+    private static CadPrimitive DimensionPrimitive(Dimension dim, string layer, Func<XYZ, Pt> P, double lengthScale, double toMm)
     {
+        // 치수 문자 높이(mm, 다시 그리기용): 치수 스타일의 문자 높이 × 전체 배율. 알 수 없으면 0.
+        double textHeight = 0;
+        try
+        {
+            if (dim.GetActiveDimensionStyle() is { } style)
+                textHeight = style.TextHeight * (style.ScaleFactor > 0 ? style.ScaleFactor : 1) * lengthScale;
+        }
+        catch { /* 스타일을 읽지 못해도 비교에는 영향 없음 */ }
         string text;
         try { text = dim.GetMeasurementText(); }
         catch { text = string.IsNullOrEmpty(dim.Text) ? dim.Measurement.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : dim.Text; }
@@ -138,10 +157,20 @@ public static class CadLoader
                 var t = (p.X - def.X) * ux + (p.Y - def.Y) * uy;
                 return new XYZ(def.X + ux * t, def.Y + uy * t, 0);
             }
-            return new CadPrimitive(PrimitiveType.Dimension, layer, [P(p1), P(p2), P(OnLine(p1)), P(OnLine(p2))], measure, text, overridden);
+            return new CadPrimitive(PrimitiveType.Dimension, layer, [P(p1), P(p2), P(OnLine(p1)), P(OnLine(p2))], measure, text, overridden, textHeight);
         }
-        return new CadPrimitive(PrimitiveType.Dimension, layer, [P(dim.DefinitionPoint)], measure, text, overridden);
+        return new CadPrimitive(PrimitiveType.Dimension, layer, [P(dim.DefinitionPoint)], measure, text, overridden, textHeight);
     }
+
+    private static double Deg(double radians) => ((radians * 180 / Math.PI) % 360 + 360) % 360;
+
+    /// <summary>여러 줄 글자의 세로 기준: 0 = 아래, 1 = 위, 2 = 가운데 (다시 그릴 때 기준선 계산용).</summary>
+    private static double MTextVertical(AttachmentPointType a) => a switch
+    {
+        AttachmentPointType.TopLeft or AttachmentPointType.TopCenter or AttachmentPointType.TopRight => 1,
+        AttachmentPointType.MiddleLeft or AttachmentPointType.MiddleCenter or AttachmentPointType.MiddleRight => 2,
+        _ => 0,
+    };
 
     /// <summary>$INSUNITS → (이름, mm 배율).</summary>
     public static (string Name, double ToMm) Units(UnitsType u) => u switch

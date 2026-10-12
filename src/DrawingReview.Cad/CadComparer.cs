@@ -111,7 +111,7 @@ public static class CadComparer
         var sb = new System.Text.StringBuilder();
         sb.Append((int)p.Type).Append('|').Append(p.Layer).Append('|');
         foreach (var pt in p.Points) sb.Append(Math.Round(pt.X / g)).Append(',').Append(Math.Round(pt.Y / g)).Append(';');
-        sb.Append(Math.Round(p.Size / g)).Append('|').Append(p.Type == PrimitiveType.Dimension && !p.IsOverriddenDimension ? "" : p.Text).Append('|').Append(Math.Round(p.A1, 1)).Append('|').Append(Math.Round(p.A2, 1)).Append(p.Closed);
+        sb.Append(Math.Round(p.Size / g)).Append('|').Append(p.Type == PrimitiveType.Dimension && !p.IsOverriddenDimension ? "" : p.Text).Append('|').Append(Math.Round(p.A1, 1)).Append('|').Append(p.Type == PrimitiveType.Dimension ? 0 : Math.Round(p.A2, 1)).Append(p.Closed);
         return sb.ToString();
     }
 

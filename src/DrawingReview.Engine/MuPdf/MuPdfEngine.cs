@@ -15,6 +15,8 @@ public sealed class MuPdfEngine : IPdfEngine
         return new MuPdfDocument(bytes, fullPath);
     }
 
+    public void WriteVectorPdf(string path, IReadOnlyList<Vector.VectorPage> pages) => MuPdfVectorWriter.Write(Path.GetFullPath(path), pages);
+
     /// <summary>테스트·샘플 생성용: 메모리의 PDF 바이트로 연다.</summary>
     public IPdfDocument Open(byte[] pdfBytes) => new MuPdfDocument(pdfBytes, sourcePath: null);
 }

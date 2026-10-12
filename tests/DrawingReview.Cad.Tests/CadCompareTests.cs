@@ -4,81 +4,22 @@ using ACadSharp.IO;
 using ACadSharp.Tables;
 using ACadSharp.Types.Units;
 using CSMath;
+using DrawingReview.TestData;
 using Xunit.Abstractions;
+using Rev = DrawingReview.TestData.CadSamples.Rev;
 
 namespace DrawingReview.Cad.Tests;
 
 /// <summary>DWG/DXF 비교 0단계 검증: 가상 CAD 도면으로 기획서 12장 조건을 시험한다.</summary>
 public class CadCompareTests(ITestOutputHelper output) : IDisposable
 {
+    private static CadDocument Build(Rev r) => CadSamples.Build(r);
+
+    private string Save(CadDocument doc, string name) => CadSamples.Save(doc, Path.Combine(_dir, name));
+
     private readonly string _dir = Directory.CreateTempSubdirectory("cad-").FullName;
 
     public void Dispose() => Directory.Delete(_dir, true);
-
-    public sealed record Rev
-    {
-        public bool AddLine { get; init; }
-        public bool RemoveCircle { get; init; }
-        public string Note { get; init; } = "VERIFY CLEARANCE";
-        public double ColumnShiftX { get; init; }
-        public double Scale { get; init; } = 1;           // 1 = mm 도면, 0.001 = m 도면
-        public UnitsType Units { get; init; } = UnitsType.Millimeters;
-        public bool Reverse { get; init; }               // 객체 순서를 뒤집어 다시 만든다 (handle이 바뀜)
-        public double CircleRadius { get; init; } = 300;
-        public double DimEndX { get; init; } = 12000;     // 두 번째 치수의 끝점 (치수 값 변경용)
-        public string DimText { get; init; } = "";        // 두 번째 치수의 문자 덮어쓰기 ("" = 측정값 그대로)
-    }
-
-    /// <summary>단순한 구조 평면: 그리드 선, 기둥 블록(중첩), 원, 글자, 폴리선 벽.</summary>
-    private static CadDocument Build(Rev r)
-    {
-        var doc = new CadDocument();
-        doc.Header.InsUnits = r.Units;
-        var s = r.Scale;
-        XYZ P(double x, double y) => new(x * s, y * s, 0);
-
-        // 중첩 블록: COL(기둥) 안에 BASE(밑판)
-        var basePlate = new BlockRecord("BASE");
-        var plate = new LwPolyline { IsClosed = true };
-        foreach (var (x, y) in new[] { (-250, -250), (250, -250), (250, 250), (-250, 250) })
-            plate.Vertices.Add(new LwPolyline.Vertex(new XY(x * s, y * s)));
-        basePlate.Entities.Add(plate);
-        doc.BlockRecords.Add(basePlate);
-        var col = new BlockRecord("COL");
-        col.Entities.Add(new Circle { Center = P(0, 0), Radius = 150 * s });
-        col.Entities.Add(new Insert(basePlate));
-        doc.BlockRecords.Add(col);
-
-        var entities = new List<Entity>();
-        for (int i = 0; i <= 4; i++) entities.Add(new Line { StartPoint = P(i * 6000, -1000), EndPoint = P(i * 6000, 13000) });
-        for (int j = 0; j <= 2; j++) entities.Add(new Line { StartPoint = P(-1000, j * 6000), EndPoint = P(25000, j * 6000) });
-        for (int i = 0; i <= 4; i++)
-            for (int j = 0; j <= 2; j++)
-            {
-                var shift = i == 2 && j == 1 ? r.ColumnShiftX : 0;
-                entities.Add(new Insert(col) { InsertPoint = P(i * 6000 + shift, j * 6000) });
-            }
-        if (!r.RemoveCircle) entities.Add(new Circle { Center = P(9000, 3000), Radius = r.CircleRadius * s });
-        entities.Add(new TextEntity { InsertPoint = P(1000, 9500), Height = 250 * s, Value = r.Note });
-        entities.Add(new MText { InsertPoint = P(15000, 9500), Height = 250 * s, Value = "S-101 FRAMING PLAN" });
-        entities.Add(new Arc { Center = P(18000, 3000), Radius = 900 * s, StartAngle = 0, EndAngle = Math.PI / 2 });
-        // 치수: 그리드 간격 6000 두 개 (선형 치수) + 세로 정렬 치수
-        entities.Add(new DimensionLinear { FirstPoint = P(0, -1000), SecondPoint = P(6000, -1000), DefinitionPoint = P(6000, -2000) });
-        entities.Add(new DimensionLinear { FirstPoint = P(6000, -1000), SecondPoint = P(r.DimEndX, -1000), DefinitionPoint = P(r.DimEndX, -2000), Text = r.DimText });
-        entities.Add(new DimensionAligned(P(-1000, 0), P(-1000, 6000)) { Offset = 1000 * s });
-        if (r.AddLine) entities.Add(new Line { StartPoint = P(3000, 4500), EndPoint = P(9000, 4500) });
-        if (r.Reverse) entities.Reverse();
-        foreach (var e in entities) doc.Entities.Add(e);
-        return doc;
-    }
-
-    private string Save(CadDocument doc, string name)
-    {
-        var path = Path.Combine(_dir, name);
-        if (name.EndsWith(".dwg")) { using var w = new DwgWriter(path, doc); w.Write(); }
-        else { using var w = new DxfWriter(path, doc, false); w.Write(); }
-        return path;
-    }
 
     private CadCompareResult Run(Rev oldRev, Rev newRev, string ext = ".dxf")
     {

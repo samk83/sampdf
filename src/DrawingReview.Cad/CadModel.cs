@@ -30,7 +30,9 @@ public enum PrimitiveType { Line, Circle, Arc, Polyline, Text, Dimension }
 /// Points: 선=양 끝(정렬됨), 원·호=중심, 폴리선=꼭짓점들, 글자=삽입점,
 ///         치수(선형·정렬)=[재는 점1, 재는 점2, 치수선 끝1, 치수선 끝2], 그 밖의 치수=[정의점].
 /// Size: 원·호=반지름, 글자=높이, 치수=측정값(mm, 각도 치수는 원래 값).
-/// Text: 글자 내용, 치수=화면에 보이는 치수 문자. A1·A2: 호=시작·끝 각도(도), 글자=회전, 치수=문자 덮어쓰기면 A1 = 1.
+/// Text: 글자 내용, 치수=화면에 보이는 치수 문자.
+/// A1·A2: 호=시작·끝 각도(도, 반시계), 글자=회전(도)·세로 기준(여러 줄 글자: 0 아래, 1 위, 2 가운데),
+///        치수=문자 덮어쓰기면 A1 = 1, A2 = 치수 문자 높이(mm, 모르면 0).
 /// </summary>
 public sealed record CadPrimitive(PrimitiveType Type, string Layer, IReadOnlyList<Pt> Points, double Size = 0, string Text = "", double A1 = 0, double A2 = 0, bool Closed = false)
 {

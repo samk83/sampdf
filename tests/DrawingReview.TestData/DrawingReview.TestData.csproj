@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\DrawingReview.Engine\DrawingReview.Engine.csproj" />
+    <ProjectReference Include="..\..\src\DrawingReview.Cad\DrawingReview.Cad.csproj" />
   </ItemGroup>
 
 </Project>

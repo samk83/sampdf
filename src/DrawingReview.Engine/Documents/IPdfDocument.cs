@@ -13,6 +13,9 @@ public interface IPdfEngine
 
     /// <summary>파일을 메모리로 읽어서 연다. 원본 파일은 잠그지 않으므로 같은 경로에 안전 저장할 수 있다.</summary>
     IPdfDocument Open(string path);
+
+    /// <summary>벡터 페이지(선·글자)로 새 PDF를 만든다 (예: CAD 도면 표시용). 같은 경로가 있으면 안전하게 교체한다.</summary>
+    void WriteVectorPdf(string path, IReadOnlyList<Vector.VectorPage> pages);
 }
 
 public interface IPdfDocument : IDisposable
