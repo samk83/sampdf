@@ -27,3 +27,6 @@ public readonly record struct PageRect(double X0, double Y0, double X1, double Y
 
 /// <summary>페이지 한 장의 크기·회전 정보. Width/Height는 회전이 반영된 보이는 크기다.</summary>
 public sealed record PageInfo(int Index, double Width, double Height, int Rotation, string? Label);
+
+/// <summary>페이지의 단어 하나와 위치 (보이는 페이지 좌표).</summary>
+public sealed record TextWord(string Text, PageRect Bounds);

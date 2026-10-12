@@ -52,6 +52,9 @@ public interface IPdfDocument : IDisposable
     /// <summary>ID로 주석을 삭제한다. 없으면 false.</summary>
     bool DeleteMarkup(int pageIndex, string markupId);
 
+    /// <summary>페이지의 모든 단어와 위치 (도면 비교의 글자 비교에 쓴다).</summary>
+    IReadOnlyList<TextWord> GetWords(int pageIndex);
+
     /// <summary>페이지에서 글자를 찾아 일치 영역들을 돌려준다.</summary>
     IReadOnlyList<PageRect> SearchText(int pageIndex, string needle);
 

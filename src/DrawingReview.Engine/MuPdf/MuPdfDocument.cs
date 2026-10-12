@@ -142,6 +142,15 @@ internal sealed class MuPdfDocument : IPdfDocument
         return true;
     }
 
+    public IReadOnlyList<TextWord> GetWords(int pageIndex)
+    {
+        var page = GetPage(pageIndex);
+        return page.GetTextWords()
+            .Where(w => !string.IsNullOrWhiteSpace(w.word))
+            .Select(w => new TextWord(w.word, FromUnrotated(page, new Rect(w.x0, w.y0, w.x1, w.y1))))
+            .ToList();
+    }
+
     public IReadOnlyList<PageRect> SearchText(int pageIndex, string needle)
     {
         if (string.IsNullOrEmpty(needle)) return [];

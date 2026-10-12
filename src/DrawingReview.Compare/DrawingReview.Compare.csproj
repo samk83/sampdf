@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\DrawingReview.Engine\DrawingReview.Engine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- OpenCvSharp 분석기가 더 새 컴파일러를 요구한다는 경고. 분석기만 건너뛰며 기능에는 영향 없음 -->
+    <NoWarn>$(NoWarn);CS9057</NoWarn>
+  </PropertyGroup>
+
+</Project>

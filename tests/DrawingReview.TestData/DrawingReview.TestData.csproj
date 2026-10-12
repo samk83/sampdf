@@ -10,4 +10,8 @@
     <PackageReference Include="MuPDF.NET" Version="3.28.2.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DrawingReview.Engine\DrawingReview.Engine.csproj" />
+  </ItemGroup>
+
 </Project>
