@@ -29,7 +29,7 @@ public sealed record RectangleDraft(PageRect Rect) : MarkupDraft;
 /// <summary>타원 (PDF Circle).</summary>
 public sealed record EllipseDraft(PageRect Rect) : MarkupDraft;
 
-/// <summary>구름 (PDF Polygon + /BE /S /C). Intensity는 구름 볼록함 정도(1~2 권장).</summary>
+/// <summary>구름 (PDF Polygon + /BE /S /C). Intensity는 구름 볼록함: 1 또는 2 (MuPDF는 정수로 저장한다). 0이면 일반 다각형.</summary>
 public sealed record CloudDraft(IReadOnlyList<PagePoint> Vertices, double Intensity = 2) : MarkupDraft
 {
     public static CloudDraft FromRect(PageRect r, double intensity = 2) =>

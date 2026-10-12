@@ -60,8 +60,48 @@ internal sealed class MuPdfDocument : IPdfDocument
         return new RenderedImage(pix.W, pix.H, pix.Stride, pix.Samples, pix.X, pix.Y, zoom);
     }
 
-    public string AddMarkup(int pageIndex, MarkupDraft draft) =>
-        MuPdfMarkupWriter.Add(_doc, GetPage(pageIndex), draft);
+    public string AddMarkup(int pageIndex, MarkupDraft draft, string? id = null) =>
+        MuPdfMarkupWriter.Add(_doc, GetPage(pageIndex), draft, id);
+
+    public bool ReplaceMarkup(int pageIndex, string markupId, MarkupDraft draft)
+    {
+        var page = GetPage(pageIndex);
+        if (FindAnnot(page, markupId) is not { } old) return false;
+        var status = MuPdfMarkupReader.ReadStatus(_doc, old.Xref);
+        var locked = MuPdfMarkupReader.ReadLocked(old);
+        var created = old.Info.CreationDate;
+        page.DeleteAnnot(old);
+        page = GetPage(pageIndex);
+        MuPdfMarkupWriter.Add(_doc, page, draft, markupId);
+        if (FindAnnot(GetPage(pageIndex), markupId) is { } fresh)
+        {
+            if (!string.IsNullOrEmpty(created)) _doc.XrefSetKey(fresh.Xref, "CreationDate", MuPdfMarkupWriter.PdfString(created));
+            if (status != null) _doc.XrefSetKey(fresh.Xref, MuPdfMarkupReader.StatusKey, MuPdfMarkupWriter.PdfString(status));
+            if (locked) fresh.SetFlags(fresh.Flags | MuPdfMarkupReader.LockedFlag);
+        }
+        return true;
+    }
+
+    public bool SetMarkupStatus(int pageIndex, string markupId, string? status)
+    {
+        if (FindAnnot(GetPage(pageIndex), markupId) is not { } annot) return false;
+        _doc.XrefSetKey(annot.Xref, MuPdfMarkupReader.StatusKey, status == null ? "null" : MuPdfMarkupWriter.PdfString(status));
+        _doc.XrefSetKey(annot.Xref, "M", MuPdfMarkupWriter.PdfString(MuPdfMarkupWriter.PdfDate(DateTimeOffset.Now)));
+        return true;
+    }
+
+    public bool SetMarkupLocked(int pageIndex, string markupId, bool locked)
+    {
+        if (FindAnnot(GetPage(pageIndex), markupId) is not { } annot) return false;
+        var flags = locked ? annot.Flags | MuPdfMarkupReader.LockedFlag : annot.Flags & ~MuPdfMarkupReader.LockedFlag;
+        annot.SetFlags(flags);
+        return true;
+    }
+
+    private static string IdOf(Annot annot) => string.IsNullOrEmpty(annot.Info.Id) ? $"xref:{annot.Xref}" : annot.Info.Id;
+
+    private static Annot? FindAnnot(Page page, string markupId) =>
+        page.GetAnnots().FirstOrDefault(a => a.Type.Item2 != "Popup" && IdOf(a) == markupId);
 
     public IReadOnlyList<MarkupInfo> GetMarkups(int pageIndex)
     {
@@ -72,16 +112,21 @@ internal sealed class MuPdfDocument : IPdfDocument
             var subtype = annot.Type.Item2;
             if (subtype is "Popup") continue; // 다른 주석의 말풍선 창. 별도 항목으로 보이지 않게 한다.
             var info = annot.Info;
+            var kind = ClassifyKind(annot, subtype);
             result.Add(new MarkupInfo(
-                Id: string.IsNullOrEmpty(info.Id) ? $"xref:{annot.Xref}" : info.Id,
+                Id: IdOf(annot),
                 PageIndex: pageIndex,
-                Kind: ClassifyKind(annot, subtype),
+                Kind: kind,
                 PdfSubtype: subtype,
                 Bounds: FromUnrotated(page, annot.Rect),
                 Author: NullIfEmpty(info.Title),
                 Subject: NullIfEmpty(info.Subject),
                 Comment: NullIfEmpty(info.Content),
-                ModifiedDate: NullIfEmpty(info.ModDate)));
+                ModifiedDate: NullIfEmpty(info.ModDate),
+                Draft: MuPdfMarkupReader.ReadDraft(_doc, page, annot, kind, info),
+                Status: MuPdfMarkupReader.ReadStatus(_doc, annot.Xref),
+                IsLocked: MuPdfMarkupReader.ReadLocked(annot),
+                CreatedDate: NullIfEmpty(info.CreationDate)));
         }
         return result;
     }
@@ -92,14 +137,9 @@ internal sealed class MuPdfDocument : IPdfDocument
     public bool DeleteMarkup(int pageIndex, string markupId)
     {
         var page = GetPage(pageIndex);
-        foreach (var annot in page.GetAnnots())
-        {
-            var id = string.IsNullOrEmpty(annot.Info.Id) ? $"xref:{annot.Xref}" : annot.Info.Id;
-            if (id != markupId) continue;
-            page.DeleteAnnot(annot);
-            return true;
-        }
-        return false;
+        if (FindAnnot(page, markupId) is not { } annot) return false;
+        page.DeleteAnnot(annot);
+        return true;
     }
 
     public IReadOnlyList<PageRect> SearchText(int pageIndex, string needle)

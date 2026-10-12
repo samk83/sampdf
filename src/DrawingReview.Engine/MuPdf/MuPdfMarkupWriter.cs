@@ -13,7 +13,7 @@ internal static class MuPdfMarkupWriter
     /// </summary>
     public const string KindKey = "DRKind";
 
-    public static string Add(Document doc, Page page, MarkupDraft draft)
+    public static string Add(Document doc, Page page, MarkupDraft draft, string? id = null)
     {
         var s = draft.Style;
         Annot annot = draft switch
@@ -74,8 +74,8 @@ internal static class MuPdfMarkupWriter
         annot.Update(opacity: (float)s.Opacity, blendMode: draft is HighlightDraft ? "Multiply" : null!);
 
         // MuPDF 기본 /NM(fitz-A0 …)은 페이지마다 겹칠 수 있으므로 문서 전체에서 고유한 ID로 바꾼다.
-        var id = Guid.NewGuid().ToString("N");
-        doc.XrefSetKey(annot.Xref, "NM", $"({id})");
+        id ??= Guid.NewGuid().ToString("N");
+        doc.XrefSetKey(annot.Xref, "NM", PdfString(id));
         return id;
     }
 
@@ -124,7 +124,11 @@ internal static class MuPdfMarkupWriter
 
     private static string Num(double v) => v.ToString("0.###", CultureInfo.InvariantCulture);
 
-    private static string PdfDate(DateTimeOffset t)
+    /// <summary>PDF 문자열 리터럴. 괄호·역슬래시를 이스케이프한다.</summary>
+    public static string PdfString(string s) =>
+        "(" + s.Replace("\\", "\\\\").Replace("(", "\\(").Replace(")", "\\)") + ")";
+
+    public static string PdfDate(DateTimeOffset t)
     {
         var offset = t.Offset;
         var sign = offset < TimeSpan.Zero ? '-' : '+';

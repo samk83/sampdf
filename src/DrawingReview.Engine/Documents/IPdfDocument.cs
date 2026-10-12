@@ -32,8 +32,17 @@ public interface IPdfDocument : IDisposable
     /// <summary>화면 표시용 렌더링 (RGB 원시 픽셀). clip을 주면 그 영역만 그린다.</summary>
     RenderedImage RenderPage(int pageIndex, double zoom, PageRect? clip = null, bool includeMarkups = true);
 
-    /// <summary>표준 PDF 주석을 추가하고 고유 ID를 돌려준다.</summary>
-    string AddMarkup(int pageIndex, MarkupDraft draft);
+    /// <summary>표준 PDF 주석을 추가하고 고유 ID를 돌려준다. id를 주면 그 ID를 쓴다 (되돌리기로 다시 만들 때).</summary>
+    string AddMarkup(int pageIndex, MarkupDraft draft, string? id = null);
+
+    /// <summary>같은 ID로 주석을 다시 만든다 (이동·크기·속성 변경). 검토 상태·잠금·작성일은 유지한다. 없으면 false.</summary>
+    bool ReplaceMarkup(int pageIndex, string markupId, MarkupDraft draft);
+
+    /// <summary>검토 상태를 바꾼다 (null = 지움). 없으면 false.</summary>
+    bool SetMarkupStatus(int pageIndex, string markupId, string? status);
+
+    /// <summary>잠금을 켜거나 끈다. 없으면 false.</summary>
+    bool SetMarkupLocked(int pageIndex, string markupId, bool locked);
 
     IReadOnlyList<MarkupInfo> GetMarkups(int pageIndex);
 
