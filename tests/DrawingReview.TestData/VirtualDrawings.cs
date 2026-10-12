@@ -55,6 +55,15 @@ public static class VirtualDrawings
         doc[PlanSetPages.Rotated270].SetRotation(270);
 
         AddPreexistingItems(doc);
+        doc.SetToc(new List<Toc>
+        {
+            new() { Level = 1, Title = "Architectural", Page = 1 },
+            new() { Level = 2, Title = "A-101 First Floor Plan", Page = 1 },
+            new() { Level = 2, Title = "A-102 Roof Framing Plan", Page = 2 },
+            new() { Level = 1, Title = "Structural", Page = 3 },
+            new() { Level = 2, Title = "S-301 Section Detail", Page = 3 },
+            new() { Level = 1, Title = "General Notes / 일반 사항", Page = 4 },
+        });
         return doc.Write(garbage: true, deflate: true);
     }
 

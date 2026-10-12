@@ -241,3 +241,26 @@ public class FlattenTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture
         Assert.Contains(doc.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
     }
 }
+
+public class OutlineTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture>
+{
+    [Fact]
+    public void Bookmarks_are_read_with_levels_and_zero_based_pages()
+    {
+        using var doc = TestHelpers.PdfEngine.Open(fixture.PlanSet);
+        var outline = doc.GetOutline();
+        Assert.Equal(6, outline.Count);
+        Assert.Equal(new OutlineItem(1, "Architectural", 0), outline[0]);
+        Assert.Equal(new OutlineItem(2, "A-102 Roof Framing Plan", 1), outline[2]);
+        Assert.Equal("General Notes / 일반 사항", outline[5].Title);
+    }
+
+    [Fact]
+    public void Words_are_reported_with_positions()
+    {
+        using var doc = TestHelpers.PdfEngine.Open(fixture.PlanSet);
+        var words = doc.GetWords(Pages.FloorPlan);
+        Assert.Contains(words, w => w.Text == "TRUSS");
+        Assert.All(words, w => Assert.True(w.Bounds.Width > 0));
+    }
+}

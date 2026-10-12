@@ -52,6 +52,9 @@ public interface IPdfDocument : IDisposable
     /// <summary>ID로 주석을 삭제한다. 없으면 false.</summary>
     bool DeleteMarkup(int pageIndex, string markupId);
 
+    /// <summary>문서의 책갈피(목차). 없으면 빈 목록.</summary>
+    IReadOnlyList<OutlineItem> GetOutline();
+
     /// <summary>페이지의 모든 단어와 위치 (도면 비교의 글자 비교에 쓴다).</summary>
     IReadOnlyList<TextWord> GetWords(int pageIndex);
 

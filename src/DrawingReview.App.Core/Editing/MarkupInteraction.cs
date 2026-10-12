@@ -42,7 +42,18 @@ public sealed class MarkupInteraction
     private MarkupItemViewModel? _resizing;
     private HandleKind _handle;
 
-    private enum Mode { Idle, Drawing, Moving, Resizing, RubberBand }
+    private MarkupDraft? _placement;
+
+    private enum Mode { Idle, Drawing, Moving, Resizing, RubberBand, Placing }
+
+    /// <summary>저장 도구(모양까지 저장)를 놓을 준비: 다음 클릭 위치에 template을 놓는다 (template의 왼쪽 위 = 클릭 점).</summary>
+    public void BeginPlacement(MarkupDraft template)
+    {
+        _placement = template;
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public bool IsPlacing => _placement != null;
 
     public MarkupInteraction(DocumentViewModel doc, ToolDefaults defaults)
     {
@@ -59,7 +70,7 @@ public sealed class MarkupInteraction
     /// <summary>미리보기 동안 원래 그림을 흐리게 할 마크업 (옮기는 중인 것).</summary>
     public IReadOnlyCollection<string> HiddenIds => _mode is Mode.Moving or Mode.Resizing ? _moving.Select(m => m.Id).ToHashSet() : [];
 
-    public bool IsBusy => _mode != Mode.Idle;
+    public bool IsBusy => _mode != Mode.Idle || _placement != null;
 
     /// <summary>미리보기가 바뀌었을 때 (화면 다시 그리기).</summary>
     public event EventHandler? Changed;
@@ -83,7 +94,11 @@ public sealed class MarkupInteraction
         Previews = [];
         RubberBand = null;
 
-        if (tool == ToolKind.Select)
+        if (_placement != null)
+        {
+            _mode = Mode.Placing;
+        }
+        else if (tool == ToolKind.Select)
         {
             BeginSelect(p, mods);
         }
@@ -138,6 +153,12 @@ public sealed class MarkupInteraction
                 case Mode.Drawing:
                     await FinishDrawingAsync(p, mods, dragged);
                     break;
+                case Mode.Placing when _placement is { } template:
+                    _placement = null;
+                    var placed = await _doc.AddMarkupAsync(Page, DraftGeometry.Translate(template, _start.X, _start.Y));
+                    _doc.Select(placed);
+                    MarkupCreated?.Invoke(this, placed);
+                    break;
                 case Mode.Moving when dragged && _moving.Count > 0:
                     await _doc.ReplaceMarkupsAsync(_moving.Zip(previews, (m, d) => (m, d)).ToList(),
                         _moving.Count == 1 ? "Move markup" : $"Move {_moving.Count} markups");
@@ -164,6 +185,7 @@ public sealed class MarkupInteraction
     /// <summary>Esc: 그리거나 옮기던 것을 취소한다.</summary>
     public void Cancel()
     {
+        if (_placement != null) { _placement = null; Changed?.Invoke(this, EventArgs.Empty); }
         if (_mode == Mode.Idle) return;
         _mode = Mode.Idle;
         Previews = [];

@@ -142,6 +142,21 @@ internal sealed class MuPdfDocument : IPdfDocument
         return true;
     }
 
+    public IReadOnlyList<OutlineItem> GetOutline()
+    {
+        try
+        {
+            var list = new List<OutlineItem>();
+            foreach (var t in _doc.GetToc(simple: true))
+                list.Add(new OutlineItem(t.Item1, t.Item2 ?? "", t.Item3 - 1)); // MuPDF 페이지 번호는 1부터
+            return list;
+        }
+        catch (Exception)
+        {
+            return []; // 손상된 목차는 무시하고 문서는 그대로 보여준다
+        }
+    }
+
     public IReadOnlyList<TextWord> GetWords(int pageIndex)
     {
         var page = GetPage(pageIndex);

@@ -19,6 +19,7 @@ public sealed class AppSettings
     public bool IsRightPanelVisible { get; set; } = true;
     public bool IsReviewListVisible { get; set; } = true;
     public List<string> RecentFiles { get; set; } = [];
+    public List<ViewModels.SavedToolSet> SavedToolSets { get; set; } = [];
 }
 
 /// <summary>

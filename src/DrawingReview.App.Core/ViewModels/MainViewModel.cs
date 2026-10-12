@@ -31,7 +31,19 @@ public sealed partial class MainViewModel : ObservableObject
         ReviewList.NavigateRequested += (_, item) => ActiveDocument?.RevealMarkup(item);
         ToolDefaults = new ToolDefaults(Environment.UserName);
         Properties = new PropertiesViewModel(this);
+        SavedTools = new SavedToolsViewModel(this);
+        Search = new SearchViewModel(() => ActiveDocument);
+        Bookmarks = new BookmarksViewModel(() => ActiveDocument);
     }
+
+    /// <summary>왼쪽 Saved Tools 패널.</summary>
+    public SavedToolsViewModel SavedTools { get; }
+
+    /// <summary>왼쪽 Search 패널.</summary>
+    public SearchViewModel Search { get; }
+
+    /// <summary>왼쪽 Bookmarks 패널.</summary>
+    public BookmarksViewModel Bookmarks { get; }
 
     /// <summary>도면 비교 작업 공간을 새로 만든다 (비교 창이 소유하고 닫을 때 정리한다).</summary>
     public Comparison.CompareViewModel CreateCompare() => new(_engine, _dialogs);
@@ -56,6 +68,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsReviewListVisible = s.IsReviewListVisible;
         RecentFiles.Clear();
         foreach (var f in s.RecentFiles.Take(10)) RecentFiles.Add(f);
+        SavedTools.Load(s.SavedToolSets);
     }
 
     /// <summary>현재 화면 상태를 설정으로 모은다 (프로그램 종료 시 저장).</summary>
@@ -69,6 +82,7 @@ public sealed partial class MainViewModel : ObservableObject
         IsRightPanelVisible = IsRightPanelVisible,
         IsReviewListVisible = IsReviewListVisible,
         RecentFiles = RecentFiles.ToList(),
+        SavedToolSets = SavedTools.Sets.ToList(),
     };
 
     /// <summary>자동 저장·복구. null이면 끈다 (테스트, 설정).</summary>
@@ -265,6 +279,8 @@ public sealed partial class MainViewModel : ObservableObject
         if (newValue != null) newValue.PropertyChanged += OnDocumentPropertyChanged;
         ReviewList.Document = newValue;
         OnPropertyChanged(nameof(Interaction));
+        Search.ClearCommand.Execute(null);
+        _ = Bookmarks.LoadAsync();
     }
 
     private void OnDocumentPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)

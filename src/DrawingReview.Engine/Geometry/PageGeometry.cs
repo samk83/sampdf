@@ -30,3 +30,6 @@ public sealed record PageInfo(int Index, double Width, double Height, int Rotati
 
 /// <summary>페이지의 단어 하나와 위치 (보이는 페이지 좌표).</summary>
 public sealed record TextWord(string Text, PageRect Bounds);
+
+/// <summary>책갈피 한 줄. Level은 1부터, PageIndex는 0부터 (-1 = 페이지 없음).</summary>
+public sealed record OutlineItem(int Level, string Title, int PageIndex);
