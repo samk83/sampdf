@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using DrawingReview.App.Core.Editing;
 using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
 
@@ -27,7 +28,64 @@ public partial class MainWindow : Window
         PreviewKeyDown += OnPreviewKeyDown;
         PreviewKeyUp += OnPreviewKeyUp;
         Closing += OnClosing;
+        SubscribeInteraction();
     }
+
+    // ---- 글상자·Callout 글자 입력 칸 ----
+
+    private MarkupInteraction? _subscribed;
+    private TextEditRequest? _editing;
+
+    private void SubscribeInteraction()
+    {
+        if (_subscribed != null) _subscribed.TextEditRequested -= OnTextEditRequested;
+        _subscribed = _vm.Interaction;
+        if (_subscribed != null) _subscribed.TextEditRequested += OnTextEditRequested;
+    }
+
+    private void OnTextEditRequested(object? sender, TextEditRequest request)
+    {
+        _editing = request;
+        InlineEditor.Text = request.InitialText;
+        PositionEditor();
+        EditorLayer.Visibility = Visibility.Visible;
+        InlineEditor.Focus();
+        InlineEditor.SelectAll();
+        if (_vm.ActiveDocument is { } doc) doc.Viewport.Changed += OnViewportChangedWhileEditing;
+    }
+
+    private void OnViewportChangedWhileEditing(object? sender, EventArgs e) => PositionEditor();
+
+    private void PositionEditor()
+    {
+        if (_editing == null || _vm.ActiveDocument is not { } doc) return;
+        var r = Viewer.PageRectToScreen(_editing.TextRect);
+        Canvas.SetLeft(InlineEditor, r.X);
+        Canvas.SetTop(InlineEditor, r.Y);
+        InlineEditor.Width = Math.Max(120, r.Width);
+        InlineEditor.MinHeight = Math.Max(30, r.Height);
+        InlineEditor.FontSize = Math.Clamp(_editing.Draft.Style.FontSize * doc.Viewport.Zoom, 9, 48);
+        Canvas.SetLeft(EditorHint, r.X);
+        Canvas.SetTop(EditorHint, r.Y + Math.Max(30, r.Height) + 4);
+    }
+
+    private async Task FinishEditingAsync(bool commit)
+    {
+        if (_editing is not { } request) return;
+        _editing = null;
+        if (_vm.ActiveDocument is { } doc) doc.Viewport.Changed -= OnViewportChangedWhileEditing;
+        EditorLayer.Visibility = Visibility.Collapsed;
+        Viewer.Focus();
+        if (commit && _subscribed != null) await _subscribed.CommitTextAsync(request, InlineEditor.Text);
+    }
+
+    private async void OnInlineEditorKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape) { e.Handled = true; await FinishEditingAsync(commit: false); }
+        else if (e.Key == Key.Enter && Keyboard.Modifiers.HasFlag(ModifierKeys.Control)) { e.Handled = true; await FinishEditingAsync(commit: true); }
+    }
+
+    private async void OnInlineEditorLostFocus(object sender, KeyboardFocusChangedEventArgs e) => await FinishEditingAsync(commit: true);
 
     // ---- 패널 접기/펴기 ----
 
@@ -35,6 +93,9 @@ public partial class MainWindow : Window
     {
         switch (e.PropertyName)
         {
+            case nameof(MainViewModel.Interaction):
+                SubscribeInteraction();
+                break;
             case nameof(MainViewModel.IsLeftPanelVisible):
                 Toggle(LeftColumn, LeftSplitterColumn, _vm.IsLeftPanelVisible, ref _leftWidth);
                 break;

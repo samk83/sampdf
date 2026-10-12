@@ -24,6 +24,9 @@
         <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ActiveDocument.ZoomInCommand}"/>
         <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ActiveDocument.ZoomOutCommand}"/>
         <KeyBinding Key="Delete" Command="{Binding ActiveDocument.DeleteSelectedCommand}"/>
+        <KeyBinding Key="C" Modifiers="Control" Command="{Binding CopyCommand}"/>
+        <KeyBinding Key="X" Modifiers="Control" Command="{Binding CutCommand}"/>
+        <KeyBinding Key="V" Modifiers="Control" Command="{Binding PasteCommand}"/>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding ActiveDocument.UndoCommand}"/>
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding ActiveDocument.RedoCommand}"/>
         <KeyBinding Key="Z" Modifiers="Control+Shift" Command="{Binding ActiveDocument.RedoCommand}"/>
@@ -59,6 +62,9 @@
                 <MenuItem Header="_Undo" InputGestureText="Ctrl+Z" Command="{Binding ActiveDocument.UndoCommand}"/>
                 <MenuItem Header="_Redo" InputGestureText="Ctrl+Y" Command="{Binding ActiveDocument.RedoCommand}"/>
                 <Separator/>
+                <MenuItem Header="Cu_t" InputGestureText="Ctrl+X" Command="{Binding CutCommand}"/>
+                <MenuItem Header="_Copy" InputGestureText="Ctrl+C" Command="{Binding CopyCommand}"/>
+                <MenuItem Header="_Paste" InputGestureText="Ctrl+V" Command="{Binding PasteCommand}"/>
                 <MenuItem Header="_Delete" InputGestureText="Del" Command="{Binding ActiveDocument.DeleteSelectedCommand}"/>
             </MenuItem>
             <MenuItem Header="_View">
@@ -88,6 +94,8 @@
                 <MenuItem Header="Arrow" InputGestureText="A" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Arrow}"/>
                 <MenuItem Header="Rectangle" InputGestureText="R" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Rectangle}"/>
                 <MenuItem Header="Ellipse" InputGestureText="E" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Ellipse}"/>
+                <Separator/>
+                <MenuItem Header="Keep Tool Active (draw repeatedly)" IsCheckable="True" IsChecked="{Binding KeepToolActive}"/>
             </MenuItem>
             <MenuItem Header="_Document"/>
             <MenuItem Header="_Compare"/>
@@ -282,9 +290,20 @@
             </Border>
             <GridSplitter Grid.Column="2" Width="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 
-            <!-- 가운데 도면 -->
-            <controls:PageView x:Name="Viewer" Grid.Column="3"
-                               Document="{Binding ActiveDocument}" ActiveTool="{Binding ActiveTool}"/>
+            <!-- 가운데 도면 + 글자 입력 칸 -->
+            <Grid Grid.Column="3" ClipToBounds="True">
+                <controls:MarkupPageView x:Name="Viewer"
+                                         Document="{Binding ActiveDocument}" ActiveTool="{Binding ActiveTool}"
+                                         Interaction="{Binding Interaction}"/>
+                <Canvas x:Name="EditorLayer" IsHitTestVisible="True" Visibility="Collapsed">
+                    <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
+                             Background="White" Foreground="Black" BorderBrush="{StaticResource AccentBrush}" CaretBrush="Black"
+                             PreviewKeyDown="OnInlineEditorKeyDown" LostKeyboardFocus="OnInlineEditorLostFocus"/>
+                    <Border x:Name="EditorHint" Background="#E6141518" CornerRadius="4" Padding="6,2">
+                        <TextBlock Foreground="{StaticResource TextBrush}" FontSize="11" Text="Ctrl+Enter or click outside to finish · Esc to cancel"/>
+                    </Border>
+                </Canvas>
+            </Grid>
 
             <GridSplitter Grid.Column="4" Width="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
 

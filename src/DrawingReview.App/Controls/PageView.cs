@@ -75,6 +75,9 @@ public class PageView : FrameworkElement
 
     protected Viewport? Viewport => Document?.Viewport;
 
+    /// <summary>표시하는 문서가 바뀔 때 (하위 클래스가 이벤트를 다시 연결하는 데 쓴다).</summary>
+    protected event Action<DocumentViewModel?, DocumentViewModel?>? DocumentChanged;
+
     private void OnDocumentChanged(DocumentViewModel? oldDoc, DocumentViewModel? newDoc)
     {
         if (oldDoc != null)
@@ -94,6 +97,7 @@ public class PageView : FrameworkElement
             if (ActualWidth > 0) newDoc.Viewport.SetView(new ViewSize(ActualWidth, ActualHeight));
             _ = LoadPreviewAsync();
         }
+        DocumentChanged?.Invoke(oldDoc, newDoc);
         InvalidateVisual();
     }
 
