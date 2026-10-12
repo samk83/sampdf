@@ -51,6 +51,20 @@ public sealed partial class DocumentViewModel
 
     public IEnumerable<MarkupItemViewModel> MarkupsOnPage(int pageIndex) => Markups.Where(m => m.PageIndex == pageIndex);
 
+    /// <summary>
+    /// Review List에서 고른 마크업을 보여준다: 해당 페이지로 이동하고, 너무 작게 보이면 확대, 아니면 가운데로.
+    /// </summary>
+    public void RevealMarkup(MarkupItemViewModel item)
+    {
+        GoToPage(item.PageIndex);
+        var b = item.Bounds;
+        var screenSize = Math.Max(b.Width, b.Height) * Viewport.Zoom;
+        if (screenSize < 24 || Viewport.VisiblePageRegion() is null)
+            Viewport.ZoomToRegion(b.Inflate(Math.Max(b.Width, b.Height)), maxZoom: Math.Max(Viewport.Zoom, Viewing.Viewport.ActualSizeZoom * 2));
+        else
+            Viewport.CenterOn(b.Center);
+    }
+
     // ---- 선택 ----
 
     public void Select(MarkupItemViewModel? item, bool additive = false)

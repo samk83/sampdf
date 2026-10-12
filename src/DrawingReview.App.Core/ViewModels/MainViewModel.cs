@@ -25,7 +25,11 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _engine = engine;
         _dialogs = dialogs;
+        ReviewList = new ReviewListViewModel(dialogs);
+        ReviewList.NavigateRequested += (_, item) => ActiveDocument?.RevealMarkup(item);
     }
+
+    public ReviewListViewModel ReviewList { get; }
 
     public ObservableCollection<DocumentViewModel> Documents { get; } = [];
 
@@ -87,6 +91,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         if (oldValue != null) oldValue.PropertyChanged -= OnDocumentPropertyChanged;
         if (newValue != null) newValue.PropertyChanged += OnDocumentPropertyChanged;
+        ReviewList.Document = newValue;
     }
 
     private void OnDocumentPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
