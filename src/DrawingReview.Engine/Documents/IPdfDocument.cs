@@ -29,6 +29,9 @@ public interface IPdfDocument : IDisposable
     /// <summary>페이지를 PNG로 렌더링한다. zoom 1.0 = 72 dpi. clip은 보이는 페이지 좌표(선택).</summary>
     byte[] RenderPagePng(int pageIndex, double zoom, PageRect? clip = null, bool includeMarkups = true);
 
+    /// <summary>화면 표시용 렌더링 (RGB 원시 픽셀). clip을 주면 그 영역만 그린다.</summary>
+    RenderedImage RenderPage(int pageIndex, double zoom, PageRect? clip = null, bool includeMarkups = true);
+
     /// <summary>표준 PDF 주석을 추가하고 고유 ID를 돌려준다.</summary>
     string AddMarkup(int pageIndex, MarkupDraft draft);
 

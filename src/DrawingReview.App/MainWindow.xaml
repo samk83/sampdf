@@ -1,0 +1,320 @@
+<Window x:Class="DrawingReview.App.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:DrawingReview.App.Controls"
+        xmlns:vm="clr-namespace:DrawingReview.App.Core.ViewModels;assembly=DrawingReview.App.Core"
+        xmlns:tools="clr-namespace:DrawingReview.App.Core.Tools;assembly=DrawingReview.App.Core"
+        Title="{Binding WindowTitle}" Width="1600" Height="960" MinWidth="1000" MinHeight="640"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized"
+        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource UiFont}" FontSize="13"
+        AllowDrop="True" UseLayoutRounding="True">
+
+    <Window.InputBindings>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseDocumentCommand}"/>
+        <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ActiveDocument.FitPageCommand}"/>
+        <KeyBinding Key="D1" Modifiers="Control" Command="{Binding ActiveDocument.ActualSizeCommand}"/>
+        <KeyBinding Key="D2" Modifiers="Control" Command="{Binding ActiveDocument.FitWidthCommand}"/>
+        <KeyBinding Key="OemPlus" Modifiers="Control" Command="{Binding ActiveDocument.ZoomInCommand}"/>
+        <KeyBinding Key="OemMinus" Modifiers="Control" Command="{Binding ActiveDocument.ZoomOutCommand}"/>
+        <KeyBinding Key="Add" Modifiers="Control" Command="{Binding ActiveDocument.ZoomInCommand}"/>
+        <KeyBinding Key="Subtract" Modifiers="Control" Command="{Binding ActiveDocument.ZoomOutCommand}"/>
+        <KeyBinding Key="PageDown" Command="{Binding ActiveDocument.NextPageCommand}"/>
+        <KeyBinding Key="PageUp" Command="{Binding ActiveDocument.PreviousPageCommand}"/>
+        <KeyBinding Key="Home" Modifiers="Control" Command="{Binding ActiveDocument.FirstPageCommand}"/>
+        <KeyBinding Key="End" Modifiers="Control" Command="{Binding ActiveDocument.LastPageCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>   <!-- 메뉴 -->
+            <RowDefinition Height="48"/>     <!-- 도구줄 -->
+            <RowDefinition Height="34"/>     <!-- 문서 탭 -->
+            <RowDefinition Height="*"/>      <!-- 작업 영역 -->
+            <RowDefinition x:Name="ReviewSplitterRow" Height="4"/>
+            <RowDefinition x:Name="ReviewRow" Height="230" MinHeight="0"/>
+            <RowDefinition Height="24"/>     <!-- 상태 표시줄 -->
+        </Grid.RowDefinitions>
+
+        <!-- ===== 메뉴 ===== -->
+        <Menu Grid.Row="0" Padding="4,2" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Open…" InputGestureText="Ctrl+O" Command="{Binding OpenCommand}"/>
+                <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}"/>
+                <MenuItem Header="Save _As…" InputGestureText="Ctrl+Shift+S" Command="{Binding SaveAsCommand}"/>
+                <Separator/>
+                <MenuItem Header="_Close Tab" InputGestureText="Ctrl+W" Command="{Binding CloseDocumentCommand}"/>
+                <Separator/>
+                <MenuItem Header="E_xit" Click="OnExit"/>
+            </MenuItem>
+            <MenuItem Header="_Edit">
+                <MenuItem Header="_Undo" InputGestureText="Ctrl+Z" IsEnabled="False"/>
+                <MenuItem Header="_Redo" InputGestureText="Ctrl+Y" IsEnabled="False"/>
+            </MenuItem>
+            <MenuItem Header="_View">
+                <MenuItem Header="Fit _Page" InputGestureText="Ctrl+0" Command="{Binding ActiveDocument.FitPageCommand}"/>
+                <MenuItem Header="Fit _Width" InputGestureText="Ctrl+2" Command="{Binding ActiveDocument.FitWidthCommand}"/>
+                <MenuItem Header="_Actual Size" InputGestureText="Ctrl+1" Command="{Binding ActiveDocument.ActualSizeCommand}"/>
+                <MenuItem Header="Zoom _In" InputGestureText="Ctrl++" Command="{Binding ActiveDocument.ZoomInCommand}"/>
+                <MenuItem Header="Zoom _Out" InputGestureText="Ctrl+-" Command="{Binding ActiveDocument.ZoomOutCommand}"/>
+                <Separator/>
+                <MenuItem Header="_Next Page" InputGestureText="PgDn" Command="{Binding ActiveDocument.NextPageCommand}"/>
+                <MenuItem Header="P_revious Page" InputGestureText="PgUp" Command="{Binding ActiveDocument.PreviousPageCommand}"/>
+                <Separator/>
+                <MenuItem Header="Left Panel" Command="{Binding ToggleLeftPanelCommand}"/>
+                <MenuItem Header="Properties Panel" Command="{Binding ToggleRightPanelCommand}"/>
+                <MenuItem Header="Review List" Command="{Binding ToggleReviewListCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Markup">
+                <MenuItem Header="Select" InputGestureText="V" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Select}"/>
+                <MenuItem Header="Pan" InputGestureText="H" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Pan}"/>
+                <Separator/>
+                <MenuItem Header="Pen" InputGestureText="P" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Pen}"/>
+                <MenuItem Header="Highlight" InputGestureText="I" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Highlight}"/>
+                <MenuItem Header="Text Box" InputGestureText="T" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.TextBox}"/>
+                <MenuItem Header="Callout" InputGestureText="Q" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Callout}"/>
+                <MenuItem Header="Cloud" InputGestureText="C" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Cloud}"/>
+                <MenuItem Header="Line" InputGestureText="L" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Line}"/>
+                <MenuItem Header="Arrow" InputGestureText="A" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Arrow}"/>
+                <MenuItem Header="Rectangle" InputGestureText="R" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Rectangle}"/>
+                <MenuItem Header="Ellipse" InputGestureText="E" Command="{Binding SelectToolCommand}" CommandParameter="{x:Static tools:ToolKind.Ellipse}"/>
+            </MenuItem>
+            <MenuItem Header="_Document"/>
+            <MenuItem Header="_Compare"/>
+            <MenuItem Header="_Settings"/>
+        </Menu>
+
+        <!-- ===== 도구줄 ===== -->
+        <Border Grid.Row="1" Background="{StaticResource ToolbarBrush}" BorderBrush="#33353B" BorderThickness="0,0,0,1">
+            <DockPanel Margin="10,0" LastChildFill="False">
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Left" VerticalAlignment="Center">
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Open (Ctrl+O)" Command="{Binding OpenCommand}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconOpen}"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Save (Ctrl+S)" Command="{Binding SaveCommand}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSave}"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Undo (Ctrl+Z)" IsEnabled="False">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconUndo}"/>
+                    </Button>
+                    <Button Style="{StaticResource ToolButton}" ToolTip="Redo (Ctrl+Y)" IsEnabled="False">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRedo}"/>
+                    </Button>
+                    <Border Width="1" Height="26" Margin="6,0" Background="{StaticResource ControlBorderBrush}"/>
+
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Select (V)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Select}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSelect}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Pan (H, or hold Space / middle mouse)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Pan}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPan}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Pen (P)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Pen}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPen}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Highlight (I)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Highlight}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconHighlight}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Text Box (T)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=TextBox}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconText}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Callout (Q)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Callout}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconCallout}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Cloud (C)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Cloud}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconCloud}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Line (L)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Line}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconLine}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Arrow (A)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Arrow}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconArrow}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Rectangle (R)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Rectangle}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRectangle}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Ellipse (E)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Ellipse}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconEllipse}"/>
+                    </RadioButton>
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" DockPanel.Dock="Right" VerticalAlignment="Center">
+                    <TextBlock VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,12,0">
+                        <Run Text="Active tool:"/> <Run Text="{Binding ActiveToolName, Mode=OneWay}" Foreground="{StaticResource TextBrush}" FontWeight="SemiBold"/>
+                        <Run Text=" · Esc to finish"/>
+                    </TextBlock>
+                    <Border BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1" CornerRadius="6" Height="30">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolButton}" Width="30" Height="28" Content="−" FontSize="16" ToolTip="Zoom out (Ctrl+-)" Command="{Binding ActiveDocument.ZoomOutCommand}"/>
+                            <TextBlock Width="60" TextAlignment="Center" VerticalAlignment="Center" Text="{Binding ActiveDocument.ZoomText, FallbackValue=—}"/>
+                            <Button Style="{StaticResource ToolButton}" Width="30" Height="28" Content="+" FontSize="16" ToolTip="Zoom in (Ctrl++)" Command="{Binding ActiveDocument.ZoomInCommand}"/>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== 문서 탭 ===== -->
+        <Border Grid.Row="2" Background="{StaticResource ChromeBrush}" BorderBrush="#33353B" BorderThickness="0,0,0,1">
+            <ListBox ItemsSource="{Binding Documents}" SelectedItem="{Binding ActiveDocument, Mode=TwoWay}" Margin="8,0,0,0"
+                     ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.VerticalScrollBarVisibility="Disabled" VerticalAlignment="Bottom">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border x:Name="Bd" Height="30" Margin="0,0,2,0" Padding="12,0,6,0" CornerRadius="6,6,0,0"
+                                            Background="Transparent" BorderBrush="Transparent" BorderThickness="1,1,1,0">
+                                        <Grid>
+                                            <Border x:Name="Top" Height="2" VerticalAlignment="Top" Margin="-12,0,-6,0" Background="{StaticResource AccentBrush}" Visibility="Collapsed" CornerRadius="6,6,0,0"/>
+                                            <ContentPresenter VerticalAlignment="Center"/>
+                                        </Grid>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#26282C"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter TargetName="Bd" Property="Background" Value="#2E3035"/>
+                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource ControlBorderBrush}"/>
+                                            <Setter TargetName="Top" Property="Visibility" Value="Visible"/>
+                                            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:DocumentViewModel}">
+                        <StackPanel Orientation="Horizontal" ToolTip="{Binding FilePath}">
+                            <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            <TextBlock Text=" ● Modified" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"
+                                       Visibility="{Binding IsModified, Converter={StaticResource BoolToVisible}}"/>
+                            <Button Style="{StaticResource ToolButton}" Width="22" Height="22" Margin="6,0,0,0" ToolTip="Close (Ctrl+W)"
+                                    Command="{Binding DataContext.CloseDocumentCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding}">
+                                <Path Style="{StaticResource IconPath}" Width="10" Height="10" Data="{StaticResource IconClose}"/>
+                            </Button>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <!-- ===== 작업 영역 ===== -->
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="44"/>
+                <ColumnDefinition x:Name="LeftColumn" Width="236" MinWidth="0"/>
+                <ColumnDefinition x:Name="LeftSplitterColumn" Width="4"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="RightSplitterColumn" Width="4"/>
+                <ColumnDefinition x:Name="RightColumn" Width="300" MinWidth="0"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 왼쪽 세로 탭 -->
+            <Border Grid.Column="0" Background="{StaticResource ChromeBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,1,0">
+                <StackPanel Margin="0,8,0,0" HorizontalAlignment="Center">
+                    <RadioButton Style="{StaticResource SideTabToggle}" ToolTip="Thumbnails" IsChecked="{Binding LeftPanel, Converter={StaticResource EnumEquals}, ConverterParameter=Thumbnails}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconThumbnails}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource SideTabToggle}" ToolTip="Bookmarks" IsChecked="{Binding LeftPanel, Converter={StaticResource EnumEquals}, ConverterParameter=Bookmarks}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconBookmarks}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource SideTabToggle}" ToolTip="Search" IsChecked="{Binding LeftPanel, Converter={StaticResource EnumEquals}, ConverterParameter=Search}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSearch}"/>
+                    </RadioButton>
+                    <RadioButton Style="{StaticResource SideTabToggle}" ToolTip="Saved Tools" IsChecked="{Binding LeftPanel, Converter={StaticResource EnumEquals}, ConverterParameter=SavedTools}">
+                        <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSavedTools}"/>
+                    </RadioButton>
+                </StackPanel>
+            </Border>
+
+            <!-- 왼쪽 패널 -->
+            <Border Grid.Column="1" Background="{StaticResource PanelBrush}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Height="34" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+                        <DockPanel>
+                            <TextBlock Style="{StaticResource PanelHeader}" Text="{Binding LeftPanel}"/>
+                            <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}"
+                                       Text="{Binding ActiveDocument.Pages.Count, StringFormat={}{0} pages, FallbackValue=''}"/>
+                        </DockPanel>
+                    </Border>
+                    <Grid>
+                        <!-- Thumbnails -->
+                        <ListBox x:Name="ThumbnailList" ItemsSource="{Binding ActiveDocument.Pages}" Padding="8"
+                                 SelectedIndex="{Binding ActiveDocument.CurrentPageIndex, Mode=TwoWay}"
+                                 Visibility="{Binding LeftPanel, Converter={StaticResource EnumToVisible}, ConverterParameter=Thumbnails}"
+                                 VirtualizingPanel.IsVirtualizing="True" SelectionChanged="OnThumbnailSelected">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:PageThumbnailViewModel}">
+                                    <StackPanel HorizontalAlignment="Center" Margin="0,2">
+                                        <Border Background="White" Width="184" Height="124" Padding="2" BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1">
+                                            <Image Source="{Binding Image, Converter={StaticResource ImageConverter}}" Stretch="Uniform"/>
+                                        </Border>
+                                        <TextBlock Text="{Binding Caption}" HorizontalAlignment="Center" Margin="0,4,0,0" FontSize="12"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock Margin="16" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
+                                   Text="This panel is coming in the next stage."
+                                   Visibility="{Binding LeftPanel, Converter={StaticResource EnumToCollapsed}, ConverterParameter=Thumbnails}"
+                                   x:Name="ComingSoon"/>
+                    </Grid>
+                </DockPanel>
+            </Border>
+            <GridSplitter Grid.Column="2" Width="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- 가운데 도면 -->
+            <controls:PageView x:Name="Viewer" Grid.Column="3"
+                               Document="{Binding ActiveDocument}" ActiveTool="{Binding ActiveTool}"/>
+
+            <GridSplitter Grid.Column="4" Width="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+
+            <!-- 오른쪽 속성 패널 -->
+            <Border Grid.Column="5" Background="{StaticResource PanelBrush}">
+                <DockPanel>
+                    <Border DockPanel.Dock="Top" Height="34" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+                        <TextBlock Style="{StaticResource PanelHeader}" Text="PROPERTIES"/>
+                    </Border>
+                    <TextBlock Margin="16" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
+                               Text="Select a markup to edit its color, line width, text and status."/>
+                </DockPanel>
+            </Border>
+        </Grid>
+
+        <GridSplitter Grid.Row="4" Height="4" HorizontalAlignment="Stretch" ResizeBehavior="PreviousAndNext"/>
+
+        <!-- ===== Review List ===== -->
+        <Border Grid.Row="5" Background="#202125">
+            <DockPanel>
+                <Border DockPanel.Dock="Top" Height="38" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+                    <TextBlock Style="{StaticResource PanelHeader}" Text="REVIEW LIST"/>
+                </Border>
+                <TextBlock Margin="16" Foreground="{StaticResource MutedTextBrush}" Text="Markups in the document will be listed here."/>
+            </DockPanel>
+        </Border>
+
+        <!-- ===== 상태 표시줄 ===== -->
+        <Border Grid.Row="6" Background="{StaticResource TitleBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+            <DockPanel Margin="12,0">
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ActiveDocument.PageStatusText, FallbackValue='No document'}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,18,0"/>
+                    <TextBlock Text="{Binding ActiveDocument.ZoomText}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,18,0"/>
+                    <TextBlock Text="{Binding ActiveDocument.PageSizeText}" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/>
+                </StackPanel>
+                <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

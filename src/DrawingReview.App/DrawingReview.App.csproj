@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Linux에서도 컴파일 확인을 할 수 있게 한다 (실행은 Windows에서만 가능). -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>DrawingReview</AssemblyName>
+    <RootNamespace>DrawingReview.App</RootNamespace>
+    <!-- 64비트 Windows용 MuPDF 네이티브 파일을 출력 폴더에 넣는다. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>false</SelfContained>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DrawingReview.App.Core\DrawingReview.App.Core.csproj" />
+  </ItemGroup>
+
+</Project>

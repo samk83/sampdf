@@ -196,3 +196,24 @@ public class SafeFileSaverTests
         Assert.Equal("NEW", File.ReadAllText(target));
     }
 }
+
+public class RenderTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture>
+{
+    [Fact]
+    public void Raw_render_reports_size_origin_and_region()
+    {
+        using var doc = TestHelpers.PdfEngine.Open(fixture.PlanSet);
+        var full = doc.RenderPage(Pages.FloorPlan, 0.25);
+        Assert.Equal(full.Width * 3, full.Stride);
+        Assert.Equal(full.Height * full.Stride, full.Pixels.Length);
+        Assert.Equal(0, full.OriginX);
+        Assert.InRange(full.Width, 647, 649);
+
+        var clip = doc.RenderPage(Pages.FloorPlan, 2, new PageRect(100, 50, 300, 150));
+        Assert.Equal(200, clip.OriginX);
+        Assert.Equal(100, clip.OriginY);
+        Assert.InRange(clip.Width, 399, 401);
+        Assert.InRange(clip.Region.X0, 99.9, 100.1);
+        Assert.InRange(clip.Region.Y1, 149.5, 150.6);
+    }
+}

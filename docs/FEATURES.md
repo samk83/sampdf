@@ -10,6 +10,9 @@
 | `tests/DrawingReview.Engine.Tests` | 엔진 자동 테스트 | Windows·Linux |
 | `tests/DrawingReview.TestData` | 가상 도면 생성기 (테스트·검증 도구 공용) | Windows·Linux |
 | `tools/EngineSpike` | 0단계 검증 실행기: 샘플·결과 PDF·보고서 생성 | Windows·Linux |
+| `src/DrawingReview.App.Core` | 화면 상태·로직 (ViewModel, 확대·이동 계산). WPF에 의존하지 않음 | Windows·Linux |
+| `tests/DrawingReview.App.Core.Tests` | App.Core 자동 테스트 | Windows·Linux |
+| `src/DrawingReview.App` | WPF 화면 (창, 테마, 도면 캔버스, 대화상자) | **Windows만** (Linux는 컴파일만) |
 
 ## Engine 모듈
 
@@ -38,3 +41,26 @@
 | 펜 | Ink | |
 | 영역 하이라이트 | Square + 채움 + `/BM /Multiply` + `/DRKind /Highlight` | engine-validation #9 |
 | 기타 기존 주석 | 읽기만 하고 보존 (`MarkupKind.Other`) | 메모, 링크, 스탬프 등 |
+
+## App.Core 모듈
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 확대·이동 계산 (화면↔페이지 좌표, 맞춤, 휠 확대) | `Viewing/Viewport.cs` | `PageRect` | `DocumentViewModel`, WPF `PageView` |
+| 엔진 호출 직렬화·백그라운드 실행 | `Services/EngineGate.cs` | — | `DocumentViewModel`, `MainViewModel.SaveDocumentAsync` |
+| 대화상자 추상화 | `Services/IDialogService.cs` | — | `MainViewModel` (구현: WPF `WpfDialogService`, 테스트: `FakeDialogs`) |
+| 도구 종류·단축키 | `Tools/ToolKind.cs` | — | `MainViewModel`, `PageView`, `MainWindow` |
+| 탭 하나(문서): 페이지 이동, 미리보기/타일/썸네일 렌더링, 캐시 | `ViewModels/DocumentViewModel.cs` | `EngineGate`, `Viewport`, `IPdfDocument` | `MainViewModel`, WPF 화면 |
+| 썸네일 항목 | `ViewModels/PageThumbnailViewModel.cs` | `RenderedImage` | 왼쪽 Thumbnails 패널 |
+| 메인 창 상태: 열기·닫기·저장, 도구, 패널 | `ViewModels/MainViewModel.cs` | `IPdfEngine`, `IDialogService` | `MainWindow` |
+
+## App (WPF) 모듈
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 프로그램 시작, 명령줄 파일 열기, 예외 처리 | `App.xaml(.cs)` | `MainViewModel`, `WpfDialogService` | — |
+| 다크 테마·아이콘·컨트롤 스타일 | `Themes/Dark.xaml` | — | 모든 창 |
+| 메인 창 배치, 단축키, 끌어다 놓기, 패널 접기, 닫기 확인 | `MainWindow.xaml(.cs)` | `MainViewModel`, `PageView` | `App` |
+| 도면 캔버스 (미리보기+고해상도 타일, 휠 확대, 이동) | `Controls/PageView.cs` | `Viewport`, `DocumentViewModel`, `BitmapFactory` | `MainWindow` |
+| 렌더링 결과 → WPF 이미지, 각종 변환기 | `Converters/Converters.cs` | `RenderedImage` | XAML 바인딩, `PageView` |
+| 파일 선택·메시지·암호 창 | `Services/WpfDialogService.cs`, `Views/PasswordWindow.xaml` | — | `MainViewModel` (인터페이스 경유) |

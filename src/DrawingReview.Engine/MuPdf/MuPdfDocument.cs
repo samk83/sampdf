@@ -52,6 +52,14 @@ internal sealed class MuPdfDocument : IPdfDocument
         return pix.ToBytes("png");
     }
 
+    public RenderedImage RenderPage(int pageIndex, double zoom, PageRect? clip = null, bool includeMarkups = true)
+    {
+        var page = GetPage(pageIndex);
+        var matrix = new Matrix((float)zoom, (float)zoom);
+        var pix = page.GetPixmap(matrix: matrix, clip: clip is { } c ? new IRect(ToMu(c)) : null!, alpha: false, annots: includeMarkups);
+        return new RenderedImage(pix.W, pix.H, pix.Stride, pix.Samples, pix.X, pix.Y, zoom);
+    }
+
     public string AddMarkup(int pageIndex, MarkupDraft draft) =>
         MuPdfMarkupWriter.Add(_doc, GetPage(pageIndex), draft);
 
