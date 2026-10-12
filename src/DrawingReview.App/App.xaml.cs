@@ -20,6 +20,12 @@ public partial class App : Application
         var settings = new SettingsStore(System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DrawingReview", "settings.json"));
         vm.ApplySettings(settings.Load());
+        vm.Recovery = new RecoveryService(System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DrawingReview", "Recovery"));
+        // 1분마다 변경된 문서를 복구 폴더에 자동 저장 (원본 PDF는 건드리지 않음)
+        var autosave = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+        autosave.Tick += async (_, _) => await vm.AutosaveAsync();
+        autosave.Start();
         window = new MainWindow(vm);
         window.Closed += (_, _) =>
         {

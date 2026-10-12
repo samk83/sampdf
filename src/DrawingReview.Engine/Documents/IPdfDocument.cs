@@ -60,6 +60,12 @@ public interface IPdfDocument : IDisposable
     /// 실패하면 대상 파일은 저장 전 상태 그대로 남는다.
     /// </summary>
     void SaveTo(string path);
+
+    /// <summary>
+    /// 평탄화 사본: 주석 모양을 페이지 내용에 그려 넣은 별도 파일을 만든다. 열린 문서와 원본은 바뀌지 않는다.
+    /// 평탄화만으로 편집 방지나 기밀 삭제가 보장되지는 않는다 (기획서 10장).
+    /// </summary>
+    void ExportFlattened(string path);
 }
 
 public sealed record DocumentSecurityInfo(bool IsEncrypted, bool NeedsPassword, bool HasSignatures)

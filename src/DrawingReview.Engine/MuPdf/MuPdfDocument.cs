@@ -169,6 +169,26 @@ internal sealed class MuPdfDocument : IPdfDocument
             });
     }
 
+    public void ExportFlattened(string path)
+    {
+        var bytes = _doc.Write(garbage: false, deflate: true);
+        var pages = PageCount;
+        SafeFileSaver.Save(
+            path,
+            writeTemp: temp =>
+            {
+                using var copy = new Document(stream: bytes, fileType: "pdf");
+                copy.Bake(annots: true, widgets: true);
+                copy.Save(temp, garbage: 3, deflate: 1);
+            },
+            verifyTemp: temp =>
+            {
+                using var check = new Document(temp);
+                if (check.PageCount != pages)
+                    throw new IOException($"Flatten verification failed: expected {pages} pages, found {check.PageCount}.");
+            });
+    }
+
     private static int CountAnnotations(Document doc) =>
         Enumerable.Range(0, doc.PageCount).Sum(i => doc.GetPageAnnotXrefs(i).Count);
 

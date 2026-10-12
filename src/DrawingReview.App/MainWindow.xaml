@@ -53,6 +53,7 @@
                 <MenuItem Header="_Open…" InputGestureText="Ctrl+O" Command="{Binding OpenCommand}"/>
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}"/>
                 <MenuItem Header="Save _As…" InputGestureText="Ctrl+Shift+S" Command="{Binding SaveAsCommand}"/>
+                <MenuItem Header="Export _Flattened Copy…" Command="{Binding ExportFlattenedCommand}"/>
                 <Separator/>
                 <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
                     <MenuItem.ItemContainerStyle>
@@ -333,7 +334,21 @@
                     <TextBlock Text="{Binding ActiveDocument.ZoomText}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,18,0"/>
                     <TextBlock Text="{Binding ActiveDocument.PageSizeText}" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/>
                 </StackPanel>
-                <TextBlock Text="{Binding StatusMessage}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" FontSize="12"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="{StaticResource MutedTextBrush}" FontSize="12" Margin="0,0,18,0"/>
+                    <TextBlock Text="{Binding ActiveDocument.SaveStateText}" FontSize="12">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveDocument.IsModified}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
             </DockPanel>
         </Border>
     </Grid>

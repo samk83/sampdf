@@ -318,6 +318,7 @@ public sealed partial class DocumentViewModel
     private void Changed(IEnumerable<int> pages, bool rerender = true)
     {
         IsModified = true;
+        ChangeVersion++;
         if (rerender)
         {
             foreach (var p in pages.Distinct())

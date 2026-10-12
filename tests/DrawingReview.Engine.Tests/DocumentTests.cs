@@ -217,3 +217,27 @@ public class RenderTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture>
         Assert.InRange(clip.Region.Y1, 149.5, 150.6);
     }
 }
+
+public class FlattenTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture>
+{
+    [Fact]
+    public void Flattened_copy_has_markups_in_content_but_no_annotations()
+    {
+        using var dir = new TempDir();
+        using var doc = TestHelpers.PdfEngine.Open(fixture.PlanSet);
+        var rect = new PageRect(200, 150, 320, 230);
+        doc.AddMarkup(Pages.FloorPlan, new RectangleDraft(rect) { Style = MarkupStyle.Default with { FillColor = RgbColor.Red } });
+        var flat = dir.File("flat.pdf");
+        doc.ExportFlattened(flat);
+
+        using var reopened = TestHelpers.PdfEngine.Open(flat);
+        Assert.Equal(doc.PageCount, reopened.PageCount);
+        Assert.DoesNotContain(reopened.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
+        // 주석 없이 렌더링해도 빨간 사각형이 보인다 = 페이지 내용으로 들어감
+        var pix = new Pixmap(reopened.RenderPagePng(Pages.FloorPlan, 0.5, includeMarkups: false));
+        var p = pix.GetPixel(130, 95);
+        Assert.True(p[0] > 200 && p[1] < 80, "flattened markup should be part of page content");
+        // 열린 문서에는 주석이 그대로 남아 있다
+        Assert.Contains(doc.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
+    }
+}

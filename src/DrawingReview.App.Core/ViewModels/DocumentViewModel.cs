@@ -65,8 +65,30 @@ public sealed partial class DocumentViewModel : ObservableObject, IDisposable
     internal IPdfDocument Document => _document;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(Title))]
+    [NotifyPropertyChangedFor(nameof(Title), nameof(SaveStateText))]
     private bool _isModified;
+
+    /// <summary>변경할 때마다 1씩 늘어난다. 자동 저장이 이미 저장한 상태인지 판단하는 데 쓴다.</summary>
+    public int ChangeVersion { get; private set; }
+
+    /// <summary>마지막 자동 저장 때의 ChangeVersion.</summary>
+    public int AutosavedVersion { get; set; } = -1;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SaveStateText))]
+    private DateTimeOffset? _lastAutosave;
+
+    /// <summary>상태 표시줄: 임시 저장(복구 사본)과 실제 PDF 저장 상태를 따로 보여준다 (기획서 10장 5항).</summary>
+    public string SaveStateText => !IsModified ? "All changes saved to PDF"
+        : LastAutosave is { } t ? $"Autosaved {t:HH:mm} (recovery copy) · PDF not saved — Ctrl+S"
+        : "PDF not saved — Ctrl+S";
+
+    /// <summary>복구 사본에서 연 문서로 표시한다 (원본 경로를 유지한 채 변경됨 상태).</summary>
+    public void MarkRecovered()
+    {
+        IsModified = true;
+        ChangeVersion++;
+    }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CurrentPage), nameof(PageStatusText))]

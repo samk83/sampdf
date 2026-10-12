@@ -65,6 +65,58 @@ public sealed partial class MainViewModel : ObservableObject
         RecentFiles = RecentFiles.ToList(),
     };
 
+    /// <summary>자동 저장·복구. null이면 끈다 (테스트, 설정).</summary>
+    public RecoveryService? Recovery { get; set; }
+
+    /// <summary>변경되었고 아직 자동 저장하지 않은 문서를 복구 폴더에 저장한다 (WPF 타이머가 주기적으로 부른다).</summary>
+    public async Task AutosaveAsync()
+    {
+        if (Recovery is not { } recovery) return;
+        foreach (var doc in Documents.ToList())
+        {
+            if (!doc.IsModified || doc.AutosavedVersion == doc.ChangeVersion) continue;
+            var version = doc.ChangeVersion;
+            try
+            {
+                var info = await recovery.SaveAsync(doc.FilePath, p => doc.Gate.RunAsync(() => doc.Document.SaveTo(p)));
+                doc.AutosavedVersion = version;
+                doc.LastAutosave = info.SavedAt;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                StatusMessage = $"Autosave failed: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>평탄화 사본 내보내기 (원본·열린 문서는 그대로).</summary>
+    [RelayCommand]
+    private async Task ExportFlattenedAsync()
+    {
+        if (ActiveDocument is not { } doc) return;
+        var path = _dialogs.PickSavePath(Path.GetFileNameWithoutExtension(doc.FileName) + " (flattened).pdf", "Export flattened copy");
+        if (path == null) return;
+        if (string.Equals(Path.GetFullPath(path), doc.FilePath, StringComparison.OrdinalIgnoreCase))
+        {
+            _dialogs.ShowError("Choose another file", "A flattened copy cannot replace the document you are editing.");
+            return;
+        }
+        try
+        {
+            StatusMessage = "Exporting flattened copy…";
+            await doc.Gate.RunAsync(() => doc.Document.ExportFlattened(path));
+            StatusMessage = $"Exported flattened copy: {Path.GetFileName(path)}";
+            _dialogs.ShowInfo("Flattened copy exported",
+                $"{Path.GetFileName(path)}\n\nMarkups are drawn into the page content and can no longer be edited in this copy. " +
+                "Flattening does not by itself prevent editing or remove hidden content.");
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = "Export failed";
+            _dialogs.ShowError("Export failed", ex.Message);
+        }
+    }
+
     /// <summary>최근 연 파일 (File 메뉴).</summary>
     public ObservableCollection<string> RecentFiles { get; } = [];
 
@@ -251,7 +303,18 @@ public sealed partial class MainViewModel : ObservableObject
         try
         {
             StatusMessage = $"Opening {Path.GetFileName(full)}…";
-            pdf = await Task.Run(() => _engine.Open(full));
+            var recovered = false;
+            if (Recovery?.Find(full) is { } info)
+            {
+                var answer = _dialogs.Confirm("Recover unsaved changes?",
+                    $"{Path.GetFileName(full)} has unsaved changes from {info.SavedAt:yyyy-MM-dd HH:mm} (autosaved recovery copy).\n\n" +
+                    "Yes: restore those changes (the PDF file is not changed until you save).\nNo: open the saved PDF and discard the recovery copy.");
+                if (answer == null) { StatusMessage = "Open cancelled"; return null; }
+                if (answer == true) recovered = true;
+                else Recovery.Delete(full);
+            }
+            var source = recovered ? Recovery!.RecoveryPathFor(full) : full;
+            pdf = await Task.Run(() => _engine.Open(source));
             if (!Unlock(pdf, full))
             {
                 pdf.Dispose();
@@ -260,6 +323,7 @@ public sealed partial class MainViewModel : ObservableObject
             }
             var doc = new DocumentViewModel(pdf, full);
             await doc.LoadMarkupsAsync();
+            if (recovered) doc.MarkRecovered();
             Documents.Add(doc);
             ActiveDocument = doc;
             StatusMessage = $"Opened {doc.FileName} ({doc.Pages.Count} pages)";
@@ -304,6 +368,7 @@ public sealed partial class MainViewModel : ObservableObject
             var answer = _dialogs.Confirm("Unsaved changes", $"Save changes to {doc.FileName} before closing?");
             if (answer == null) return false;
             if (answer == true && !await SaveDocumentAsync(doc)) return false;
+            if (answer == false) Recovery?.Delete(doc.FilePath); // 저장하지 않기로 했으므로 복구 사본도 지운다
         }
         var index = Documents.IndexOf(doc);
         _interactions.Remove(doc);
@@ -330,7 +395,9 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StatusMessage = $"Saving {Path.GetFileName(path)}…";
             await doc.Gate.RunAsync(() => doc.Document.SaveTo(path));
+            Recovery?.Delete(doc.FilePath);
             doc.IsModified = false;
+            doc.LastAutosave = null;
             StatusMessage = $"Saved {Path.GetFileName(path)} at {DateTime.Now:HH:mm}";
             return true;
         }
