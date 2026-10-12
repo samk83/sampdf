@@ -11,11 +11,17 @@
         FontFamily="{StaticResource UiFont}" FontSize="13"
         AllowDrop="True" UseLayoutRounding="True">
 
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Print" Executed="OnPrint"/>
+    </Window.CommandBindings>
+
     <Window.InputBindings>
         <KeyBinding Key="O" Modifiers="Control" Command="{Binding OpenCommand}"/>
         <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}"/>
         <KeyBinding Key="S" Modifiers="Control+Shift" Command="{Binding SaveAsCommand}"/>
         <KeyBinding Key="W" Modifiers="Control" Command="{Binding CloseDocumentCommand}"/>
+        <KeyBinding Key="P" Modifiers="Control" Command="{x:Static ApplicationCommands.Print}"/>
+        <KeyBinding Key="F" Modifiers="Control" Command="{Binding ShowLeftPanelCommand}" CommandParameter="{x:Static vm:LeftPanelKind.Search}"/>
         <KeyBinding Key="D0" Modifiers="Control" Command="{Binding ActiveDocument.FitPageCommand}"/>
         <KeyBinding Key="D1" Modifiers="Control" Command="{Binding ActiveDocument.ActualSizeCommand}"/>
         <KeyBinding Key="D2" Modifiers="Control" Command="{Binding ActiveDocument.FitWidthCommand}"/>
@@ -54,6 +60,7 @@
                 <MenuItem Header="_Save" InputGestureText="Ctrl+S" Command="{Binding SaveCommand}"/>
                 <MenuItem Header="Save _As…" InputGestureText="Ctrl+Shift+S" Command="{Binding SaveAsCommand}"/>
                 <MenuItem Header="Export _Flattened Copy…" Command="{Binding ExportFlattenedCommand}"/>
+                <MenuItem Header="_Print…" InputGestureText="Ctrl+P" Click="OnPrint"/>
                 <Separator/>
                 <MenuItem Header="Open _Recent" ItemsSource="{Binding RecentFiles}">
                     <MenuItem.ItemContainerStyle>
@@ -294,10 +301,12 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <TextBlock Margin="16" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"
-                                   Text="This panel is coming in the next stage."
-                                   Visibility="{Binding LeftPanel, Converter={StaticResource EnumToCollapsed}, ConverterParameter=Thumbnails}"
-                                   x:Name="ComingSoon"/>
+                        <views:BookmarksPanel DataContext="{Binding Bookmarks}"
+                                              Visibility="{Binding DataContext.LeftPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource EnumToVisible}, ConverterParameter=Bookmarks}"/>
+                        <views:SearchPanel x:Name="SearchView" DataContext="{Binding Search}"
+                                           Visibility="{Binding DataContext.LeftPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource EnumToVisible}, ConverterParameter=Search}"/>
+                        <views:SavedToolsPanel DataContext="{Binding SavedTools}"
+                                               Visibility="{Binding DataContext.LeftPanel, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource EnumToVisible}, ConverterParameter=SavedTools}"/>
                     </Grid>
                 </DockPanel>
             </Border>
@@ -307,7 +316,7 @@
             <Grid Grid.Column="3" ClipToBounds="True">
                 <controls:MarkupPageView x:Name="Viewer"
                                          Document="{Binding ActiveDocument}" ActiveTool="{Binding ActiveTool}"
-                                         Interaction="{Binding Interaction}"/>
+                                         Interaction="{Binding Interaction}" SearchHit="{Binding Search.CurrentHit}"/>
                 <Canvas x:Name="EditorLayer" IsHitTestVisible="True" Visibility="Collapsed">
                     <TextBox x:Name="InlineEditor" AcceptsReturn="True" TextWrapping="Wrap" VerticalContentAlignment="Top"
                              Background="White" Foreground="Black" BorderBrush="{StaticResource AccentBrush}" CaretBrush="Black"

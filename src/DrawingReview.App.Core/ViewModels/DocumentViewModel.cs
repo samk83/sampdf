@@ -180,6 +180,10 @@ public sealed partial class DocumentViewModel : ObservableObject, IDisposable
     public Task<RenderedImage> RenderRegionAsync(int pageIndex, PageRect region, double pixelsPerPoint, CancellationToken ct = default) =>
         _gate.RunAsync(() => _document.RenderPage(pageIndex, pixelsPerPoint, region), ct);
 
+    /// <summary>임의 해상도로 페이지 전체를 렌더링 (인쇄·내보내기용).</summary>
+    public Task<RenderedImage> RenderPageAsync(int pageIndex, double zoom, bool includeMarkups = true, CancellationToken ct = default) =>
+        _gate.RunAsync(() => _document.RenderPage(pageIndex, zoom, includeMarkups: includeMarkups), ct);
+
     /// <summary>썸네일을 앞 페이지부터 차례로 만든다.</summary>
     public async Task LoadThumbnailsAsync(CancellationToken ct = default)
     {

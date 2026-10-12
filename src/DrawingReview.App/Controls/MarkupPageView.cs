@@ -36,12 +36,12 @@ public class MarkupPageView : PageView
 
     /// <summary>검색 결과 강조 (현재 페이지에 해당하는 영역).</summary>
     public static readonly DependencyProperty SearchHitProperty = DependencyProperty.Register(
-        nameof(SearchHit), typeof(SearchHitInfo), typeof(MarkupPageView),
+        nameof(SearchHit), typeof(SearchHit), typeof(MarkupPageView),
         new PropertyMetadata(null, (d, _) => ((MarkupPageView)d).InvalidateVisual()));
 
-    public SearchHitInfo? SearchHit
+    public SearchHit? SearchHit
     {
-        get => (SearchHitInfo?)GetValue(SearchHitProperty);
+        get => (SearchHit?)GetValue(SearchHitProperty);
         set => SetValue(SearchHitProperty, value);
     }
 
@@ -180,6 +180,3 @@ public class MarkupPageView : PageView
     private static T Frozen<T>(T f) where T : Freezable { f.Freeze(); return f; }
     private static Pen FrozenPen(Pen p) { p.Freeze(); return p; }
 }
-
-/// <summary>캔버스에 강조할 검색 결과 (페이지와 영역들).</summary>
-public sealed record SearchHitInfo(int PageIndex, IReadOnlyList<PageRect> Rects);

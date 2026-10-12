@@ -1,0 +1,55 @@
+<Window x:Class="DrawingReview.App.Views.PrintWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Print" Width="900" Height="720" MinWidth="700" MinHeight="520" WindowStartupLocation="CenterOwner" ShowInTaskbar="False"
+        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}" FontFamily="{StaticResource UiFont}" FontSize="13">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="280"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- 미리보기: 용지 위에 페이지가 놓이는 모습 -->
+        <Grid Background="{StaticResource CanvasBrush}">
+            <Viewbox Margin="24" Stretch="Uniform">
+                <Canvas x:Name="Paper" Background="White">
+                    <Image x:Name="PreviewImage" RenderOptions.BitmapScalingMode="HighQuality"/>
+                </Canvas>
+            </Viewbox>
+            <Border VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="10" Padding="10,4" CornerRadius="6" Background="#E6141518">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource TextButton}" Content="◀" Click="OnPrev" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="PageText" VerticalAlignment="Center" MinWidth="120" TextAlignment="Center"/>
+                    <Button Style="{StaticResource TextButton}" Content="▶" Click="OnNext" Margin="8,0,0,0"/>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <StackPanel Grid.Column="1" Margin="16" >
+            <TextBlock Style="{StaticResource PanelHeader}" Text="PRINT" Margin="0,0,0,12"/>
+            <TextBlock Style="{StaticResource FieldLabel}" Text="Pages"/>
+            <RadioButton x:Name="RangeAll" Content="All pages" IsChecked="True" GroupName="Range" Foreground="{StaticResource TextBrush}" Checked="OnOptionChanged"/>
+            <RadioButton x:Name="RangeCurrent" Content="Current page" GroupName="Range" Foreground="{StaticResource TextBrush}" Checked="OnOptionChanged"/>
+            <StackPanel Orientation="Horizontal" Margin="0,2,0,12">
+                <RadioButton x:Name="RangeCustom" Content="Pages:" GroupName="Range" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" Checked="OnOptionChanged"/>
+                <TextBox x:Name="RangeText" Width="120" Margin="8,0,0,0" Text="1-2" TextChanged="OnOptionChanged"/>
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource FieldLabel}" Text="Size"/>
+            <RadioButton x:Name="FitToPaper" Content="Fit to paper" IsChecked="True" GroupName="Scale" Foreground="{StaticResource TextBrush}" Checked="OnOptionChanged"/>
+            <RadioButton x:Name="ActualSize" Content="Actual size (100%)" GroupName="Scale" Foreground="{StaticResource TextBrush}" Checked="OnOptionChanged" Margin="0,0,0,12"/>
+
+            <CheckBox x:Name="IncludeMarkups" Content="Print markups" IsChecked="True" Checked="OnOptionChanged" Unchecked="OnOptionChanged" Margin="0,0,0,12"/>
+
+            <TextBlock x:Name="PaperText" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+            <TextBlock x:Name="ScaleText" TextWrapping="Wrap" Margin="0,0,0,6"/>
+            <TextBlock x:Name="WarningText" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+            <Button Style="{StaticResource TextButton}" Content="Choose printer and paper…" Click="OnChoosePrinter" Margin="0,0,0,8"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button x:Name="PrintButton" Style="{StaticResource PrimaryButton}" Content="Print" MinWidth="90" Click="OnPrint" IsDefault="True"/>
+                <Button Style="{StaticResource TextButton}" Content="Close" MinWidth="80" Margin="8,0,0,0" IsCancel="True"/>
+            </StackPanel>
+        </StackPanel>
+    </Grid>
+</Window>

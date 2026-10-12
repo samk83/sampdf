@@ -96,6 +96,11 @@ public partial class MainWindow : Window
             case nameof(MainViewModel.Interaction):
                 SubscribeInteraction();
                 break;
+            case nameof(MainViewModel.LeftPanel) when _vm.LeftPanel == LeftPanelKind.Search:
+                if (!_vm.IsLeftPanelVisible) _vm.IsLeftPanelVisible = true;
+                Dispatcher.BeginInvoke(() => { SearchView.QueryBox.Focus(); SearchView.QueryBox.SelectAll(); },
+                    System.Windows.Threading.DispatcherPriority.Input);
+                break;
             case nameof(MainViewModel.IsLeftPanelVisible):
                 Toggle(LeftColumn, LeftSplitterColumn, _vm.IsLeftPanelVisible, ref _leftWidth);
                 break;
@@ -182,6 +187,11 @@ public partial class MainWindow : Window
     }
 
     private void OnExit(object sender, RoutedEventArgs e) => Close();
+
+    private void OnPrint(object sender, RoutedEventArgs e)
+    {
+        if (_vm.ActiveDocument is { } doc) new Views.PrintWindow(doc) { Owner = this }.ShowDialog();
+    }
 
     // ---- 도면 비교 창 ----
 

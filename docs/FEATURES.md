@@ -68,6 +68,9 @@
 | 도면 비교 작업 공간 (짝, 비교 실행, 수동 정렬, 검토, 합치기·나누기, Cloud, 내보내기, 프로젝트) | `Comparison/CompareViewModel.cs` | Compare 엔진, `DocumentViewModel`, `MarkupInteraction` | WPF `CompareWindow` |
 | 비교 모델·Cloud 설정·동기화 | `Comparison/CompareModels.cs` | — | `CompareViewModel`, `CompareWindow` |
 | 비교 프로젝트 파일 (.drcompare) | `Comparison/CompareProject.cs` | `SafeFileSaver` | `CompareViewModel` |
+| 검색·책갈피 | `ViewModels/SearchViewModel.cs` | `IPdfDocument.SearchText/GetWords/GetOutline` | WPF `SearchPanel`, `BookmarksPanel`, 캔버스 강조 |
+| Saved Tools (세트, 스타일/문구·모양 저장, 놓기, 가져오기·내보내기) | `ViewModels/SavedToolsViewModel.cs` | `ToolDefaults`, `MarkupInteraction.BeginPlacement` | WPF `SavedToolsPanel`, 설정 |
+| 인쇄 배치 (맞춤/실제 크기, 회전, 잘림 경고, 페이지 범위) | `Printing/PrintLayout.cs` | — | WPF `PrintWindow` |
 
 ## App (WPF) 모듈
 
@@ -85,6 +88,8 @@
 | 속성 패널 | `Views/PropertiesPanel.xaml` | `PropertiesViewModel` | `MainWindow` |
 | 비교 창·페이지 짝 창 | `Views/CompareWindow.xaml(.cs)`, `Views/PairWindow.xaml` | `CompareViewModel`, `ViewportSync` | `MainWindow` Compare 메뉴 |
 | 비교 캔버스 (겹쳐 보기 그림, 변경 영역, 정렬 점) | `Controls/CompareCanvas.cs` | `MarkupPageView` | `CompareWindow` |
+| 검색·책갈피·Saved Tools 패널 | `Views/SearchPanel`, `Views/BookmarksPanel`, `Views/SavedToolsPanel` | 각 ViewModel | `MainWindow` 왼쪽 패널 |
+| 인쇄 미리보기·인쇄 | `Views/PrintWindow.xaml(.cs)` | `PrintLayout`, `DocumentViewModel.RenderPageAsync` | File → Print (Ctrl+P) |
 
 ## Compare 모듈
 
