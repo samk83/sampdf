@@ -33,6 +33,12 @@ public sealed partial class MainViewModel : ObservableObject
         Properties = new PropertiesViewModel(this);
     }
 
+    /// <summary>도면 비교 작업 공간을 새로 만든다 (비교 창이 소유하고 닫을 때 정리한다).</summary>
+    public Comparison.CompareViewModel CreateCompare() => new(_engine, _dialogs);
+
+    /// <summary>비교 창에서 대화상자를 쓸 수 있게 공유한다.</summary>
+    public IDialogService Dialogs => _dialogs;
+
     /// <summary>오른쪽 속성 패널.</summary>
     public PropertiesViewModel Properties { get; }
 

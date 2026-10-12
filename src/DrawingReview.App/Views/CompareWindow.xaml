@@ -1,0 +1,226 @@
+<Window x:Class="DrawingReview.App.Views.CompareWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:DrawingReview.App.Controls"
+        xmlns:cmp="clr-namespace:DrawingReview.App.Core.Comparison;assembly=DrawingReview.App.Core"
+        Title="Compare Drawings" Width="1500" Height="920" MinWidth="1000" MinHeight="600" WindowState="Maximized"
+        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
+        FontFamily="{StaticResource UiFont}" FontSize="13" UseLayoutRounding="True">
+    <!-- DataContext: CompareViewModel -->
+    <Window.InputBindings>
+        <KeyBinding Key="Delete" Command="{Binding NewDocument.DeleteSelectedCommand}"/>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding NewDocument.UndoCommand}"/>
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding NewDocument.RedoCommand}"/>
+        <KeyBinding Key="A" Command="{Binding AcceptCommand}"/>
+        <KeyBinding Key="D" Command="{Binding DismissCommand}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="24"/>
+        </Grid.RowDefinitions>
+
+        <!-- 도구줄 1: 파일·비교 -->
+        <Border Grid.Row="0" Background="{StaticResource ToolbarBrush}" BorderBrush="#33353B" BorderThickness="0,0,0,1" Padding="10,8">
+            <WrapPanel VerticalAlignment="Center">
+                <Button Style="{StaticResource TextButton}" Content="Open drawings…" Click="OnOpenDrawings" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource TextButton}" Content="Open project…" Click="OnOpenProject" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource TextButton}" Content="Save project…" Command="{Binding SaveProjectAsCommand}" Margin="0,0,14,0"/>
+
+                <TextBlock Text="Pages" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                <ComboBox Width="180" ItemsSource="{Binding PagePairs}" SelectedItem="{Binding SelectedPair}" Margin="0,0,4,0"/>
+                <Button Style="{StaticResource TextButton}" Content="Pair…" ToolTip="Pair different page numbers" Click="OnEditPair" Margin="0,0,14,0"/>
+
+                <Border BorderBrush="{StaticResource ControlBorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,10,0">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton Style="{StaticResource ToolToggle}" Width="Auto" Padding="10,0" Content="Overlay" ToolTip="Old = red, new = blue"
+                                     IsChecked="{Binding Mode, Converter={StaticResource EnumEquals}, ConverterParameter=Overlay}"/>
+                        <RadioButton Style="{StaticResource ToolToggle}" Width="Auto" Content="  Side by side  "
+                                     IsChecked="{Binding Mode, Converter={StaticResource EnumEquals}, ConverterParameter=SideBySide}"/>
+                        <RadioButton Style="{StaticResource ToolToggle}" Width="Auto" Content="  Differences only  "
+                                     IsChecked="{Binding Mode, Converter={StaticResource EnumEquals}, ConverterParameter=DifferenceOnly}"/>
+                    </StackPanel>
+                </Border>
+                <CheckBox Content="Sync zoom &amp; pan" IsChecked="{Binding SyncNavigation}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                <CheckBox Content="High sensitivity" IsChecked="{Binding HighSensitivity}" Margin="0,0,12,0" VerticalAlignment="Center"/>
+                <CheckBox Content="Ignore title block" IsChecked="{Binding IgnoreTitleBlock}" Margin="0,0,12,0" VerticalAlignment="Center"
+                          ToolTip="Ignore the bottom-right corner (title block, dates)"/>
+                <Button Style="{StaticResource PrimaryButton}" Content="Compare" Command="{Binding RunCompareCommand}" Margin="0,0,6,0" MinWidth="90"/>
+                <Button Style="{StaticResource TextButton}" Content="Cancel" Command="{Binding CancelCommand}" Margin="0,0,6,0"
+                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisible}}"/>
+                <Button Style="{StaticResource TextButton}" Content="Align by 2 points…" Command="{Binding BeginManualAlignmentCommand}"/>
+            </WrapPanel>
+        </Border>
+
+        <!-- 도구줄 2: 마크업·Cloud·내보내기 -->
+        <Border Grid.Row="1" Background="#222327" BorderBrush="#33353B" BorderThickness="0,0,0,1" Padding="10,6">
+            <WrapPanel VerticalAlignment="Center">
+                <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Select / move clouds (V)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Select}">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconSelect}"/>
+                </RadioButton>
+                <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Pan (H)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Pan}">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconPan}"/>
+                </RadioButton>
+                <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Draw a manual revision cloud (C)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Cloud}">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconCloud}"/>
+                </RadioButton>
+                <RadioButton Style="{StaticResource ToolToggle}" ToolTip="Draw a manual rectangle (R)" IsChecked="{Binding ActiveTool, Converter={StaticResource EnumEquals}, ConverterParameter=Rectangle}">
+                    <Path Style="{StaticResource IconPath}" Data="{StaticResource IconRectangle}"/>
+                </RadioButton>
+                <Border Width="1" Height="24" Margin="8,0" Background="{StaticResource ControlBorderBrush}"/>
+
+                <TextBlock Text="Cloud" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="ShapeBox" Width="110" SelectionChanged="OnCloudOptionChanged" Margin="0,0,8,0">
+                    <ComboBoxItem Content="Scalloped" Tag="Cloud" IsSelected="True"/>
+                    <ComboBoxItem Content="Rectangle" Tag="Rectangle"/>
+                </ComboBox>
+                <TextBlock Text="Margin" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="MarginBox" Width="80" SelectionChanged="OnCloudOptionChanged" Margin="0,0,8,0">
+                    <ComboBoxItem Content="4 pt" Tag="4"/>
+                    <ComboBoxItem Content="8 pt" Tag="8" IsSelected="True"/>
+                    <ComboBoxItem Content="16 pt" Tag="16"/>
+                    <ComboBoxItem Content="24 pt" Tag="24"/>
+                </ComboBox>
+                <TextBlock Text="Arc" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="ArcBox" Width="80" SelectionChanged="OnCloudOptionChanged" Margin="0,0,8,0">
+                    <ComboBoxItem Content="Small" Tag="1"/>
+                    <ComboBoxItem Content="Large" Tag="2" IsSelected="True"/>
+                </ComboBox>
+                <TextBlock Text="Line" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,6,0"/>
+                <ComboBox x:Name="WidthBox" Width="80" SelectionChanged="OnCloudOptionChanged" Margin="0,0,8,0">
+                    <ComboBoxItem Content="1 pt" Tag="1"/>
+                    <ComboBoxItem Content="2 pt" Tag="2" IsSelected="True"/>
+                    <ComboBoxItem Content="3 pt" Tag="3"/>
+                </ComboBox>
+                <ComboBox x:Name="ColorBox" Width="90" SelectionChanged="OnCloudOptionChanged" Margin="0,0,8,0">
+                    <ComboBoxItem Content="Red" Tag="Red" IsSelected="True"/>
+                    <ComboBoxItem Content="Blue" Tag="Blue"/>
+                    <ComboBoxItem Content="Magenta" Tag="Magenta"/>
+                    <ComboBoxItem Content="Black" Tag="Black"/>
+                </ComboBox>
+                <CheckBox x:Name="NumberingBox" Content="Numbers" IsChecked="True" Checked="OnCloudOptionChanged" Unchecked="OnCloudOptionChanged" Margin="0,0,10,0" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource PrimaryButton}" Content="Create clouds for accepted" Command="{Binding CreateCloudsCommand}" Margin="0,0,14,0"/>
+
+                <Button Style="{StaticResource TextButton}" Content="Export PDF…" Command="{Binding ExportPdfCommand}" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource TextButton}" Content="Export list…" ToolTip="CSV or JSON" Command="{Binding ExportChangeListCommand}" Margin="0,0,6,0"/>
+                <Button Style="{StaticResource TextButton}" Content="Export image…" Command="{Binding ExportImageCommand}"/>
+            </WrapPanel>
+        </Border>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="OldColumn" Width="0"/>
+                <ColumnDefinition x:Name="SplitterColumn" Width="0"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 이전 도면 (나란히 보기) -->
+            <Grid Grid.Column="0">
+                <controls:CompareCanvas x:Name="OldCanvas" IsOldSide="True" Document="{Binding OldDocument}" ActiveTool="Pan"
+                                        Changes="{Binding Changes}" SelectedChange="{Binding SelectedChange}"
+                                        IsPickingPoint="{Binding IsPickingAlignment}"/>
+                <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="8" Padding="8,3" CornerRadius="10" Background="#4A2422" IsHitTestVisible="False">
+                    <TextBlock Foreground="#FFB4AE" FontWeight="SemiBold" Text="{Binding OldDocument.FileName, StringFormat=OLD · {0}}"/>
+                </Border>
+            </Grid>
+            <Border Grid.Column="1" Background="{StaticResource TitleBrush}"/>
+
+            <!-- 개정 도면 -->
+            <Grid Grid.Column="2">
+                <controls:CompareCanvas x:Name="NewCanvas" Document="{Binding NewDocument}" ActiveTool="{Binding ActiveTool}" Interaction="{Binding Interaction}"
+                                        Changes="{Binding Changes}" SelectedChange="{Binding SelectedChange}" OverlayImage="{Binding OverlayImage}"
+                                        IsPickingPoint="{Binding IsPickingAlignment}"/>
+                <Border VerticalAlignment="Top" HorizontalAlignment="Left" Margin="8" Padding="8,3" CornerRadius="10" Background="#1C2F4D" IsHitTestVisible="False">
+                    <TextBlock Foreground="#A9CBF5" FontWeight="SemiBold" Text="{Binding NewDocument.FileName, StringFormat=NEW · {0}}"/>
+                </Border>
+                <Border VerticalAlignment="Top" HorizontalAlignment="Center" Margin="8" Padding="12,6" CornerRadius="6" Background="#E6141518"
+                        Visibility="{Binding IsPickingAlignment, Converter={StaticResource BoolToVisible}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding ManualAlignmentHint}" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                        <Button Style="{StaticResource TextButton}" Content="Cancel" Command="{Binding CancelManualAlignmentCommand}"/>
+                    </StackPanel>
+                </Border>
+                <Border VerticalAlignment="Center" HorizontalAlignment="Center" Padding="16,10" CornerRadius="8" Background="#E6141518"
+                        Visibility="{Binding IsBusy, Converter={StaticResource BoolToVisible}}">
+                    <TextBlock Text="Comparing…" FontSize="15"/>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch"/>
+
+            <!-- 변경 목록 -->
+            <DockPanel Grid.Column="4" Background="{StaticResource PanelBrush}">
+                <Border DockPanel.Dock="Top" Height="34" Padding="12,0" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,0,0,1">
+                    <DockPanel>
+                        <TextBlock Style="{StaticResource PanelHeader}" Text="CHANGES"/>
+                        <TextBlock HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="{Binding ChangeCountText}"/>
+                    </DockPanel>
+                </Border>
+                <TextBlock DockPanel.Dock="Top" Margin="12,8" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource MutedTextBrush}"
+                           Text="Changes are graphic difference candidates, not engineering judgments. Review each one. Dashed = small or uncertain."/>
+                <WrapPanel DockPanel.Dock="Top" Margin="12,0,12,8">
+                    <Button Style="{StaticResource TextButton}" Content="Accept (A)" Command="{Binding AcceptCommand}" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Dismiss (D)" Command="{Binding DismissCommand}" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Reset" Command="{Binding ResetStatusCommand}" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Show/Hide" Command="{Binding ToggleVisibilityCommand}" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Merge" ToolTip="Select several with Ctrl+click" Click="OnMerge" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Split" Click="OnSplit" Margin="0,0,4,4"/>
+                    <Button Style="{StaticResource TextButton}" Content="Accept all high-confidence" Command="{Binding AcceptAllHighConfidenceCommand}" Margin="0,0,4,4"/>
+                </WrapPanel>
+                <ListBox x:Name="ChangeList" ItemsSource="{Binding Changes}" SelectedItem="{Binding SelectedChange}" SelectionMode="Extended"
+                         MouseDoubleClick="OnChangeDoubleClick" SelectionChanged="OnChangeSelected" Padding="6,0">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type cmp:ChangeItemViewModel}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="34"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="26" Height="22" CornerRadius="4" Background="#34363C" VerticalAlignment="Top">
+                                    <TextBlock Text="{Binding Number}" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                </Border>
+                                <StackPanel Grid.Column="1">
+                                    <TextBlock Text="{Binding Summary}" FontWeight="SemiBold"/>
+                                    <TextBlock Text="{Binding Location}" FontSize="11" Foreground="{StaticResource MutedTextBrush}"/>
+                                    <TextBlock Text="Hidden" FontSize="11" Foreground="{StaticResource MutedTextBrush}"
+                                               Visibility="{Binding IsVisible, Converter={StaticResource BoolToCollapsed}}"/>
+                                </StackPanel>
+                                <Border Grid.Column="2" CornerRadius="10" Padding="8,1" VerticalAlignment="Top" Background="#34363C">
+                                    <TextBlock Text="{Binding Status}" FontSize="12"/>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Grid>
+
+        <!-- 상태 표시줄 -->
+        <Border Grid.Row="3" Background="{StaticResource TitleBrush}" BorderBrush="{StaticResource PanelBorderBrush}" BorderThickness="0,1,0,0">
+            <DockPanel Margin="12,0">
+                <TextBlock Text="{Binding Status}" VerticalAlignment="Center" FontSize="12" Foreground="{StaticResource MutedTextBrush}" TextTrimming="CharacterEllipsis" MaxWidth="900"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <TextBlock Text="{Binding NewDocument.ZoomText}" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Margin="0,0,18,0"/>
+                    <TextBlock Text="{Binding AlignmentText}" FontSize="12">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource MutedTextBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AlignmentReliable}" Value="False">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

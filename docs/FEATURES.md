@@ -13,6 +13,8 @@
 | `src/DrawingReview.App.Core` | 화면 상태·로직 (ViewModel, 확대·이동 계산). WPF에 의존하지 않음 | Windows·Linux |
 | `tests/DrawingReview.App.Core.Tests` | App.Core 자동 테스트 | Windows·Linux |
 | `src/DrawingReview.App` | WPF 화면 (창, 테마, 도면 캔버스, 대화상자) | **Windows만** (Linux는 컴파일만) |
+| `src/DrawingReview.Compare` | 도면 비교 엔진 (정렬, 차이, 글자 비교, 영역 묶기). 화면 없음 | Windows·Linux |
+| `tests/DrawingReview.Compare.Tests` | 비교 검수 테스트 (기획서 12장) | Windows·Linux |
 
 ## Engine 모듈
 
@@ -52,7 +54,20 @@
 | 도구 종류·단축키 | `Tools/ToolKind.cs` | — | `MainViewModel`, `PageView`, `MainWindow` |
 | 탭 하나(문서): 페이지 이동, 미리보기/타일/썸네일 렌더링, 캐시 | `ViewModels/DocumentViewModel.cs` | `EngineGate`, `Viewport`, `IPdfDocument` | `MainViewModel`, WPF 화면 |
 | 썸네일 항목 | `ViewModels/PageThumbnailViewModel.cs` | `RenderedImage` | 왼쪽 Thumbnails 패널 |
-| 메인 창 상태: 열기·닫기·저장, 도구, 패널 | `ViewModels/MainViewModel.cs` | `IPdfEngine`, `IDialogService` | `MainWindow` |
+| 메인 창 상태: 열기·닫기·저장, 도구, 패널, 복사·붙여넣기, 자동 저장, 평탄화, 설정 적용 | `ViewModels/MainViewModel.cs` | `IPdfEngine`, `IDialogService`, `RecoveryService`, `ToolDefaults` | `MainWindow` |
+| 마크업 편집 (추가·삭제·변경·상태·잠금·선택·되돌리기) | `ViewModels/DocumentViewModel.Markups.cs` | `UndoStack`, `EngineGate` | 캔버스, Review List, 속성 패널, 비교 |
+| 마크업 한 줄 (목록·선택·속성 공통) | `ViewModels/MarkupItemViewModel.cs` | `MarkupInfo` | Review List, 캔버스, 속성 |
+| Review List (필터·정렬·숨김 개수·선택 동기화·상태 일괄·CSV) | `ViewModels/ReviewListViewModel.cs` | `DocumentViewModel` | WPF `ReviewListPanel` |
+| 속성 패널 (선택 편집 / 도구 기본값, 최근 색) | `ViewModels/PropertiesViewModel.cs` | `ToolDefaults`, `DocumentViewModel` | WPF `PropertiesPanel` |
+| 도형 계산 (이동·크기·클릭 판정·손잡이·Shift 맞춤) | `Editing/DraftGeometry.cs` | — | `MarkupInteraction`, 비교 |
+| 마우스 동작 (그리기·선택·이동·크기·글자 입력) | `Editing/MarkupInteraction.cs` | `DraftGeometry`, `ToolDefaults` | WPF `MarkupPageView` |
+| 되돌리기 스택 | `Editing/UndoStack.cs` | — | `DocumentViewModel` |
+| 도구별 기본 스타일·작성자 | `Editing/ToolDefaults.cs` | `MarkupStyle` | `MarkupInteraction`, 속성, 설정 |
+| 설정 파일 (JSON) | `Services/SettingsStore.cs` | `SafeFileSaver` | WPF `App` |
+| 자동 저장·복구 사본 | `Services/RecoveryService.cs` | — | `MainViewModel` |
+| 도면 비교 작업 공간 (짝, 비교 실행, 수동 정렬, 검토, 합치기·나누기, Cloud, 내보내기, 프로젝트) | `Comparison/CompareViewModel.cs` | Compare 엔진, `DocumentViewModel`, `MarkupInteraction` | WPF `CompareWindow` |
+| 비교 모델·Cloud 설정·동기화 | `Comparison/CompareModels.cs` | — | `CompareViewModel`, `CompareWindow` |
+| 비교 프로젝트 파일 (.drcompare) | `Comparison/CompareProject.cs` | `SafeFileSaver` | `CompareViewModel` |
 
 ## App (WPF) 모듈
 
@@ -64,3 +79,19 @@
 | 도면 캔버스 (미리보기+고해상도 타일, 휠 확대, 이동) | `Controls/PageView.cs` | `Viewport`, `DocumentViewModel`, `BitmapFactory` | `MainWindow` |
 | 렌더링 결과 → WPF 이미지, 각종 변환기 | `Converters/Converters.cs` | `RenderedImage` | XAML 바인딩, `PageView` |
 | 파일 선택·메시지·암호 창 | `Services/WpfDialogService.cs`, `Views/PasswordWindow.xaml` | — | `MainViewModel` (인터페이스 경유) |
+| 마크업 캔버스 (선택 표시·손잡이·미리보기·범위 선택) | `Controls/MarkupPageView.cs` | `PageView`, `MarkupInteraction`, `DraftRenderer` | `MainWindow`, `CompareCanvas` |
+| 마크업 미리보기 그리기 | `Controls/DraftRenderer.cs` | — | `MarkupPageView`, `CompareCanvas` |
+| Review List 표 | `Views/ReviewListPanel.xaml(.cs)` | `ReviewListViewModel` | `MainWindow` |
+| 속성 패널 | `Views/PropertiesPanel.xaml` | `PropertiesViewModel` | `MainWindow` |
+| 비교 창·페이지 짝 창 | `Views/CompareWindow.xaml(.cs)`, `Views/PairWindow.xaml` | `CompareViewModel`, `ViewportSync` | `MainWindow` Compare 메뉴 |
+| 비교 캔버스 (겹쳐 보기 그림, 변경 영역, 정렬 점) | `Controls/CompareCanvas.cs` | `MarkupPageView` | `CompareWindow` |
+
+## Compare 모듈
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 비교 결과·정렬 변환·설정 모델 | `Model/CompareModel.cs` | `PageRect` | 비교 전체 |
+| 페이지 비교 (렌더→정렬→차이→글자→잡음→묶기), 겹쳐 보기, 합치기·나누기, PNG | `PageComparer.cs` | `Aligner`, `ImageOps`, `TextDiff` | `CompareViewModel` |
+| 자동·수동 정렬 | `Aligner.cs` | OpenCV (ORB, RANSAC, ECC) | `PageComparer`, `CompareViewModel` |
+| 이미지 처리·영역 묶기 | `ImageOps.cs` | OpenCV | `PageComparer`, `Aligner` |
+| 단어 비교 | `TextDiff.cs` | `TextWord` | `PageComparer` |

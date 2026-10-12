@@ -16,15 +16,36 @@ public sealed class WpfDialogService(Func<Window?> owner) : IDialogService
         return dlg.ShowDialog(owner()) == true ? dlg.FileNames : [];
     }
 
+    public string? PickPdfFile(string title)
+    {
+        var dlg = new OpenFileDialog { Filter = PdfFilter, Title = title };
+        return dlg.ShowDialog(owner()) == true ? dlg.FileName : null;
+    }
+
+    public string? PickCompareProject()
+    {
+        var dlg = new OpenFileDialog { Filter = "Comparison project (*.drcompare)|*.drcompare", Title = "Open comparison project" };
+        return dlg.ShowDialog(owner()) == true ? dlg.FileName : null;
+    }
+
     public string? PickSavePath(string suggestedFileName, string title = "Save PDF")
     {
+        // 제안한 파일 이름의 확장자로 형식을 고른다 (PDF, CSV/JSON, PNG, 비교 프로젝트)
+        var ext = System.IO.Path.GetExtension(suggestedFileName).ToLowerInvariant();
+        var filter = ext switch
+        {
+            ".csv" or ".json" => "CSV (*.csv)|*.csv|JSON (*.json)|*.json",
+            ".png" => "PNG image (*.png)|*.png",
+            ".drcompare" => "Comparison project (*.drcompare)|*.drcompare",
+            _ => PdfFilter,
+        };
         var dlg = new SaveFileDialog
         {
-            Filter = PdfFilter,
+            Filter = filter,
             FileName = suggestedFileName,
             Title = title,
             AddExtension = true,
-            DefaultExt = ".pdf",
+            DefaultExt = string.IsNullOrEmpty(ext) ? ".pdf" : ext,
             OverwritePrompt = true,
         };
         return dlg.ShowDialog(owner()) == true ? dlg.FileName : null;

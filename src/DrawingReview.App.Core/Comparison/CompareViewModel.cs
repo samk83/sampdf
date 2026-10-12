@@ -4,7 +4,9 @@ using System.Text;
 using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DrawingReview.App.Core.Editing;
 using DrawingReview.App.Core.Services;
+using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Compare;
 using DrawingReview.Compare.Model;
@@ -37,6 +39,22 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
     {
         _engine = engine;
         _dialogs = dialogs;
+    }
+
+    /// <summary>비교 창의 도구: 선택·이동, 손, 수동 구름·사각형.</summary>
+    [ObservableProperty] private ToolKind _activeTool = ToolKind.Select;
+
+    /// <summary>수동 Revision Cloud용 도구 기본값 (Cloud 설정의 색·굵기를 따른다).</summary>
+    public ToolDefaults ToolDefaults { get; } = new(Environment.UserName);
+
+    /// <summary>개정 도면 사본 위의 마크업 편집 (Cloud 이동·크기 조절, 수동 Cloud 그리기).</summary>
+    [ObservableProperty] private MarkupInteraction? _interaction;
+
+    partial void OnCloudOptionsChanged(CloudOptions value)
+    {
+        var style = MarkupStyle.Default with { StrokeColor = value.Color, TextColor = value.Color, LineWidth = value.LineWidth };
+        ToolDefaults.Set(ToolKind.Cloud, new ToolPreset(style, "Revision"));
+        ToolDefaults.Set(ToolKind.Rectangle, new ToolPreset(style, "Revision"));
     }
 
     public DocumentViewModel? OldDocument { get; private set; }
@@ -117,6 +135,9 @@ public sealed partial class CompareViewModel : ObservableObject, IDisposable
             OldDocument = new DocumentViewModel(oldPdf, OldPath);
             NewDocument = new DocumentViewModel(newPdf, NewPath);
             await NewDocument.LoadMarkupsAsync();
+            OnCloudOptionsChanged(CloudOptions);
+            Interaction = new MarkupInteraction(NewDocument, ToolDefaults);
+            Interaction.MarkupCreated += (_, _) => ActiveTool = ToolKind.Select;
             OnPropertyChanged(nameof(OldDocument));
             OnPropertyChanged(nameof(NewDocument));
 

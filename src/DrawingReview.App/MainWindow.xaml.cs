@@ -183,6 +183,39 @@ public partial class MainWindow : Window
 
     private void OnExit(object sender, RoutedEventArgs e) => Close();
 
+    // ---- 도면 비교 창 ----
+
+    private async void OnCompareDrawings(object sender, RoutedEventArgs e)
+    {
+        var dialogs = _vm.Dialogs;
+        var oldPath = dialogs.PickPdfFile("Select the OLD (previous) drawing");
+        if (oldPath == null) return;
+        var newPath = dialogs.PickPdfFile("Select the NEW (revised) drawing");
+        if (newPath == null) return;
+        var cmp = _vm.CreateCompare();
+        var window = new Views.CompareWindow(cmp, dialogs) { Owner = this };
+        window.Show();
+        if (await cmp.OpenAsync(oldPath, newPath)) await cmp.RunCompareAsync();
+    }
+
+    private async void OnOpenCompareProject(object sender, RoutedEventArgs e)
+    {
+        var path = _vm.Dialogs.PickCompareProject();
+        if (path == null) return;
+        var cmp = _vm.CreateCompare();
+        var window = new Views.CompareWindow(cmp, _vm.Dialogs) { Owner = this };
+        window.Show();
+        try
+        {
+            if (!await cmp.LoadProjectAsync(path)) window.Close();
+        }
+        catch (Exception ex)
+        {
+            _vm.Dialogs.ShowError("Could not open project", ex.Message);
+            window.Close();
+        }
+    }
+
     // ---- Windows 10/11 어두운 제목 표시줄 ----
 
     [DllImport("dwmapi.dll")]

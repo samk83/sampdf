@@ -108,7 +108,10 @@
                 <MenuItem Header="Keep Tool Active (draw repeatedly)" IsCheckable="True" IsChecked="{Binding KeepToolActive}"/>
             </MenuItem>
             <MenuItem Header="_Document"/>
-            <MenuItem Header="_Compare"/>
+            <MenuItem Header="_Compare">
+                <MenuItem Header="Compare _Drawings…" Click="OnCompareDrawings"/>
+                <MenuItem Header="Open Comparison _Project…" Click="OnOpenCompareProject"/>
+            </MenuItem>
             <MenuItem Header="_Settings"/>
         </Menu>
 

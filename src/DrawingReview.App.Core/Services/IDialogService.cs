@@ -9,6 +9,12 @@ public interface IDialogService
     /// <summary>열 PDF 파일들을 고른다. 취소하면 빈 목록.</summary>
     IReadOnlyList<string> PickPdfFilesToOpen();
 
+    /// <summary>PDF 하나를 고른다 (제목으로 무엇을 고르는지 알려 준다). 취소하면 null.</summary>
+    string? PickPdfFile(string title);
+
+    /// <summary>비교 프로젝트 파일을 고른다. 취소하면 null.</summary>
+    string? PickCompareProject();
+
     /// <summary>저장할 경로를 고른다. 취소하면 null.</summary>
     string? PickSavePath(string suggestedFileName, string title = "Save PDF");
 

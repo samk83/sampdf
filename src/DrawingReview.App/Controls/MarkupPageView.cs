@@ -12,7 +12,7 @@ namespace DrawingReview.App.Controls;
 /// 도면 캔버스 + 마크업 편집. 마우스 입력을 App.Core의 MarkupInteraction에 전달하고,
 /// 선택 표시·손잡이·미리보기·범위 선택 사각형·검색 결과 강조를 도면 위에 그린다.
 /// </summary>
-public sealed class MarkupPageView : PageView
+public class MarkupPageView : PageView
 {
     private static readonly Brush AccentBrush = Frozen(new SolidColorBrush(Color.FromRgb(0x2F, 0x7F, 0xE0)));
     private static readonly Brush BandFill = Frozen(new SolidColorBrush(Color.FromArgb(0x28, 0x4C, 0x9B, 0xEA)));
@@ -66,9 +66,9 @@ public sealed class MarkupPageView : PageView
     /// <summary>페이지 영역을 이 컨트롤 안의 화면 사각형으로 (글자 입력 칸 배치용).</summary>
     public Rect PageRectToScreen(PageRect r) => ToScreen(r);
 
-    private PagePoint ToPage(Point p) => Viewport!.ScreenToPage(new Core.Viewing.ScreenPoint(p.X, p.Y));
+    protected PagePoint ToPage(Point p) => Viewport!.ScreenToPage(new Core.Viewing.ScreenPoint(p.X, p.Y));
 
-    private Point ToScreenPoint(PagePoint p)
+    protected Point ToScreenPoint(PagePoint p)
     {
         var s = Viewport!.PageToScreen(p);
         return new Point(s.X, s.Y);

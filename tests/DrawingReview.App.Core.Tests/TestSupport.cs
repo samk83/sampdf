@@ -14,6 +14,8 @@ public sealed class FakeDialogs : IDialogService
     public List<string> Infos { get; } = [];
     public List<string> Confirms { get; } = [];
 
+    public string? PickPdfFile(string title) => FilesToOpen.Count > 0 ? FilesToOpen.Dequeue() : null;
+    public string? PickCompareProject() => FilesToOpen.Count > 0 ? FilesToOpen.Dequeue() : null;
     public IReadOnlyList<string> PickPdfFilesToOpen() => FilesToOpen.Count > 0 ? [FilesToOpen.Dequeue()] : [];
     public string? PickSavePath(string suggestedFileName, string title = "Save PDF") => SavePath;
     public string? PromptPassword(string fileName, bool retry) => Passwords.Count > 0 ? Passwords.Dequeue() : null;
