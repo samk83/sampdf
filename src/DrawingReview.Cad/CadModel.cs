@@ -23,12 +23,14 @@ public readonly record struct Box(double MinX, double MinY, double MaxX, double 
     public Pt Center => new((MinX + MaxX) / 2, (MinY + MaxY) / 2);
 }
 
-public enum PrimitiveType { Line, Circle, Arc, Polyline, Text }
+public enum PrimitiveType { Line, Circle, Arc, Polyline, Text, Dimension }
 
 /// <summary>
 /// 비교용으로 정규화한 도면 요소 하나. 블록은 풀어서 넣고, 단위는 mm로 맞췄다.
-/// Points: 선=양 끝(정렬됨), 원·호=중심, 폴리선=꼭짓점들, 글자=삽입점.
-/// Size: 원·호=반지름, 글자=높이. Extra: 호=시작·끝 각도(도), 글자=회전.
+/// Points: 선=양 끝(정렬됨), 원·호=중심, 폴리선=꼭짓점들, 글자=삽입점,
+///         치수(선형·정렬)=[재는 점1, 재는 점2, 치수선 끝1, 치수선 끝2], 그 밖의 치수=[정의점].
+/// Size: 원·호=반지름, 글자=높이, 치수=측정값(mm, 각도 치수는 원래 값).
+/// Text: 글자 내용, 치수=화면에 보이는 치수 문자. A1·A2: 호=시작·끝 각도(도), 글자=회전, 치수=문자 덮어쓰기면 A1 = 1.
 /// </summary>
 public sealed record CadPrimitive(PrimitiveType Type, string Layer, IReadOnlyList<Pt> Points, double Size = 0, string Text = "", double A1 = 0, double A2 = 0, bool Closed = false)
 {
@@ -45,9 +47,15 @@ public sealed record CadPrimitive(PrimitiveType Type, string Layer, IReadOnlyLis
         PrimitiveType.Line => $"L{Points[0].DistanceTo(Points[1]):0.0}|{Angle(Points[0], Points[1]):0.0}",
         PrimitiveType.Circle => $"C{Size:0.0}",
         PrimitiveType.Arc => $"A{Size:0.0}|{A1:0.0}|{A2:0.0}",
-        PrimitiveType.Polyline => $"P{Points.Count}|" + string.Join(";", Points.Skip(1).Select(p => $"{p.X - Points[0].X:0.0},{p.Y - Points[0].Y:0.0}")),
+        PrimitiveType.Polyline => $"P{Points.Count}|" + Relative(),
+        PrimitiveType.Dimension => $"D{(IsOverriddenDimension ? Text : "")}|{Size:0.0}|" + Relative(),
         _ => $"T{Text}|{Size:0.0}",
     };
+
+    /// <summary>치수 문자를 직접 쓴 경우 (측정값 자동 표시가 아님).</summary>
+    public bool IsOverriddenDimension => Type == PrimitiveType.Dimension && A1 > 0;
+
+    private string Relative() => string.Join(";", Points.Skip(1).Select(p => $"{p.X - Points[0].X:0.0},{p.Y - Points[0].Y:0.0}"));
 
     private static double Angle(Pt a, Pt b) => (Math.Atan2(b.Y - a.Y, b.X - a.X) * 180 / Math.PI + 360) % 180;
 }

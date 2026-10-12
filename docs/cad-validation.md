@@ -3,7 +3,7 @@
 Drawing Difference Checker 기획서의 "DXF/DWG 비교 검증 → 판단 후 개발" 단계 결과다. 화면 없이 엔진만 시험했다.
 
 - 모듈: `src/DrawingReview.Cad` (C#, **ACadSharp 3.8.0, MIT**)
-- 테스트: `tests/DrawingReview.Cad.Tests/CadCompareTests.cs` — **13개 모두 통과** (Linux)
+- 테스트: `tests/DrawingReview.Cad.Tests/CadCompareTests.cs` — **17개 모두 통과** (Linux)
 - 시험 도면: 테스트가 ACadSharp로 직접 만드는 가상 구조 평면 (그리드, 중첩 블록 기둥, 원, 호, 글자, 여러 줄 글자, 폴리선)
 - **실제 AutoCAD·Revit에서 저장한 DWG로는 아직 시험하지 않았다.** 가장 중요한 남은 검증이다.
 
@@ -24,6 +24,7 @@ Drawing Difference Checker 기획서의 "DXF/DWG 비교 검증 → 판단 후 �
 | 2. 선 추가 | ✅ | 추가 1 |
 | 3. 원 삭제 | ✅ | 삭제 1 |
 | 4. 블록(기둥) 400mm 이동 | ✅ | 펼친 요소가 "400mm 이동"으로 보고됨 |
+| 5. 치수 변경 | ✅ | `"6000" → "6500"`. 문자 덮어쓰기 변경도 감지, 덮어쓴 문자 때문에 길이 변경이 숨는 경우 "check text override" 경고 |
 | 6. 글자 변경 | ✅ | `"VERIFY CLEARANCE" → "VERIFY CLEARANCE AT COLUMN"` |
 | 반지름 변경 | ✅ | `300 → 450 mm` |
 | 12. 단위 차이 (mm 도면 vs m 도면) | ✅ | 변경 0, 단위 차이 경고 |
@@ -38,7 +39,7 @@ Drawing Difference Checker 기획서의 "DXF/DWG 비교 검증 → 판단 후 �
 | 항목 | 상태 | 위험도 |
 |---|---|---|
 | 실제 AutoCAD 2018~2025 저장 DWG | 미검증 | **높음**: ACadSharp는 커뮤니티 라이브러리라 일부 파일을 못 읽을 수 있음 |
-| 치수(Dimension) 값·위치 비교 | 미구현 (경고로 개수만 표시) | 높음: 기획서 필수 항목 |
+| 치수(Dimension) | 선형·정렬 치수: 값·문자·점 비교와 다시 그리기 지원. 각도·반지름·좌표 치수는 값·문자·정의점만 비교 | 중간: 실제 도면의 치수 스타일(DIMLFAC 등)은 미검증 |
 | 해치(Hatch), 스플라인, 타원, 3D 객체, 이미지 | 미구현 (경고) | 중간 |
 | 배치(Layout)·뷰포트·Paper Space | 미구현 (Model Space만) | 중간 |
 | 외부 참조(Xref) 내용 | 경고만 | 중간 |

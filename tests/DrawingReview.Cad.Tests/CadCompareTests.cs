@@ -25,6 +25,8 @@ public class CadCompareTests(ITestOutputHelper output) : IDisposable
         public UnitsType Units { get; init; } = UnitsType.Millimeters;
         public bool Reverse { get; init; }               // 객체 순서를 뒤집어 다시 만든다 (handle이 바뀜)
         public double CircleRadius { get; init; } = 300;
+        public double DimEndX { get; init; } = 12000;     // 두 번째 치수의 끝점 (치수 값 변경용)
+        public string DimText { get; init; } = "";        // 두 번째 치수의 문자 덮어쓰기 ("" = 측정값 그대로)
     }
 
     /// <summary>단순한 구조 평면: 그리드 선, 기둥 블록(중첩), 원, 글자, 폴리선 벽.</summary>
@@ -60,6 +62,10 @@ public class CadCompareTests(ITestOutputHelper output) : IDisposable
         entities.Add(new TextEntity { InsertPoint = P(1000, 9500), Height = 250 * s, Value = r.Note });
         entities.Add(new MText { InsertPoint = P(15000, 9500), Height = 250 * s, Value = "S-101 FRAMING PLAN" });
         entities.Add(new Arc { Center = P(18000, 3000), Radius = 900 * s, StartAngle = 0, EndAngle = Math.PI / 2 });
+        // 치수: 그리드 간격 6000 두 개 (선형 치수) + 세로 정렬 치수
+        entities.Add(new DimensionLinear { FirstPoint = P(0, -1000), SecondPoint = P(6000, -1000), DefinitionPoint = P(6000, -2000) });
+        entities.Add(new DimensionLinear { FirstPoint = P(6000, -1000), SecondPoint = P(r.DimEndX, -1000), DefinitionPoint = P(r.DimEndX, -2000), Text = r.DimText });
+        entities.Add(new DimensionAligned(P(-1000, 0), P(-1000, 6000)) { Offset = 1000 * s });
         if (r.AddLine) entities.Add(new Line { StartPoint = P(3000, 4500), EndPoint = P(9000, 4500) });
         if (r.Reverse) entities.Reverse();
         foreach (var e in entities) doc.Entities.Add(e);
@@ -138,6 +144,44 @@ public class CadCompareTests(ITestOutputHelper output) : IDisposable
         var c = Assert.Single(Run(new Rev(), new Rev { CircleRadius = 450 }).Changes);
         Assert.Equal(CadChangeKind.Modified, c.Kind);
         Assert.Contains("300 → 450", c.Description);
+    }
+
+    [Fact] // 5: 치수 하나가 바뀌면 이전 → 개정 값으로 보고한다
+    public void Changed_dimension_is_detected_with_values()
+    {
+        var c = Assert.Single(Run(new Rev(), new Rev { DimEndX = 12500 }).Changes);
+        Assert.Equal(CadChangeKind.Modified, c.Kind);
+        Assert.Equal(PrimitiveType.Dimension, c.Type);
+        Assert.Contains("\"6000\" → \"6500\"", c.Description);
+    }
+
+    [Fact]
+    public void Changed_dimension_text_override_is_detected()
+    {
+        var c = Assert.Single(Run(new Rev(), new Rev { DimText = "6000 VIF" }).Changes);
+        Assert.Equal(CadChangeKind.Modified, c.Kind);
+        Assert.Contains("\"6000\" → \"6000 VIF\"", c.Description);
+    }
+
+    [Fact] // 문자를 덮어쓴 치수는 길이가 바뀌어도 숫자가 그대로라 따로 경고한다
+    public void Overridden_dimension_with_changed_length_is_flagged()
+    {
+        var c = Assert.Single(Run(new Rev { DimText = "6000" }, new Rev { DimText = "6000", DimEndX = 12500 }).Changes);
+        Assert.Contains("check text override", c.Description);
+        Assert.Contains("6000 → 6500", c.Description);
+    }
+
+    [Fact]
+    public void Dimensions_are_loaded_with_dimension_line_points()
+    {
+        var d = CadLoader.Load(Save(Build(new Rev()), "d.dwg"));
+        var dims = d.Primitives.Where(p => p.Type == PrimitiveType.Dimension).ToList();
+        Assert.Equal(3, dims.Count);
+        Assert.All(dims, p => Assert.Equal(6000, p.Size, 3));
+        var first = dims.First(p => p.Points[0].DistanceTo(new Pt(0, -1000)) < 1e-6);
+        Assert.Equal(new Pt(0, -2000), first.Points[2]);
+        Assert.Equal(new Pt(6000, -2000), first.Points[3]);
+        Assert.DoesNotContain(d.Warnings, w => w.Contains("DIMENSION", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact] // 12: 단위 차이 (mm 도면 vs m 도면)

@@ -111,25 +111,41 @@ public static class CadComparer
         var sb = new System.Text.StringBuilder();
         sb.Append((int)p.Type).Append('|').Append(p.Layer).Append('|');
         foreach (var pt in p.Points) sb.Append(Math.Round(pt.X / g)).Append(',').Append(Math.Round(pt.Y / g)).Append(';');
-        sb.Append(Math.Round(p.Size / g)).Append('|').Append(p.Text).Append('|').Append(Math.Round(p.A1, 1)).Append('|').Append(Math.Round(p.A2, 1)).Append(p.Closed);
+        sb.Append(Math.Round(p.Size / g)).Append('|').Append(p.Type == PrimitiveType.Dimension && !p.IsOverriddenDimension ? "" : p.Text).Append('|').Append(Math.Round(p.A1, 1)).Append('|').Append(Math.Round(p.A2, 1)).Append(p.Closed);
         return sb.ToString();
     }
 
-    private static string TextSuffix(CadPrimitive p) => p.Type == PrimitiveType.Text ? $" (\"{p.Text}\")" : "";
+    private static string TextSuffix(CadPrimitive p) => p.Type is PrimitiveType.Text or PrimitiveType.Dimension ? $" (\"{p.Text}\")" : "";
 
     private static string Describe(CadPrimitive o, CadPrimitive n) => n.Type switch
     {
         PrimitiveType.Text => $"Text changed \"{o.Text}\" → \"{n.Text}\"",
         PrimitiveType.Circle => $"Circle radius {o.Size:0.##} → {n.Size:0.##} mm",
         PrimitiveType.Line => $"Line changed (length {o.Points[0].DistanceTo(o.Points[1]):0.#} → {n.Points[0].DistanceTo(n.Points[1]):0.#} mm)",
+        PrimitiveType.Dimension => DescribeDimension(o, n),
         _ => $"{n.Type} changed",
     };
 
-    /// <summary>"같은 자리"의 기준점: 선은 한쪽 끝, 원·호·글자는 중심·삽입점, 폴리선은 첫 점.</summary>
-    private static Pt Anchor(CadPrimitive p) => p.Type == PrimitiveType.Line ? p.Points[0] : p.Points[0];
+    /// <summary>
+    /// 치수 변경 설명. 문자를 직접 고쳐 쓴(override) 치수는 측정값이 바뀌어도 문자가 그대로일 수 있어
+    /// 그 경우를 따로 알린다 (보이는 숫자와 실제 길이가 다름).
+    /// </summary>
+    private static string DescribeDimension(CadPrimitive o, CadPrimitive n)
+    {
+        var measured = Math.Abs(o.Size - n.Size) > 1e-6 ? $"measured {o.Size:0.##} → {n.Size:0.##}" : "";
+        if (o.Text != n.Text)
+            return $"Dimension \"{o.Text}\" → \"{n.Text}\"" + (measured.Length > 0 && !n.Text.Contains(n.Size.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)) ? $" ({measured})" : "");
+        if (measured.Length > 0)
+            return $"Dimension {measured} but text is still \"{n.Text}\" — check text override";
+        return "Dimension position changed";
+    }
+
+    /// <summary>"같은 자리"의 기준점: 선은 한쪽 끝, 원·호·글자는 중심·삽입점, 폴리선은 첫 점, 치수는 가운데.</summary>
+    private static Pt Anchor(CadPrimitive p) => p.Type == PrimitiveType.Dimension ? p.Bounds.Center : p.Points[0];
 
     private static double NearDistance(CadPrimitive p) => p.Type switch
     {
+        PrimitiveType.Dimension => Math.Max(p.Size * 0.5, 1),
         PrimitiveType.Text => Math.Max(p.Size * 2, 1),
         PrimitiveType.Line => 1,
         _ => Math.Max(p.Size * 0.5, 1),
@@ -144,6 +160,8 @@ public static class CadComparer
         if (Math.Abs(a.Size - b.Size) > tol) return false;
         if (a.Type == PrimitiveType.Arc && (AngleDiff(a.A1, b.A1) > 0.1 || AngleDiff(a.A2, b.A2) > 0.1)) return false;
         if (a.Type == PrimitiveType.Text && (a.Text != b.Text || AngleDiff(a.A1, b.A1) > 0.1)) return false;
+        // 자동 문자 치수는 측정값(Size, mm)이 같으면 같다 (mm 도면 "6000"과 m 도면 "6"). 덮어쓴 문자는 글자로 비교한다.
+        if (a.Type == PrimitiveType.Dimension && (a.IsOverriddenDimension || b.IsOverriddenDimension) && a.Text != b.Text) return false;
         return a.Closed == b.Closed;
     }
 

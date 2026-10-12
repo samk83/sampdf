@@ -84,6 +84,9 @@ public static class CadLoader
             case MText mtext:
                 output.Add(new CadPrimitive(PrimitiveType.Text, layer, [P(mtext.InsertPoint)], mtext.Height * scale * toMm, mtext.Value ?? "", mtext.Rotation));
                 break;
+            case Dimension dim:
+                output.Add(DimensionPrimitive(dim, layer, P, scale * toMm));
+                break;
             case Insert insert when depth < 16:
                 {
                     // 블록 내용을 삽입 위치·배율·회전으로 옮겨 넣는다 (중첩 블록 포함)
@@ -102,6 +105,42 @@ public static class CadLoader
                 unsupported[name] = unsupported.GetValueOrDefault(name) + 1;
                 break;
         }
+    }
+
+    /// <summary>
+    /// 치수를 비교용 요소로 만든다. 치수의 그림 블록(*D)은 펼치지 않고 치수 자체의 값·문자·점을 쓴다.
+    /// 선형·정렬 치수는 치수선 양 끝도 계산해 두어 화면에 다시 그릴 수 있게 한다.
+    /// </summary>
+    private static CadPrimitive DimensionPrimitive(Dimension dim, string layer, Func<XYZ, Pt> P, double lengthScale)
+    {
+        string text;
+        try { text = dim.GetMeasurementText(); }
+        catch { text = string.IsNullOrEmpty(dim.Text) ? dim.Measurement.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : dim.Text; }
+        var measure = dim.IsAngular ? dim.Measurement : dim.Measurement * lengthScale;
+        // 문자를 직접 쓴 치수(override)는 A1 = 1. 자동 문자 치수는 단위 표시가 달라도 측정값(mm)으로 비교한다.
+        var overridden = !string.IsNullOrEmpty(dim.Text) && dim.Text != "<>" ? 1 : 0;
+
+        if (dim is DimensionAligned aligned)
+        {
+            var p1 = aligned.FirstPoint;
+            var p2 = aligned.SecondPoint;
+            var def = aligned.DefinitionPoint;
+            // 치수선 방향: 회전 치수(Linear)는 Rotation, 정렬 치수는 재는 두 점 방향
+            double ux, uy;
+            if (dim is DimensionLinear linear) { ux = Math.Cos(linear.Rotation); uy = Math.Sin(linear.Rotation); }
+            else
+            {
+                var len = Math.Sqrt((p2.X - p1.X) * (p2.X - p1.X) + (p2.Y - p1.Y) * (p2.Y - p1.Y));
+                (ux, uy) = len > 1e-12 ? ((p2.X - p1.X) / len, (p2.Y - p1.Y) / len) : (1, 0);
+            }
+            XYZ OnLine(XYZ p)
+            {
+                var t = (p.X - def.X) * ux + (p.Y - def.Y) * uy;
+                return new XYZ(def.X + ux * t, def.Y + uy * t, 0);
+            }
+            return new CadPrimitive(PrimitiveType.Dimension, layer, [P(p1), P(p2), P(OnLine(p1)), P(OnLine(p2))], measure, text, overridden);
+        }
+        return new CadPrimitive(PrimitiveType.Dimension, layer, [P(dim.DefinitionPoint)], measure, text, overridden);
     }
 
     /// <summary>$INSUNITS → (이름, mm 배율).</summary>
