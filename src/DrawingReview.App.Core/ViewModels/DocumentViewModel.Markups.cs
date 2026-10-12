@@ -124,6 +124,42 @@ public sealed partial class DocumentViewModel
         return item;
     }
 
+    /// <summary>여러 마크업을 한 번에 추가 (붙여넣기). 하나의 되돌리기 단위. 추가된 항목을 돌려준다.</summary>
+    public async Task<IReadOnlyList<MarkupItemViewModel>> AddMarkupsAsync(int pageIndex, IReadOnlyList<MarkupDraft> drafts, string name)
+    {
+        var created = new List<(string Id, MarkupDraft Draft)>();
+        foreach (var d in drafts)
+        {
+            var id = await Gate.RunAsync(() =>
+            {
+                var newId = Document.AddMarkup(pageIndex, d);
+                Document.SetMarkupStatus(pageIndex, newId, ReviewStatus.Open);
+                return newId;
+            });
+            created.Add((id, d));
+        }
+        var items = new List<MarkupItemViewModel>();
+        foreach (var (id, _) in created) items.Add(await InsertItemAsync(pageIndex, id));
+        if (created.Count == 0) return items;
+        Changed(pageIndex);
+        Undo.Push(new DelegateAction(name,
+            undo: async () =>
+            {
+                foreach (var (id, _) in created) await RemoveAsync(pageIndex, id);
+                Changed(pageIndex);
+            },
+            redo: async () =>
+            {
+                foreach (var (id, d) in created)
+                {
+                    await Gate.RunAsync(() => { Document.AddMarkup(pageIndex, d, id); Document.SetMarkupStatus(pageIndex, id, ReviewStatus.Open); });
+                    await InsertItemAsync(pageIndex, id);
+                }
+                Changed(pageIndex);
+            }));
+        return items;
+    }
+
     /// <summary>선택한(또는 주어진) 마크업 삭제. 잠긴 것과 다른 프로그램의 주석은 건너뛴다. 삭제한 개수를 돌려준다.</summary>
     public async Task<int> DeleteMarkupsAsync(IEnumerable<MarkupItemViewModel> items)
     {

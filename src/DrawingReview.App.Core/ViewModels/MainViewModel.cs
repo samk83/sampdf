@@ -1,9 +1,11 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DrawingReview.App.Core.Editing;
 using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.Tools;
 using DrawingReview.Engine.Documents;
+using DrawingReview.Engine.Markups;
 
 namespace DrawingReview.App.Core.ViewModels;
 
@@ -27,6 +29,64 @@ public sealed partial class MainViewModel : ObservableObject
         _dialogs = dialogs;
         ReviewList = new ReviewListViewModel(dialogs);
         ReviewList.NavigateRequested += (_, item) => ActiveDocument?.RevealMarkup(item);
+        ToolDefaults = new ToolDefaults(Environment.UserName);
+    }
+
+    /// <summary>도구별 기본 스타일·작성자. 설정 파일에서 불러오고 저장한다.</summary>
+    public ToolDefaults ToolDefaults { get; }
+
+    private readonly Dictionary<DocumentViewModel, MarkupInteraction> _interactions = new();
+
+    /// <summary>현재 탭의 캔버스 마우스 동작 처리기.</summary>
+    public MarkupInteraction? Interaction => ActiveDocument is { } d ? InteractionFor(d) : null;
+
+    public MarkupInteraction InteractionFor(DocumentViewModel doc)
+    {
+        if (_interactions.TryGetValue(doc, out var existing)) return existing;
+        var interaction = new MarkupInteraction(doc, ToolDefaults);
+        interaction.MarkupCreated += (_, _) => { if (!KeepToolActive) ActiveTool = ToolKind.Select; };
+        _interactions[doc] = interaction;
+        return interaction;
+    }
+
+    /// <summary>연속 배치: 켜면 마크업을 그린 뒤에도 같은 도구가 유지된다 (기획서 7장).</summary>
+    [ObservableProperty]
+    private bool _keepToolActive;
+
+    private List<MarkupDraft> _clipboard = [];
+    private int _clipboardPage = -1;
+    private int _pasteCount;
+
+    [RelayCommand]
+    private void Copy()
+    {
+        if (ActiveDocument is not { } doc) return;
+        var drafts = doc.SelectedMarkups.Where(m => m.IsEditable).Select(m => m.Draft!).ToList();
+        if (drafts.Count == 0) return;
+        _clipboard = drafts;
+        _clipboardPage = doc.CurrentPageIndex;
+        _pasteCount = 0;
+        StatusMessage = drafts.Count == 1 ? "Copied 1 markup" : $"Copied {drafts.Count} markups";
+    }
+
+    [RelayCommand]
+    private async Task CutAsync()
+    {
+        if (ActiveDocument is not { } doc) return;
+        Copy();
+        await doc.DeleteMarkupsAsync(doc.SelectedMarkups.ToList());
+    }
+
+    /// <summary>붙여넣기: 같은 페이지면 조금씩 비켜서, 다른 페이지면 같은 위치에 놓는다.</summary>
+    [RelayCommand]
+    private async Task PasteAsync()
+    {
+        if (ActiveDocument is not { } doc || _clipboard.Count == 0) return;
+        var page = doc.CurrentPageIndex;
+        double offset = page == _clipboardPage ? 12 / doc.Viewport.Zoom * ++_pasteCount : 0;
+        var drafts = _clipboard.Select(d => DraftGeometry.Translate(d, offset, offset) with { Author = ToolDefaults.Author }).ToList();
+        var items = await doc.AddMarkupsAsync(page, drafts, drafts.Count == 1 ? "Paste markup" : $"Paste {drafts.Count} markups");
+        doc.SelectMany(items);
     }
 
     public ReviewListViewModel ReviewList { get; }
@@ -92,6 +152,7 @@ public sealed partial class MainViewModel : ObservableObject
         if (oldValue != null) oldValue.PropertyChanged -= OnDocumentPropertyChanged;
         if (newValue != null) newValue.PropertyChanged += OnDocumentPropertyChanged;
         ReviewList.Document = newValue;
+        OnPropertyChanged(nameof(Interaction));
     }
 
     private void OnDocumentPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -102,9 +163,14 @@ public sealed partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SelectTool(ToolKind tool) => ActiveTool = tool;
 
-    /// <summary>Esc: 그리던 도구를 끝내고 선택 도구로 돌아간다.</summary>
+    /// <summary>Esc: 그리던 것을 취소하고, 이미 아무것도 안 하고 있으면 선택 도구로 돌아가고 선택을 푼다.</summary>
     [RelayCommand]
-    private void CancelTool() => ActiveTool = ToolKind.Select;
+    private void CancelTool()
+    {
+        if (Interaction is { IsBusy: true } i) { i.Cancel(); return; }
+        if (ActiveTool != ToolKind.Select) ActiveTool = ToolKind.Select;
+        else ActiveDocument?.ClearSelection();
+    }
 
     [RelayCommand]
     private void ShowLeftPanel(LeftPanelKind panel) => LeftPanel = panel;
@@ -185,6 +251,7 @@ public sealed partial class MainViewModel : ObservableObject
             if (answer == true && !await SaveDocumentAsync(doc)) return false;
         }
         var index = Documents.IndexOf(doc);
+        _interactions.Remove(doc);
         Documents.Remove(doc);
         doc.Dispose();
         if (ActiveDocument == doc || ActiveDocument == null)
