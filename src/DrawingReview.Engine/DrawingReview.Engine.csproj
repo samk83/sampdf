@@ -10,4 +10,9 @@
     <PackageReference Include="MuPDF.NET" Version="3.28.2.4" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 한글 보정(MuPdfUtf8Fix) 상태를 테스트에서 확인한다 -->
+    <InternalsVisibleTo Include="DrawingReview.Engine.Tests" />
+  </ItemGroup>
+
 </Project>

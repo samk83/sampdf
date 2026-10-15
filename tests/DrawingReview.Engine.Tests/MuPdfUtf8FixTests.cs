@@ -1,0 +1,31 @@
+using DrawingReview.Engine.Geometry;
+using DrawingReview.Engine.Markups;
+using DrawingReview.Engine.MuPdf;
+
+namespace DrawingReview.Engine.Tests;
+
+/// <summary>
+/// Windows 한글 깨짐 보정(MuPdfUtf8Fix)이 적용되고, 한글 읽기가 실제로 보정 콜백을 거치는지 확인한다.
+/// Linux는 원래 UTF-8이라 보정 없이도 통과하므로, "콜백을 거치는지"로 Windows에서도 고쳐질 길임을 확인한다.
+/// MuPDF.NET 버전을 올려 이 테스트가 실패하면 보정을 다시 살펴본다.
+/// </summary>
+public class MuPdfUtf8FixTests
+{
+    [Fact]
+    public void Fix_is_applied_and_korean_reads_go_through_it()
+    {
+        var engine = new MuPdfEngine();
+        Assert.True(MuPdfUtf8Fix.Applied, MuPdfUtf8Fix.Error);
+
+        using var doc = engine.Open(TestData.VirtualDrawings.CreatePlanSet());
+        var id = doc.AddMarkup(0, new RectangleDraft(new PageRect(100, 100, 300, 200)) { Comment = "기존 보 간격 확인", Author = "김샘" });
+        var before = MuPdfUtf8Fix.Calls;
+        var m = Assert.Single(doc.GetMarkups(0), x => x.Id == id);
+        Assert.Equal("기존 보 간격 확인", m.Comment);
+        Assert.Equal("김샘", m.Author);
+        Assert.True(MuPdfUtf8Fix.Calls > before, "annotation strings should be returned through the UTF-8 callback");
+
+        var outline = doc.GetOutline();
+        Assert.Contains(outline, o => o.Title == "General Notes / 일반 사항");
+    }
+}

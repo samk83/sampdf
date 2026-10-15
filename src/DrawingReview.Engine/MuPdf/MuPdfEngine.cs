@@ -5,6 +5,9 @@ namespace DrawingReview.Engine.MuPdf;
 /// <summary>MuPDF.NET(AGPL) 기반 엔진. 개인 로컬 사용 전제로 채택 검증 중.</summary>
 public sealed class MuPdfEngine : IPdfEngine
 {
+    /// <summary>Windows에서 한글이 깨지지 않도록 문자열 보정을 먼저 적용한다 (MuPdfUtf8Fix 참고).</summary>
+    static MuPdfEngine() => MuPdfUtf8Fix.Ensure();
+
     public string Name => "MuPDF.NET";
 
     public IPdfDocument Open(string path)
