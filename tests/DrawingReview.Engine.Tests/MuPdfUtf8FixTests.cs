@@ -29,3 +29,29 @@ public class MuPdfUtf8FixTests
         Assert.Contains(outline, o => o.Title == "General Notes / 일반 사항");
     }
 }
+
+/// <summary>책갈피 제목을 PDF 객체에서 직접 읽기 (Windows 한글 깨짐 우회).</summary>
+public class MuPdfOutlineTitlesTests
+{
+    [Theory]
+    [InlineData("<< /Title (Architectural) >>", "Architectural")]
+    [InlineData("<< /Title <FEFF0041C77CBC18> >>", "A일반")]
+    [InlineData("<< /Title (A \\(B\\) \\\\ C) >>", "A (B) \\ C")]
+    [InlineData("<< /Title (\\376\\377\\000A\\307\\174) >>", "A일")]          // 8진수로 쓴 UTF-16BE
+    [InlineData("<< /Title (\\357\\273\\277\\355\\225\\234) >>", "한")]        // UTF-8 (BOM 포함)
+    [InlineData("<< /Count 2 >>", "")]
+    public void Title_strings_are_decoded(string source, string expected) =>
+        Assert.Equal(expected, MuPdfOutlineTitles.Title(source));
+
+    [Fact]
+    public void Titles_follow_toc_order_and_read_korean()
+    {
+        using var doc = new MuPDF.NET.Document(stream: TestData.VirtualDrawings.CreatePlanSet());
+        var titles = MuPdfOutlineTitles.Read(doc);
+        var toc = doc.GetToc(simple: true);
+        Assert.NotNull(titles);
+        Assert.Equal(toc.Count, titles!.Count);
+        Assert.Equal(toc.Select(t => t.Item2), titles); // Linux에서는 GetToc도 맞으므로 같아야 한다
+        Assert.Contains("General Notes / 일반 사항", titles);
+    }
+}

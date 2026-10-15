@@ -146,9 +146,17 @@ internal sealed class MuPdfDocument : IPdfDocument
     {
         try
         {
+            var toc = _doc.GetToc(simple: true);
+            // 제목은 PDF 객체에서 직접 읽는다 (GetToc 제목은 Windows에서 한글이 깨짐 — MuPdfOutlineTitles 참고).
+            // 개수가 다르면(특이한 목차 구조) GetToc 제목을 그대로 쓴다.
+            var titles = MuPdfOutlineTitles.Read(_doc);
+            var useTitles = titles != null && titles.Count == toc.Count;
             var list = new List<OutlineItem>();
-            foreach (var t in _doc.GetToc(simple: true))
-                list.Add(new OutlineItem(t.Item1, t.Item2 ?? "", t.Item3 - 1)); // MuPDF 페이지 번호는 1부터
+            for (int i = 0; i < toc.Count; i++)
+            {
+                var t = toc[i];
+                list.Add(new OutlineItem(t.Item1, useTitles ? titles![i] : t.Item2 ?? "", t.Item3 - 1)); // MuPDF 페이지 번호는 1부터
+            }
             return list;
         }
         catch (Exception)

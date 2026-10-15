@@ -35,6 +35,7 @@
 | 벡터 페이지 모델 (선·글자) | `Vector/VectorPage.cs` | 좌표 모델, `RgbColor` | `CadPlotter`, `WriteVectorPdf` |
 | 벡터 페이지 → 새 PDF (`IPdfEngine.WriteVectorPdf`) | `MuPdf/MuPdfVectorWriter.cs` | `KoreanCidFont`, `SafeFileSaver` | `CadComparison` |
 | Windows 한글 깨짐 보정 (MuPDF.NET 문자열 콜백을 UTF-8로 다시 등록) | `MuPdf/MuPdfUtf8Fix.cs` | — | `MuPdfEngine` 정적 생성자 (엔진을 처음 쓸 때 한 번) |
+| 책갈피 제목을 PDF 객체에서 직접 읽기 (Windows 한글 깨짐 우회) | `MuPdf/MuPdfOutlineTitles.cs` | — | `MuPdfDocument.GetOutline` |
 | 한글 글자용 CID 글꼴 참조 (글꼴 파일 미포함) | `MuPdf/KoreanCidFont.cs` | — | `MuPdfVectorWriter`, TestData `KoreanText` |
 
 ## 마크업 종류별 PDF 저장 형식
