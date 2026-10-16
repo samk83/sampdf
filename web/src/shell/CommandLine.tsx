@@ -20,7 +20,10 @@ export function CommandLine({ compact }: { compact?: boolean }) {
     ? history.slice(-2)
     : [
         { text: t('cmdline.welcome', { app: t('app.name') }), kind: 'info' },
-        { text: t('cmdline.notYet'), kind: 'info' },
+        // 클라우드 미리보기 빌드(npm run build:preview)에서는 비교가 안 된다는 안내를 먼저
+        import.meta.env.VITE_PREVIEW === '1'
+          ? { text: t('cmdline.preview'), kind: 'cmd' }
+          : { text: t('cmdline.notYet'), kind: 'info' },
       ];
 
   // 옛 비교·PNG 탭: 한 줄만 (마지막 기록). 도면 칸을 넓게 두려고 U3·U4까지 이렇게 쓴다.

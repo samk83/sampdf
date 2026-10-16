@@ -117,6 +117,7 @@ export const en = {
   'cmdline.input': 'Command input',
   'cmdline.prompt': 'Command:',
   'cmdline.welcome': '{app} · type a command or ? for the list',
+  'cmdline.preview': 'Online preview: comparing drawings needs the app on your PC (run-web.cmd).',
   'cmdline.notYet': 'The command line starts working in the next update. Use the buttons for now.',
 
   // 상태 표시줄
