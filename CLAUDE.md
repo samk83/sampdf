@@ -7,12 +7,13 @@ Sam이 혼자 쓰는 도면 검토 프로그램. Bluebeam Revu처럼 PDF 도면�
 - 디자인 규칙: `design.md` (공통, 하네스 원본 그대로) · `design/brand.md`, `design/tokens.css` (이 프로젝트, 시안 확정 후 생김)
 - 시안 진행 기록: `design/README.md` · 확정 화면: `design/screens/index.html` (브라우저로 열기)
 - 다음 세션 시작 안내: `docs/NEXT-SESSION.md`
+- 설계서: `docs/DESIGN-SPEC.md` (화면 구조·부품·데이터·명령·API·개발 순서 U1~U12)
 - 기능 지도: `docs/FEATURES.md` · 결정 기록: `docs/DECISIONS.md` · 변경 이력: `docs/CHANGELOG.md`
 
 ## 진행 단계
 - [x] 1. 기획서로 시작 (기획서 v0.2 + Drawing Difference Checker PRD, 이후 Owner 결정 반영 → `docs/PLAN.md`)
 - [x] 2. 시안 (design-board) — 확정: A 배치 + 포커스 모드 + S1 Slate, 영어 기본. 기록 `design/README.md`, 결과 `design/brand.md`·`design/tokens.css`·`design/screens/`
-- [ ] 3. 설계 (확정 시안 기준 화면 구조·부품·데이터 연결, Owner 승인)
+- [x] 3. 설계 (확정 시안 기준 화면 구조·부품·데이터 연결, Owner 승인) — `docs/DESIGN-SPEC.md` 2026-10-16 승인
 - [ ] 4. 개발 (작은 단위로 구현·테스트·커밋)
 - [ ] 5. 출시 전 점검 (ship-check)
 

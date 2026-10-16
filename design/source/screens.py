@@ -442,7 +442,7 @@ def FExport():
     return page('Final · Export PDF', root(under + dim_overlay() + dialog('Export marked PDF', body_html, footer, 600, 120)))
 
 
-def FStart():
+def start_body(cmd_lines=None):
     nav = [('Home', 'home', True), ('Open drawing', 'file', False), ('Compare', 'logo', False), ('Transparent PNG', 'image', False), ('Tool sets', 'tools', False), ('Settings', 'settings', False)]
     navh = ''.join(f'<button aria-current="{"page" if on else "false"}" style="height: 36px; display: flex; align-items: center; gap: 10px; padding: 0 12px; border: none; border-radius: 6px; background: {T["pressed"] if on else "transparent"}; color: {"#ffffff" if on else T["text2"]}; font: inherit; font-weight: {600 if on else 400}; text-align: left">{icon(ic, 17)}{l}</button>' for l, ic, on in nav)
     actions = [('Compare drawings', 'Put the old and new revision side by side. Changes get clouds and △ numbers.', 'logo', 'CMP', True),
@@ -481,11 +481,66 @@ def FStart():
 <div style="height: 120px; display: flex; align-items: center; justify-content: center; gap: 12px; border: 1.5px dashed {T["field"]}; border-radius: 10px; color: {T["muted"]}">{icon("upload", 20)}<span><b style="color: {T["text"]}">Drop PDF or images here</b> · drop two to compare right away</span></div></section>
 <section aria-label="Recent comparisons" style="display: flex; flex-direction: column; gap: 10px"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Recent comparisons</h2><div style="display: flex; flex-direction: column; border: 1px solid {T["border"]}; border-radius: 8px; background: {T["panel"]}; overflow: hidden">{comp}</div></section>
 </div></main>'''
-    cmd = cmdline([('Sam Drawing Tools 1.0 · type a command or ? for the list', ''), ('Command: <span style="color:#fff">?</span>  opens the full command list', '')], 'Command:', '', None)
+    cmd = cmdline(cmd_lines or [('Sam Drawing Tools 1.0 · type a command or ? for the list', ''), ('Command: <span style="color:#fff">?</span>  opens the full command list', '')], 'Command:', '', None)
     body = (titlebar([('Home', True)], '')
             + f'<div style="flex: 1; display: flex; min-height: 0"><nav aria-label="Start" style="width: 212px; flex: none; display: flex; flex-direction: column; gap: 2px; padding: 16px 10px; background: {T["panel"]}; border-right: 1px solid {T["border"]}">{navh}</nav>{main}</div>'
             + cmd + statusbar('<span>Ready</span>', None, f'<span>127.0.0.1:5180</span><span style="display: flex; align-items: center; gap: 4px">{icon("globe", 12, "#ffffff")}EN</span>'))
-    return page('Final · Home', root(body))
+    return body
+
+
+def FStart():
+    return page('Final · Home', root(start_body()))
+
+
+def FOpen():
+    """Open drawing dialog (DESIGN-SPEC 3-2): the app's own file browser, served by the local engine."""
+    under = start_body([('Command: <span style="color:#fff">OPEN</span>', 'cmd'), ('OPEN  Choose a file in the dialog', '')])
+    places = [('Recent folders', 'clock', False), ('Desktop', 'monitor', False), ('Documents', 'file', False), ('Downloads', 'download', False),
+              ('Projects', 'folder', True), ('C:', 'hdd', False), ('D:', 'hdd', False)]
+    placeh = ''.join(
+        f'<button style="height: 32px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border: none; border-radius: 2px; background: {T["pressed"] if on else "transparent"}; color: {"#ffffff" if on else T["text2"]}; font: inherit; font-size: 12.5px; font-weight: {600 if on else 400}; text-align: left">{icon(ic, 15)}{l}</button>'
+        for l, ic, on in places)
+    crumbs = ['D:', 'Projects', 'Sam Office New Build', 'Structural']
+    crumbh = f'<span style="color: {T["faint"]}">{icon("chevright", 13)}</span>'.join(
+        f'<span style="color: {"#ffffff" if i == len(crumbs) - 1 else T["text2"]}; font-weight: {600 if i == len(crumbs) - 1 else 400}">{c}</span>' for i, c in enumerate(crumbs))
+    rows = [('folder', 'Superseded', '', 'Oct 2', '', False, False),
+            ('file', 'S-101_Structural_Plan_rev0.pdf', '3 pages', 'Sep 1', '2.4 MB', False, False),
+            ('file', 'S-101_Structural_Plan_rev1.pdf', '3 pages · 5 markups', 'Oct 14', '2.6 MB', True, False),
+            ('file', 'S-201_Sections_rev0.pdf', '2 pages', 'Sep 1', '1.8 MB', False, False),
+            ('file', 'S-301_Details_rev0.pdf', '6 pages', 'Sep 3', '4.1 MB', False, False),
+            ('image', 'site_photo_stamp.jpg', 'image', 'Oct 15', '0.9 MB', False, False),
+            ('file', 'S-501_Foundation_rev2.pdf', 'password-protected', 'Oct 9', '3.0 MB', False, True)]
+    rowh = ''.join(
+        f'<div role="row" aria-selected="{"true" if sel else "false"}" style="height: 34px; display: grid; grid-template-columns: 24px minmax(0, 1fr) 140px 70px 64px; column-gap: 10px; align-items: center; padding: 0 12px; border-bottom: 1px solid {T["soft"]}; '
+        f'background: {T["accentBg"] if sel else "transparent"}; box-shadow: {"inset 2px 0 0 " + T["accent"] if sel else "none"}; font-size: 12.5px; color: {T["text"]}">'
+        f'<span style="color: {"#ffd43b" if ic == "folder" else ("#ff8787" if warn else "#9ec5fe")}">{icon(ic, 15)}</span>'
+        f'<span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: {600 if sel else 400}">{n}</span>'
+        f'<span style="color: {"#ff8787" if warn else T["faint"]}; font-size: 11.5px">{meta}</span>'
+        f'<span style="color: {T["faint"]}; font-size: 11.5px">{d}</span><span style="color: {T["faint"]}; font-size: 11.5px; text-align: right">{sz}</span></div>'
+        for ic, n, meta, d, sz, sel, warn in rows)
+    head = (f'<div role="row" style="height: 30px; display: grid; grid-template-columns: 24px minmax(0, 1fr) 140px 70px 64px; column-gap: 10px; align-items: center; padding: 0 12px; '
+            f'background: {T["panel2"]}; border-bottom: 1px solid {T["border"]}; font-size: 11.5px; color: {T["muted"]}"><span></span><span>Name</span><span>Info</span><span>Modified</span><span style="text-align: right">Size</span></div>')
+    thumb = (f'<div style="height: 128px; padding: 10px; background: #f4f4f1; border: 1px solid {T["border"]}; border-radius: 2px; box-sizing: border-box">'
+             f'<svg aria-hidden="true" viewBox="0 0 160 100" width="100%" height="100%"><rect x="1" y="1" width="158" height="98" fill="none" stroke="#3b3f46"></rect>'
+             f'<path d="M14 14h120M14 44h120M14 74h120M14 14v60M54 14v60M94 14v60M134 14v60" fill="none" stroke="#3b3f46"></path><rect x="108" y="80" width="48" height="16" fill="none" stroke="#3b3f46"></rect></svg></div>')
+    preview = (f'<aside aria-label="Preview" style="width: 200px; flex: none; display: flex; flex-direction: column; gap: 10px; padding: 12px; border-left: 1px solid {T["soft"]}">{thumb}'
+               f'<span style="font-size: 12.5px; font-weight: 600; word-break: break-all">S-101_Structural_Plan_rev1.pdf</span>'
+               f'<span style="font-size: 11.5px; color: {T["muted"]}; line-height: 1.6">3 pages · A1<br>5 markups · layers REVIEW, NOTES<br>Modified Oct 14, 16:20</span>'
+               f'<span style="font-size: 11.5px; color: {T["faint"]}; line-height: 1.5">Saving with Ctrl+S writes back to this file. A .bak copy is kept the first time.</span></aside>')
+    body_html = f'''<div style="display: flex; flex-direction: column">
+<div style="height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid {T["soft"]}">{icon_btn("arrowup", "Up one folder", 28)}
+<div style="flex: 1; min-width: 0; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid {T["field"]}; border-radius: 2px; background: {T["app"]}; font-size: 12.5px">{icon("folder", 14, T["faint"])}{crumbh}</div>
+<div style="width: 180px; height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid {T["field"]}; border-radius: 2px; background: {T["app"]}; color: {T["faint"]}; font-size: 12.5px">{icon("search", 14)}Filter this folder</div></div>
+<div style="height: 360px; display: flex; min-height: 0">
+<nav aria-label="Places" style="width: 168px; flex: none; display: flex; flex-direction: column; gap: 2px; padding: 10px 8px; border-right: 1px solid {T["soft"]}; background: {T["panel2"]}">{placeh}</nav>
+<div role="grid" aria-label="Files" style="flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden">{head}{rowh}</div>{preview}</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid {T["soft"]}">
+<span style="font-size: 12px; color: {T["muted"]}">Path</span>
+<div style="flex: 1; height: 30px; display: flex; align-items: center; padding: 0 10px; border: 1px solid {T["accent"]}; border-radius: 2px; background: {T["app"]}; font-family: {T["mono"]}; font-size: 12px">D:\\Projects\\Sam Office New Build\\Structural\\S-101_Structural_Plan_rev1.pdf</div>
+<div style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid {T["field"]}; border-radius: 2px; font-size: 12.5px; color: {T["text2"]}">PDF and images{icon("chevdown", 14)}</div></div></div>'''
+    footer = (f'<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: {T["faint"]}">{icon("info", 14)}Files are read from this PC only. Dragging files into the window also works.</span>'
+              f'<span style="margin-left: auto"></span>{btn("Cancel", h=34)}{btn("Open", "primary", "folder", 34)}')
+    return page('Final · Open drawing', root(under + dim_overlay() + dialog("Open drawing", body_html, footer, 1000, 90)))
 
 
 def review_under():
@@ -604,7 +659,7 @@ def FPng():
 SCREENS = {'FReviewLine': FReviewLine, 'FReviewHatch': FReviewHatch, 'FFocus': FFocus,
            'FCompare': FCompare, 'FCompareEmpty': FCompareEmpty, 'FCompareRunning': FCompareRunning,
            'FOverlay': FOverlay, 'FExport': FExport, 'FStart': FStart,
-           'FSettings': FSettings, 'FError': FError, 'FPng': FPng}
+           'FSettings': FSettings, 'FError': FError, 'FPng': FPng, 'FOpen': FOpen}
 
 if __name__ == '__main__':
     name = sys.argv[1]

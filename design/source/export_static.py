@@ -30,6 +30,7 @@ PAGES = [
     ('10-settings', 'FSettings', 'S1', 'Settings · language, OSNAP, aliases'),
     ('11-error-empty', 'FError', 'S1', 'Error & empty states'),
     ('12-transparent-png', 'FPng', 'S1', 'Transparent PNG'),
+    ('13-open-drawing', 'FOpen', 'S1', 'Open drawing dialog (app file browser)'),
 ]
 
 # skin key -> token name (only colors that tokens.css defines)

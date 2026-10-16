@@ -75,6 +75,7 @@
 | 설정 | `screens/10-settings.html` | 언어, 오스냅, 명령 별칭, 어두운 도면 보기 |
 | 오류·빈 상태 | `screens/11-error-empty.html` | 암호 PDF, 스캔 페이지 안내, 오타 명령 제안 |
 | 투명 PNG | `screens/12-transparent-png.html` | 전·후, 설정 |
+| 파일 열기 창 | `screens/13-open-drawing.html` | 앱 전용 파일 열기(장소·경로·목록·미리보기). 설계 승인 후 추가 (DESIGN-SPEC 3-2) |
 
 화면 파일은 `design/source/export_static.py`가 만든다 (직접 고치지 말고 `design/source/screens.py`를 고친 뒤 다시 실행).
 
