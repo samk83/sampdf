@@ -13,6 +13,8 @@ export type DocTab = {
   /** 저장 안 된 변경 (●). 닫을 때·브라우저 창을 닫을 때 묻는다. */
   dirty: boolean;
   ribbonTab: RibbonTabId;
+  /** 리본을 접어 탭 줄만 보임. 옛 비교·PNG 화면 탭은 접힌 채 시작 (U3·U4까지 도면 칸을 넓게). */
+  ribbonCollapsed: boolean;
   /** 시작 화면에서 끌어다 놓아 열 때 넘겨받은 파일 (탭이 처음 그려질 때 한 번 쓴다). */
   files?: File[];
 };
@@ -20,6 +22,9 @@ export type DocTab = {
 export const HOME_TAB_ID = 'home';
 
 /** 탭 종류별로 처음 열리는 리본 탭 (설계서 2-1 표). */
+/** 아직 옛 디자인 화면을 담은 탭 종류 (U3·U4에서 새 틀로 옮기면 비운다). */
+export const LEGACY_KINDS: TabKind[] = ['compare', 'png'];
+
 export const FIRST_RIBBON: Record<TabKind, RibbonTabId> = { home: 'home', drawing: 'markup', compare: 'compare', png: 'tools' };
 
 /** 명령창 기록 한 줄. kind: info(흐림) · cmd(친 명령) · error(빨강) · ok(초록). */
@@ -34,6 +39,7 @@ export type AppState = {
   openTab: (kind: Exclude<TabKind, 'home'>, options?: { title?: string; files?: File[] }) => string;
   closeTab: (id: string) => void;
   activate: (id: string) => void;
+  /** 리본 탭을 누름: 다른 탭이면 그 탭을 펼쳐 보이고, 지금 탭을 다시 누르면 접고 펼친다. */
   setRibbonTab: (id: string, ribbonTab: RibbonTabId) => void;
   setDirty: (id: string, dirty: boolean) => void;
   toggle: (key: StatusToggleId) => void;
@@ -46,7 +52,7 @@ const HISTORY_LIMIT = 200;
 let nextId = 1;
 
 export const initialState = (): Pick<AppState, 'tabs' | 'history' | 'activeId' | 'language' | 'toggles'> => ({
-  tabs: [{ id: HOME_TAB_ID, kind: 'home', dirty: false, ribbonTab: 'home' }],
+  tabs: [{ id: HOME_TAB_ID, kind: 'home', dirty: false, ribbonTab: 'home', ribbonCollapsed: false }],
   history: [],
   activeId: HOME_TAB_ID,
   language: 'en',
@@ -62,7 +68,9 @@ export const useApp = create<AppState>()((set, get) => ({
 
   openTab: (kind, options) => {
     const id = `${kind}-${nextId++}`;
-    const tab: DocTab = { id, kind, title: options?.title, dirty: false, ribbonTab: FIRST_RIBBON[kind], files: options?.files };
+    const tab: DocTab = {
+      id, kind, title: options?.title, dirty: false, ribbonTab: FIRST_RIBBON[kind], ribbonCollapsed: LEGACY_KINDS.includes(kind), files: options?.files,
+    };
     set((s) => ({ tabs: [...s.tabs, tab], activeId: id }));
     return id;
   },
@@ -82,7 +90,11 @@ export const useApp = create<AppState>()((set, get) => ({
     if (get().tabs.some((t) => t.id === id)) set({ activeId: id });
   },
 
-  setRibbonTab: (id, ribbonTab) => set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, ribbonTab } : t)) })),
+  setRibbonTab: (id, ribbonTab) =>
+    set((s) => ({
+      tabs: s.tabs.map((t) =>
+        t.id !== id ? t : { ...t, ribbonTab, ribbonCollapsed: t.ribbonTab === ribbonTab ? !t.ribbonCollapsed : false }),
+    })),
 
   setDirty: (id, dirty) => set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, dirty } : t)) })),
 

@@ -4,7 +4,10 @@ import { RibbonButton } from '../ui/RibbonButton';
 import { useNotYet } from './notYet';
 import { RIBBON, RIBBON_TABS } from './ribbonLayout';
 
-/** 리본 탭 줄 + 리본 (설계서 2-4). 버튼 = 명령 (U2부터 실행, 지금은 명령창에 안내). */
+/**
+ * 리본 탭 줄 + 리본 (설계서 2-4). 버튼 = 명령 (U2부터 실행, 지금은 명령창에 안내).
+ * 지금 리본 탭을 다시 누르면 리본을 접고 펼친다 (접히면 탭 줄만).
+ */
 export function Ribbon({ tab }: { tab: DocTab }) {
   const t = useT();
   const notYet = useNotYet();
@@ -16,15 +19,17 @@ export function Ribbon({ tab }: { tab: DocTab }) {
         {RIBBON_TABS.map((id) => {
           const active = id === tab.ribbonTab;
           return (
-            <button key={id} type="button" role="tab" aria-selected={active} onClick={() => setRibbonTab(tab.id, id)}
+            <button key={id} type="button" role="tab" aria-selected={active} aria-expanded={active ? !tab.ribbonCollapsed : undefined} onClick={() => setRibbonTab(tab.id, id)}
               className={`h-touch rounded-t-sm px-3.5 ${
-                active ? 'bg-surface font-semibold text-fg shadow-[inset_0_2px_0_var(--color-accent)]' : 'text-fg-muted hover:text-fg'
+                active && !tab.ribbonCollapsed ? 'bg-surface font-semibold text-fg shadow-[inset_0_2px_0_var(--color-accent)]'
+                  : active ? 'font-semibold text-fg' : 'text-fg-muted hover:text-fg'
               }`}>
               {t(`ribbon.tab.${id}` as MessageKey)}
             </button>
           );
         })}
       </div>
+      {!tab.ribbonCollapsed && (
       <div role="toolbar" aria-label={t(`ribbon.tab.${tab.ribbonTab}` as MessageKey)}
         className="flex h-ribbon items-stretch overflow-x-auto border-b border-default bg-surface px-2 py-1.5">
         {RIBBON[tab.ribbonTab].map((group) => (
@@ -46,6 +51,7 @@ export function Ribbon({ tab }: { tab: DocTab }) {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

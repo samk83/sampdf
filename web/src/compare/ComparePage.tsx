@@ -20,7 +20,12 @@ type PaneSize = { width: number; height: number };
  * 도면 비교 화면: 왼쪽 원본, 오른쪽 리비전. 두 파일이 모두 열리면 자동으로 비교하고
  * 리비전 칸에 하이라이트·구름·△를 보여 준다. 내려받기는 표시를 넣은 리비전 PDF.
  */
-export function ComparePage({ active, initialFiles }: { active: boolean; initialFiles?: File[] }) {
+export function ComparePage({ active, initialFiles, onDirtyChange }: {
+  active: boolean;
+  initialFiles?: File[];
+  /** 지운 변경·고친 표시가 있으면 true: 탭을 닫을 때 묻는다 (설계서 2-1). */
+  onDirtyChange?: (dirty: boolean) => void;
+}) {
   const [left, setLeft] = useState<Side>(emptySide);
   const [right, setRight] = useState<Side>(emptySide);
   const [result, setResult] = useState<CompareResult | null>(null);
@@ -76,6 +81,14 @@ export function ComparePage({ active, initialFiles }: { active: boolean; initial
     if (initialFiles[0]) void open('left', initialFiles[0]);
     if (initialFiles[1]) void open('right', initialFiles[1]);
   }, []);
+
+  // 탭을 닫으면(화면이 사라지면) 서버에 올린 파일도 닫는다 (설계서 5-9 서버 메모리)
+  const openIds = useRef<string[]>([]);
+  openIds.current = [left.file?.id, right.file?.id].filter((id): id is string => !!id);
+  useEffect(() => () => openIds.current.forEach(closeFile), []);
+
+  const hasWork = excluded.size > 0 || Object.keys(edits).length > 0;
+  useEffect(() => onDirtyChange?.(hasWork), [hasWork, onDirtyChange]);
 
   const close = (side: 'left' | 'right') => {
     const s = side === 'left' ? left : right;
@@ -311,7 +324,7 @@ export function ComparePage({ active, initialFiles }: { active: boolean; initial
             )}
             <SettingsMenu value={settings} onChange={setSettings} />
             <button type="button" onClick={download} disabled={!result || exporting}
-              className="ml-1 inline-flex h-[38px] items-center gap-2 rounded-lg bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
+              className="ml-1 inline-flex h-[38px] items-center gap-2 rounded-[8px] bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />}
               PDF 내려받기
             </button>
@@ -374,7 +387,7 @@ export function ComparePage({ active, initialFiles }: { active: boolean; initial
           )}
           {comparing && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
-              <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 text-[14px] leading-[20px] font-semibold shadow-lg">
+              <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 text-[14px] leading-[20px] font-semibold shadow-[0_10px_15px_-3px_rgb(0_0_0/0.1),0_4px_6px_-4px_rgb(0_0_0/0.1)]">
                 <Loader2 className="h-5 w-5 animate-spin text-legacy-accent" aria-hidden /> 비교하는 중…
               </div>
             </div>
@@ -423,7 +436,7 @@ function Pane({ title, side, pageNote, onClose, closeLabel, children }: {
           {pageNote && <span className="whitespace-nowrap text-[#6b7280]">· {pageNote}</span>}
         </div>
         {side.file && (
-          <button type="button" aria-label={closeLabel ?? `${title} 닫기`} onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-md text-legacy-muted hover:bg-[#eef0f3]">
+          <button type="button" aria-label={closeLabel ?? `${title} 닫기`} onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-[6px] text-legacy-muted hover:bg-[#eef0f3]">
             <X className="h-4 w-4" aria-hidden />
           </button>
         )}

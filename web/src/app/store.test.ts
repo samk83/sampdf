@@ -20,6 +20,18 @@ describe('문서 탭 (설계서 2-1)', () => {
     expect(s().tabs.map((t) => t.id)).toEqual([HOME_TAB_ID, c, p]);
   });
 
+  it('옛 화면 탭은 리본이 접힌 채 열리고, 리본 탭을 누르면 펼치고 같은 탭을 다시 누르면 접는다', () => {
+    const c = s().openTab('compare');
+    const tab = () => s().tabs.find((t) => t.id === c)!;
+    expect(tab().ribbonCollapsed).toBe(true);
+    s().setRibbonTab(c, 'draw');
+    expect(tab()).toMatchObject({ ribbonTab: 'draw', ribbonCollapsed: false });
+    s().setRibbonTab(c, 'draw');
+    expect(tab().ribbonCollapsed).toBe(true);
+    s().setRibbonTab(c, 'draw');
+    expect(tab().ribbonCollapsed).toBe(false);
+  });
+
   it('Home 탭은 닫을 수 없다', () => {
     s().closeTab(HOME_TAB_ID);
     expect(s().tabs).toHaveLength(1);
@@ -55,8 +67,8 @@ describe('문서 탭 (설계서 2-1)', () => {
     const b = s().openTab('compare');
     s().setRibbonTab(a, 'view');
     s().setDirty(b, true);
-    expect(s().tabs.find((t) => t.id === a)).toMatchObject({ ribbonTab: 'view', dirty: false });
-    expect(s().tabs.find((t) => t.id === b)).toMatchObject({ ribbonTab: 'compare', dirty: true });
+    expect(s().tabs.find((t) => t.id === a)).toMatchObject({ ribbonTab: 'view', ribbonCollapsed: false, dirty: false });
+    expect(s().tabs.find((t) => t.id === b)).toMatchObject({ ribbonTab: 'compare', ribbonCollapsed: true, dirty: true });
   });
 });
 

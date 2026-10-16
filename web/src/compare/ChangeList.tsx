@@ -35,7 +35,7 @@ export function ChangeList({ changes, removedCount, filter, onFilter, selectedId
       <div className="flex h-12 items-center justify-between border-b border-[#eef0f3] pl-4 pr-2">
         <h2 className="text-[15px] font-bold">변경 {changes.length}건</h2>
         <button type="button" aria-label="변경 목록 접기" onClick={onCollapse}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-legacy-muted hover:bg-[#eef0f3]">
+          className="flex h-9 w-9 items-center justify-center rounded-[8px] text-legacy-muted hover:bg-[#eef0f3]">
           <PanelRightClose className="h-[18px] w-[18px]" aria-hidden />
         </button>
       </div>
@@ -60,7 +60,7 @@ export function ChangeList({ changes, removedCount, filter, onFilter, selectedId
             <li key={c.id}>
               <div className={`flex items-center gap-2.5 rounded-[10px] p-2.5 ${selected ? 'bg-[#eff4ff] outline outline-2 outline-legacy-accent' : 'hover:bg-[#f4f5f7]'}`}>
                 <button type="button" onClick={() => onSelect(c)} className="flex min-w-0 flex-1 items-center gap-2.5 text-left">
-                  <span className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-md ${
+                  <span className={`flex h-[26px] w-[26px] flex-none items-center justify-center rounded-[6px] ${
                     c.category === 'text' ? 'bg-[#fef3c7] text-[#a16207]' : 'bg-[#fee2e2] text-[#b91c1c]'}`}>
                     {c.category === 'text' ? <Highlighter className="h-[15px] w-[15px]" aria-hidden /> : <Cloud className="h-[15px] w-[15px]" aria-hidden />}
                   </span>
@@ -75,7 +75,7 @@ export function ChangeList({ changes, removedCount, filter, onFilter, selectedId
                   </span>
                 </button>
                 <button type="button" aria-label={`변경 ${c.number} 지우기`} onClick={() => onRemove(c)}
-                  className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-lg text-[#6b7280] hover:bg-white hover:text-red-700">
+                  className="flex h-[34px] w-[34px] flex-none items-center justify-center rounded-[8px] text-[#6b7280] hover:bg-white hover:text-red-700">
                   <Trash2 className="h-[15px] w-[15px]" aria-hidden />
                 </button>
               </div>

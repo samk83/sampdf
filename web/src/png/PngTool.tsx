@@ -120,7 +120,7 @@ export function PngTool({ initialFile }: { initialFile?: File }) {
     <div className="flex h-full flex-col bg-[#f4f5f7] text-legacy-ink">
       <AppHeader right={
         <button type="button" onClick={download} disabled={!image}
-          className="inline-flex h-[38px] items-center gap-2 rounded-lg bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
+          className="inline-flex h-[38px] items-center gap-2 rounded-[8px] bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
           <Download className="h-4 w-4" aria-hidden /> PNG 내려받기
         </button>
       } />
@@ -135,7 +135,7 @@ export function PngTool({ initialFile }: { initialFile?: File }) {
               </div>
               {image && (
                 <button type="button" aria-label="그림 닫기" onClick={() => { setImage(null); setResultSize(null); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-legacy-muted hover:bg-[#eef0f3]">
+                  className="flex h-8 w-8 items-center justify-center rounded-[6px] text-legacy-muted hover:bg-[#eef0f3]">
                   <X className="h-4 w-4" aria-hidden />
                 </button>
               )}
@@ -179,11 +179,11 @@ export function PngTool({ initialFile }: { initialFile?: File }) {
           <div className="flex flex-col gap-2.5">
             <div className="text-[14px] leading-[20px] font-semibold">배경 색</div>
             <div className="flex items-center gap-2.5">
-              <span className="h-9 w-9 rounded-lg border border-[#c3c8d1]" style={{ background: toHex(background) }} />
+              <span className="h-9 w-9 rounded-[8px] border border-[#c3c8d1]" style={{ background: toHex(background) }} />
               <span className="flex-1 font-mono text-[13px] text-[#3f4552]">{toHex(background)}{autoBackground ? ' (자동)' : ''}</span>
               <button type="button" aria-label="그림에서 배경 색 찍기" title="그림에서 배경 색 찍기" aria-pressed={picking} disabled={!image}
                 onClick={() => setPicking((p) => !p)}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border disabled:opacity-40 ${picking ? 'border-legacy-accent bg-legacy-accent-soft text-legacy-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
+                className={`flex h-10 w-10 items-center justify-center rounded-[8px] border disabled:opacity-40 ${picking ? 'border-legacy-accent bg-legacy-accent-soft text-legacy-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
                 <Pipette className="h-[17px] w-[17px]" aria-hidden />
               </button>
             </div>
@@ -202,7 +202,7 @@ export function PngTool({ initialFile }: { initialFile?: File }) {
             )}
           </div>
 
-          <p className="mt-auto text-[12px] leading-[16px] leading-relaxed text-legacy-muted">그림은 브라우저 안에서만 처리돼요. 슬라이더를 움직이면 결과가 바로 바뀝니다.</p>
+          <p className="mt-auto text-[12px] leading-relaxed text-legacy-muted">그림은 브라우저 안에서만 처리돼요. 슬라이더를 움직이면 결과가 바로 바뀝니다.</p>
         </aside>
       </div>
     </div>

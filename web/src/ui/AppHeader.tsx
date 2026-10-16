@@ -21,7 +21,7 @@ export function IconButton({ label, onClick, children, pressed, disabled }: {
 }) {
   return (
     <button type="button" aria-label={label} title={label} aria-pressed={pressed} disabled={disabled} onClick={onClick}
-      className={`flex h-9 w-9 items-center justify-center rounded-lg disabled:opacity-40 ${
+      className={`flex h-9 w-9 items-center justify-center rounded-[8px] disabled:opacity-40 ${
         pressed ? 'bg-legacy-accent-soft text-legacy-accent' : 'text-[#3f4552] hover:bg-[#eef0f3]'
       }`}>
       {children}

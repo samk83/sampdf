@@ -13,7 +13,7 @@ const LINE_COLOR: Record<HistoryLine['kind'], string> = {
  * 명령창 자리 (아래에 붙은 모양, 01·04). 기록 2줄 + 입력 줄.
  * 입력·자동완성·실행은 U2에서 만든다. 지금은 버튼을 눌렀을 때의 안내가 기록에 쌓인다.
  */
-export function CommandLine() {
+export function CommandLine({ compact }: { compact?: boolean }) {
   const t = useT();
   const history = useApp((s) => s.history);
   const shown: HistoryLine[] = history.length
@@ -22,6 +22,17 @@ export function CommandLine() {
         { text: t('cmdline.welcome', { app: t('app.name') }), kind: 'info' },
         { text: t('cmdline.notYet'), kind: 'info' },
       ];
+
+  // 옛 비교·PNG 탭: 한 줄만 (마지막 기록). 도면 칸을 넓게 두려고 U3·U4까지 이렇게 쓴다.
+  if (compact) {
+    const last = shown[shown.length - 1];
+    return (
+      <section aria-label={t('cmdline.label')} className="flex h-cmdline-input flex-none items-center gap-2.5 border-t border-default bg-sunken pl-3 pr-2 font-mono text-sm">
+        <Terminal className="h-icon w-icon flex-none text-accent" aria-hidden />
+        <div role="log" aria-live="polite" className={`min-w-0 flex-1 truncate ${LINE_COLOR[last.kind]}`}>{last.text}</div>
+      </section>
+    );
+  }
 
   return (
     <section aria-label={t('cmdline.label')} className="relative flex flex-none flex-col border-t border-default bg-sunken font-mono text-sm">

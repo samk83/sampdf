@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { activeTab, useApp, type DocTab } from '../app/store';
+import { useCallback, useEffect } from 'react';
+import { activeTab, LEGACY_KINDS, useApp, type DocTab } from '../app/store';
 import { ComparePage } from '../compare/ComparePage';
 import { PngTool } from '../png/PngTool';
 import { CommandLine } from './CommandLine';
@@ -22,8 +22,16 @@ export function AppShell() {
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (useApp.getState().tabs.some((t) => t.dirty)) e.preventDefault();
     };
+    // 파일 놓는 칸 밖에 떨어뜨려도 브라우저가 그 파일로 페이지를 바꾸지 않게 (열린 탭을 잃음)
+    const stop = (e: DragEvent) => e.preventDefault();
     window.addEventListener('beforeunload', onBeforeUnload);
-    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+    window.addEventListener('dragover', stop);
+    window.addEventListener('drop', stop);
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload);
+      window.removeEventListener('dragover', stop);
+      window.removeEventListener('drop', stop);
+    };
   }, []);
 
   return (
@@ -37,18 +45,20 @@ export function AppShell() {
           </div>
         ))}
       </div>
-      <CommandLine />
+      <CommandLine compact={LEGACY_KINDS.includes(active.kind)} />
       <StatusBar tab={active} />
     </div>
   );
 }
 
 function TabContent({ tab, active }: { tab: DocTab; active: boolean }) {
+  const setDirty = useApp((s) => s.setDirty);
+  const onDirtyChange = useCallback((dirty: boolean) => setDirty(tab.id, dirty), [setDirty, tab.id]);
   switch (tab.kind) {
     case 'home':
       return <HomeScreen active={active} />;
     case 'compare':
-      return <div className="legacy h-full"><ComparePage active={active} initialFiles={tab.files} /></div>;
+      return <div className="legacy h-full"><ComparePage active={active} initialFiles={tab.files} onDirtyChange={onDirtyChange} /></div>;
     case 'png':
       return <div className="legacy h-full"><PngTool initialFile={tab.files?.[0]} /></div>;
     case 'drawing':

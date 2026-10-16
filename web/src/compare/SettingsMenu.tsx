@@ -29,7 +29,7 @@ export function SettingsMenu({ value, onChange }: { value: MarkSettings; onChang
   return (
     <div ref={ref} className="relative">
       <button type="button" aria-expanded={open} onClick={() => setOpen((o) => !o)}
-        className={`inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] ${open ? 'border-legacy-accent bg-legacy-accent-soft text-legacy-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
+        className={`inline-flex h-9 items-center gap-1.5 rounded-[8px] border px-3 text-[13px] ${open ? 'border-legacy-accent bg-legacy-accent-soft text-legacy-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
         <Settings2 className="h-4 w-4" aria-hidden />
         표시 설정
       </button>
@@ -42,7 +42,7 @@ export function SettingsMenu({ value, onChange }: { value: MarkSettings; onChang
             <label className="flex items-center justify-between text-[13px] text-[#3f4552]">
               {value.numbering === 'sequential' ? '시작 번호' : '번호'}
               <input value={value.startLabel} maxLength={4} aria-label="리비전 번호" onChange={(e) => set({ startLabel: e.target.value })}
-                className="h-9 w-20 rounded-md border border-[#c3c8d1] px-2 font-mono text-[14px] leading-[20px] text-legacy-ink" />
+                className="h-9 w-20 rounded-[6px] border border-[#c3c8d1] px-2 font-mono text-[14px] leading-[20px] text-legacy-ink" />
             </label>
             <span className="text-[12px] leading-[16px] text-legacy-muted">{value.numbering === 'sequential' ? '예: 1 → 1, 2, 3…  /  A → A, B, C…' : '모든 구름에 같은 번호를 붙여요.'}</span>
           </div>

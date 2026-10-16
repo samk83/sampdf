@@ -147,10 +147,10 @@
 | 옛 비교·PNG 화면 전용 밝은 스타일 (U3·U4에서 지움) | `app/legacy.css` | — | `shell/AppShell` |
 | 브라우저 키 시험 화면 (위험 시험 R7, 주소 끝 `#keytest`) | `app/KeyTest.tsx` | `i18n` | `App` |
 | 화면 글자 번역 `t()` (영어 기준, 빠진 키는 영어, 1개/여러 개) | `i18n/index.ts`, `i18n/en.ts`, `i18n/ko.ts` | `app/store` (언어) | 새 화면 전체 |
-| 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄 | `shell/AppShell.tsx` | 아래 부품 | `App` |
+| 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄, 저장 안 된 탭이 있으면 창 닫기 전 확인, 칸 밖에 떨어뜨린 파일 무시 | `shell/AppShell.tsx` | 아래 부품 | `App` |
 | 제목줄 (앱 이름, 문서 탭 열기·닫기·가운데 버튼 닫기, ●, ↶↷, Focus) | `shell/TitleBar.tsx` | `ui/IconButton`, `app/store` | `AppShell` |
-| 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표) | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
-| 명령창 자리 (기록 2줄 + 입력 줄. 입력은 U2) | `shell/CommandLine.tsx` | `app/store` (기록) | `AppShell` |
+| 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표). 지금 탭을 다시 누르면 접고 펼침, 옛 화면 탭은 접힌 채 시작 | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
+| 명령창 자리 (기록 2줄 + 입력 줄, 옛 화면 탭은 한 줄. 입력은 U2) | `shell/CommandLine.tsx` | `app/store` (기록) | `AppShell` |
 | 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
 | 시작 화면 (왼쪽 메뉴, 큰 카드 3개, 최근 목록 자리, 창 어디나 끌어다 놓기) | `shell/HomeScreen.tsx` | `app/dropRouting` | `AppShell` |
 | 아직 동작하지 않는 버튼 → 명령창에 안내 (U2에서 명령 실행으로 바뀜) | `shell/notYet.ts` | `app/store` (기록) | 리본, 제목줄, 시작 화면 |
@@ -159,7 +159,7 @@
 | 색 하드코딩 검사·마크업 색 비교 (테스트) | `app/tokens.test.ts` | `design/tokens.css` | `npm test` |
 | 옛 위쪽 도구 막대·아이콘 버튼 (비교·PNG 화면 안, U3·U4에서 지움) | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
 | 서버 호출·자료 모양·파일 저장 | `api.ts` | — | 비교 화면, PNG 화면(저장) |
-| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기). 비교 탭 안에서 옛 디자인 그대로, 숨긴 탭은 키를 안 받음, 시작 화면에서 받은 파일을 바로 엶 | `compare/ComparePage.tsx` | 아래 부품들 | `shell/AppShell` (비교 탭마다 하나) |
+| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기). 비교 탭 안에서 옛 디자인 그대로, 숨긴 탭은 키를 안 받음, 시작 화면에서 받은 파일을 바로 엶, 탭을 닫으면 서버 파일도 닫음, 지운 변경·고친 표시가 있으면 탭 ● | `compare/ComparePage.tsx` | 아래 부품들 | `shell/AppShell` (비교 탭마다 하나) |
 | 좌우 칸과 굵은 구분선 (끌어서 크기 조절, 두 번 누르면 반반, ← →) | `compare/SplitPanes.tsx` | — | `ComparePage` |
 | 표시 설정 (△ 번호 하나씩/같은 번호, 시작 번호, 글자 변경도 구름, 제목란 무시) | `compare/SettingsMenu.tsx` | `ui/Segmented` | `ComparePage` |
 | △ 번호 매기기 (1,2,3… / A,B,C… / 같은 번호) | `compare/numbering.ts` | — | `ComparePage` (화면·내려받기 공통) |

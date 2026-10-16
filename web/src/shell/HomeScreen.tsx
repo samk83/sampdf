@@ -1,11 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { File as FileIcon, GitCompare, House, Image, Settings, Upload, Wrench, type LucideIcon } from 'lucide-react';
 import { compareTitle, routeDrop } from '../app/dropRouting';
 import { useApp } from '../app/store';
 import { useT } from '../i18n';
 import { useNotYet } from './notYet';
 
-/** 시작 화면 (확정 시안 01). 최근 파일·비교 목록은 U5에서 채운다. */
+/**
+ * 시작 화면 (확정 시안 01). 최근 파일·비교 목록은 U5에서 채운다.
+ * `px-[30px]`·`h-[136px]` 같은 대괄호 크기는 시안 값 그대로 (간격 토큰 4·8·12…에 없는 값).
+ */
 export function HomeScreen({ active }: { active: boolean }) {
   const t = useT();
   const notYet = useNotYet();
@@ -15,6 +18,15 @@ export function HomeScreen({ active }: { active: boolean }) {
 
   const openCompare = (files?: File[]) => openTab('compare', { files, title: files ? compareTitle(t('tabs.compare'), files) : undefined });
   const openPng = (files?: File[]) => openTab('png', { files, title: files ? `${t('tabs.png')} · ${files[0].name}` : undefined });
+
+  const handleDrop = (dropped: File[]) => {
+    const route = routeDrop(dropped);
+    if (route.kind === 'compare') openCompare(route.files);
+    else if (route.kind === 'png') openPng(route.files);
+    else log({ text: t('home.drop.unsupported'), kind: 'error' });
+  };
+  const handleDropRef = useRef(handleDrop);
+  handleDropRef.current = handleDrop;
 
   // "Drop files anywhere in this window": 시작 화면이 보일 때 창 어디에 놓아도 연다
   useEffect(() => {
@@ -28,10 +40,7 @@ export function HomeScreen({ active }: { active: boolean }) {
     const onDrop = (e: DragEvent) => {
       e.preventDefault();
       setOver(false);
-      const route = routeDrop(Array.from(e.dataTransfer?.files ?? []));
-      if (route.kind === 'compare') openCompare(route.files);
-      else if (route.kind === 'png') openPng(route.files);
-      else log({ text: t('home.drop.unsupported'), kind: 'error' });
+      handleDropRef.current(Array.from(e.dataTransfer?.files ?? []));
     };
     window.addEventListener('dragover', onOver);
     window.addEventListener('dragleave', onLeave);
@@ -41,7 +50,7 @@ export function HomeScreen({ active }: { active: boolean }) {
       window.removeEventListener('dragleave', onLeave);
       window.removeEventListener('drop', onDrop);
     };
-  });
+  }, [active]);
 
   return (
     <div className="flex h-full min-h-0">
