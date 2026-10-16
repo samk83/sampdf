@@ -141,7 +141,13 @@
 | 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
 |---|---|---|---|
 | 앱 시작 (토큰·글꼴·CSS 불러오기), `#keytest`이면 키 시험 화면 | `app/main.tsx`, `app/App.tsx` | `design/tokens.css` | `index.html` |
-| 공용 상태 보관소 (문서 탭 열기·닫기·전환, 탭별 리본 탭·저장 안 됨, 상태 토글, 명령창 기록) | `app/store.ts` (Zustand) | — | 공통 틀 전체 |
+| 공용 상태 보관소 (문서 탭 열기·닫기·전환, 탭별 리본 탭·저장 안 됨, 상태 토글, 명령창 기록·입력·질문·이전 입력, 패널·명령창 숨김, 명령 목록 창) | `app/store.ts` (Zustand) | — | 공통 틀 전체 |
+| 키보드 분배: 글자 → 명령창(입력칸·대화상자에 커서가 있으면 그 칸), F1·F2·F3·F7·F8·F9·Ctrl+0·Ctrl+9, 빈 곳 Enter·Space = 실행, Esc = 취소 | `app/keyboard.ts`, `shell/useGlobalKeys.ts`, `shell/cmdlineFocus.ts` | `commands/runner` | `AppShell` |
+| 명령 등록표 (1단계 명령 전부 + 2단계 3개, 별칭·단축키·쓸 수 있는 탭·갈래) | `commands/registry.ts` | — | 리본, 명령창, 명령 목록 창 |
+| 명령 찾기·자동완성 순서·오타 제안(글자 차이 2 이하) | `commands/lookup.ts` | — | 명령창, runner |
+| 입력 해석: 좌표 `100,200`·`@100,50`·`@500<90`·거리, 오스냅 한 번(END…NEA), 옵션 앞글자, 숫자 | `commands/parseInput.ts` | — | runner (U7a부터 점 질문) |
+| 명령 실행: 질문(옵션·숫자·글자·점·고르기)과 답, 틀린 답은 빨간 줄 + 다시 묻기, Esc 취소, 빈 Enter 반복, 쓸 수 없는 탭·등록만 된 명령·2단계 안내, 버튼 = 명령(지금 명령 취소), 투명 명령(GRID 등) | `commands/runner.ts` | `commands/builtins`, `lookup`, `parseInput` | 명령창, 리본, 제목줄, 시작 화면, 상태 표시줄, 단축키 |
+| U2에서 동작하는 명령: `?`/HELP, GRID, ORTHO, SNAP, PANELS, CMDLINE, TABNEXT, TABPREV, CMP, PNG, EXIT(저장 안 됐으면 명령창에서 `[Yes/No]`) | `commands/builtins.ts` | `app/store` | runner |
 | 시작 화면에 끌어다 놓은 파일 → 열 탭 정하기 | `app/dropRouting.ts` | — | `shell/HomeScreen` |
 | 글꼴 앱 안에 넣기 (Pretendard·JetBrains Mono, 인터넷 없이) | `app/fonts.css` | npm `pretendard`, `@fontsource/jetbrains-mono` | `main.tsx` |
 | 옛 비교·PNG 화면 전용 밝은 스타일 (U3·U4에서 지움) | `app/legacy.css` | — | `shell/AppShell` |
@@ -150,11 +156,13 @@
 | 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄, 저장 안 된 탭이 있으면 창 닫기 전 확인, 칸 밖에 떨어뜨린 파일 무시 | `shell/AppShell.tsx` | 아래 부품 | `App` |
 | 제목줄 (앱 이름, 문서 탭 열기·닫기·가운데 버튼 닫기, ●, ↶↷, Focus) | `shell/TitleBar.tsx` | `ui/IconButton`, `app/store` | `AppShell` |
 | 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표). 지금 탭을 다시 누르면 접고 펼침, 옛 화면 탭은 접힌 채 시작 | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
-| 명령창 자리 (기록 2줄 + 입력 줄, 옛 화면 탭은 한 줄. 입력은 U2) | `shell/CommandLine.tsx` | `app/store` (기록) | `AppShell` |
+| 명령창 (기록 2줄 + 입력 줄, 질문과 눌러서 고르는 [옵션], ↑↓ 이전 입력, Tab 완성·제안 받기, F2 기록 펼치기. 옛 화면 탭은 입력 줄만 + 마지막 기록) | `shell/CommandLine.tsx` | `commands/runner`, `ui/IconButton` | `AppShell` |
+| 명령 자동완성 목록 (시안 04: 이름·별칭·설명·단축키, 최대 8줄) | `shell/Autocomplete.tsx` | `commands/lookup` | `CommandLine` |
+| 명령 목록 창 (`?`·F1: 갈래별, 이 탭에서 못 씀·나중·Phase 2 표시, 거르기 칸, 누르면 실행) | `shell/CommandListDialog.tsx` | `ui/Dialog`, `commands/registry` | `AppShell` |
 | 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
 | 시작 화면 (왼쪽 메뉴, 큰 카드 3개, 최근 목록 자리, 창 어디나 끌어다 놓기) | `shell/HomeScreen.tsx` | `app/dropRouting` | `AppShell` |
-| 아직 동작하지 않는 버튼 → 명령창에 안내 (U2에서 명령 실행으로 바뀜) | `shell/notYet.ts` | `app/store` (기록) | 리본, 제목줄, 시작 화면 |
-| 새 기본 부품 (토큰만 사용): 아이콘 버튼, 리본 버튼("Phase 2" 꼬리표), 상태 토글 | `ui/IconButton.tsx`, `ui/RibbonButton.tsx`, `ui/StatusToggle.tsx` | lucide-react | 공통 틀 |
+| 명령이 없는 버튼(시작 화면 Tool sets) → 명령창에 "나중에" 안내. 명령이 있는 버튼은 모두 `runCommand` | `shell/notYet.ts` | `app/store` (기록) | 시작 화면 |
+| 새 기본 부품 (토큰만 사용): 아이콘 버튼, 리본 버튼("Phase 2" 꼬리표), 상태 토글, 대화상자(Esc 닫기, Tab이 상자 안에서만, 닫으면 커서 원위치) | `ui/IconButton.tsx`, `ui/RibbonButton.tsx`, `ui/StatusToggle.tsx`, `ui/Dialog.tsx` | lucide-react | 공통 틀 |
 | PDF에 넣는 마크업 색 (tokens.css와 같은지 테스트) | `doc/palette.ts` | — | (U7부터) 저장 |
 | 색 하드코딩 검사·마크업 색 비교 (테스트) | `app/tokens.test.ts` | `design/tokens.css` | `npm test` |
 | 옛 위쪽 도구 막대·아이콘 버튼 (비교·PNG 화면 안, U3·U4에서 지움) | `ui/AppHeader.tsx` | lucide-react | 두 화면 |

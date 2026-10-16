@@ -4,7 +4,7 @@
 
 > **2026-10-16 갱신 — 설계 승인됨**: `docs/DESIGN-SPEC.md` v1.0 (Owner "설계승인"). 결정은 `docs/DECISIONS.md`에 옮김.
 > 다음은 **4단계 개발**: Owner가 "코딩 진행해"라고 하면 설계서 9장의 U1(토큰·글꼴·공통 틀·문서 탭·Zustand·다국어 틀·브라우저 키 시험 R7)부터.
-> **2026-10-16 갱신 — U1 완료** (리뷰어 지적 반영까지, 브랜치 `claude/project-thread-5mv5zs`, `docs/CHANGELOG.md` 맨 위). 다음은 **U2 명령 시스템**. U2에서 정할 것: Ctrl+9(`CMDLINE`)는 브라우저 탭 이동 키라 못 쓸 가능성이 큼 (`docs/risk-r7.md`). Owner Windows 확인 요청: 새 화면 실행, `#keytest` 키 시험.
+> **2026-10-16 갱신 — U2 완료** (명령 시스템, 리뷰어 지적 반영까지, 브랜치 `claude/project-thread-5mv5zs`, `docs/CHANGELOG.md` 맨 위). 다음은 **U3 비교 탭 옮기기**. Owner Windows 확인 요청: 새 화면 실행, `#keytest` 키 시험, 한글 상태로 명령 치기, Ctrl+9.
 > **온라인 미리보기**: https://claude.ai/artifact/NZfSGkzc8ZF8jHTogVjHWv (Owner 비공개). 개발 단위가 끝날 때마다 같은 링크로 갱신: `cd web && VITE_PREVIEW=1 npm run build:preview` → `preview-dist/`를 아티팩트로 올림(같은 URL을 `url`로). 비교는 서버가 없어 안 됨.
 > 위험 시험 R1은 Owner의 실제 CAD PDF 1~2장이 필요하다. 아래 "시작 프롬프트"와 "설계에서 정할 것"은 설계 시작 때의 기록이다.
 

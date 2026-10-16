@@ -1,16 +1,15 @@
 import { useApp, type DocTab } from '../app/store';
 import { useT, type MessageKey } from '../i18n';
 import { RibbonButton } from '../ui/RibbonButton';
-import { useNotYet } from './notYet';
+import { runCommand } from '../commands/runner';
 import { RIBBON, RIBBON_TABS } from './ribbonLayout';
 
 /**
- * 리본 탭 줄 + 리본 (설계서 2-4). 버튼 = 명령 (U2부터 실행, 지금은 명령창에 안내).
+ * 리본 탭 줄 + 리본 (설계서 2-4). 버튼 = 명령: 누르면 명령창에 그 명령을 쳐 준 것과 같다 (6-1).
  * 지금 리본 탭을 다시 누르면 리본을 접고 펼친다 (접히면 탭 줄만).
  */
 export function Ribbon({ tab }: { tab: DocTab }) {
   const t = useT();
-  const notYet = useNotYet();
   const setRibbonTab = useApp((s) => s.setRibbonTab);
 
   return (
@@ -43,7 +42,7 @@ export function Ribbon({ tab }: { tab: DocTab }) {
                 return (
                   <RibbonButton key={b.id} icon={b.icon} label={label} tooltip={tooltip}
                     tag={b.phase ? t('soon.phase2') : undefined}
-                    onClick={() => notYet(b.command, b.phase ? 'phase2' : 'command')} />
+                    onClick={() => void runCommand(b.command)} />
                 );
               })}
             </div>

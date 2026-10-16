@@ -2,7 +2,7 @@ import { Fullscreen, GitCompare, Redo2, Undo2, X } from 'lucide-react';
 import { HOME_TAB_ID, useApp, type DocTab } from '../app/store';
 import { useT, type MessageKey } from '../i18n';
 import { IconButton } from '../ui/IconButton';
-import { useNotYet } from './notYet';
+import { runCommand } from '../commands/runner';
 
 /** 탭에 보이는 이름: 정한 이름이 없으면 종류별 기본 이름. */
 export function useTabTitle() {
@@ -13,7 +13,6 @@ export function useTabTitle() {
 /** 제목줄: 앱 이름 · 문서 탭 · 되돌리기·다시 하기 · 포커스 모드 (설계서 2-2). */
 export function TitleBar() {
   const t = useT();
-  const notYet = useNotYet();
   const tabs = useApp((s) => s.tabs);
   const activeId = useApp((s) => s.activeId);
   const activate = useApp((s) => s.activate);
@@ -59,9 +58,9 @@ export function TitleBar() {
       </div>
 
       <div className="ml-auto flex flex-none items-center gap-1">
-        <IconButton label={t('titlebar.undo')} onClick={() => notYet('UNDO')}><Undo2 className="h-[15px] w-[15px]" aria-hidden /></IconButton>
-        <IconButton label={t('titlebar.redo')} onClick={() => notYet('REDO')}><Redo2 className="h-[15px] w-[15px]" aria-hidden /></IconButton>
-        <button type="button" title={t('titlebar.focusHint')} onClick={() => notYet('FOCUS', 'later')}
+        <IconButton label={t('titlebar.undo')} onClick={() => void runCommand('UNDO')}><Undo2 className="h-[15px] w-[15px]" aria-hidden /></IconButton>
+        <IconButton label={t('titlebar.redo')} onClick={() => void runCommand('REDO')}><Redo2 className="h-[15px] w-[15px]" aria-hidden /></IconButton>
+        <button type="button" title={t('titlebar.focusHint')} onClick={() => void runCommand('FOCUS')}
           className="ml-2 flex h-6 items-center gap-1.5 rounded-sm border border-default px-2 text-xs text-fg-secondary hover:bg-pressed">
           <Fullscreen className="h-[13px] w-[13px]" aria-hidden />
           {t('titlebar.focus')} <span className="text-fg-faint">F11</span>

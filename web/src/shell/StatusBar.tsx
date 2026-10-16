@@ -1,6 +1,8 @@
 import { Globe } from 'lucide-react';
 import { useApp, type DocTab, type StatusToggleId } from '../app/store';
 import { useT, type MessageKey } from '../i18n';
+import { toggleAid } from '../commands/builtins';
+import { runCommand } from '../commands/runner';
 import { StatusToggle } from '../ui/StatusToggle';
 
 const TOGGLES: StatusToggleId[] = ['grid', 'snap', 'ortho', 'osnap', 'darkView'];
@@ -10,9 +12,11 @@ const TOGGLE_KEY: Record<StatusToggleId, string> = { grid: 'F7', snap: 'F9', ort
 export function StatusBar({ tab }: { tab: DocTab }) {
   const t = useT();
   const toggles = useApp((s) => s.toggles);
-  const toggle = useApp((s) => s.toggle);
   const language = useApp((s) => s.language);
   const showToggles = tab.kind === 'drawing' || tab.kind === 'compare';
+  // GRID·SNAP·ORTHO는 그 명령, OSNAP은 F3처럼 켜고 끄기만 (OSNAP 명령은 설정 창), DARK VIEW는 DARKVIEW 명령 (U10)
+  const onToggle = (id: StatusToggleId) =>
+    id === 'osnap' ? toggleAid('osnap') : void runCommand(id === 'darkView' ? 'DARKVIEW' : id.toUpperCase(), { quiet: id !== 'darkView' });
   const left = tab.kind === 'compare' ? t('status.compare') : tab.kind === 'png' ? t('status.png') : t('status.ready');
 
   return (
@@ -21,7 +25,7 @@ export function StatusBar({ tab }: { tab: DocTab }) {
       {showToggles && (
         <span role="group" aria-label={t('status.toggles')} className="flex gap-1">
           {TOGGLES.map((id) => (
-            <StatusToggle key={id} label={t(`status.toggle.${id}` as MessageKey)} on={toggles[id]} onToggle={() => toggle(id)}
+            <StatusToggle key={id} label={t(`status.toggle.${id}` as MessageKey)} on={toggles[id]} onToggle={() => onToggle(id)}
               title={`${t(`status.toggle.${id}` as MessageKey)} (${TOGGLE_KEY[id]})`} />
           ))}
         </span>

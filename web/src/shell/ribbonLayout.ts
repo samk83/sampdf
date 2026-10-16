@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import type { RibbonTabId } from '../app/store';
 
-/** 리본 버튼 하나. 누르면 명령창에 command를 쳐 준 것과 같다 (설계서 6-1, U2부터 동작). */
+/** 리본 버튼 하나. 누르면 명령창에 command를 쳐 준 것과 같다 (설계서 6-1). */
 export type RibbonButtonDef = {
   id: string;
   icon: LucideIcon;
@@ -137,7 +137,7 @@ export const RIBBON: Record<RibbonTabId, RibbonGroupDef[]> = {
     { id: 'panels', buttons: [
       { id: 'pages', icon: Files, command: 'PAGES' },
       { id: 'bookmarks', icon: Bookmark, command: 'BOOKMARKS' },
-      { id: 'layers', icon: Layers, command: 'LAYERS' },
+      { id: 'layers', icon: Layers, command: 'LAYER' },
       { id: 'properties', icon: SlidersHorizontal, command: 'PROPERTIES' },
       { id: 'commandLine', icon: Terminal, command: 'CMDLINE', hint: 'Ctrl+9' },
     ] },

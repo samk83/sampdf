@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Ask } from '../commands/registry';
 
 /** 문서 탭 종류 (설계서 2-1). Drawing 탭은 U5·U6에서 열 수 있게 된다. */
 export type TabKind = 'home' | 'drawing' | 'compare' | 'png';
@@ -30,12 +31,39 @@ export const FIRST_RIBBON: Record<TabKind, RibbonTabId> = { home: 'home', drawin
 /** 명령창 기록 한 줄. kind: info(흐림) · cmd(친 명령) · error(빨강) · ok(초록). */
 export type HistoryLine = { text: string; kind: 'info' | 'cmd' | 'error' | 'ok' };
 
+export type CmdState = {
+  /** 입력칸 글자. */
+  input: string;
+  /** 실행 중인 명령 이름. */
+  running: string | null;
+  /** 지금 명령이 묻는 질문 (없으면 "Command:"). */
+  ask: Ask | null;
+  /** 빈 Enter로 다시 부를 직전 명령. */
+  last: string | null;
+  /** 이전 입력 (↑↓로 다시 부름, 최근 50개). */
+  recall: string[];
+  /** 오타 제안: Tab을 누르면 이 명령으로 바꾼다. */
+  suggestion: string | null;
+};
+
 export type AppState = {
   tabs: DocTab[];
   history: HistoryLine[];
   activeId: string;
   language: 'en' | 'ko';
   toggles: Record<StatusToggleId, boolean>;
+  /** 명령창 (설계서 6장). */
+  cmd: CmdState;
+  /** Ctrl+0 / PANELS: 좌우 패널 숨김 (모든 탭 공통). */
+  panelsHidden: boolean;
+  /** Ctrl+9 / CMDLINE: 명령창 숨김. 글자를 치면 다시 보인다. */
+  cmdlineHidden: boolean;
+  /** F2: 명령 기록 펼침. */
+  historyExpanded: boolean;
+  /** ? / F1: 명령 목록 창. */
+  helpOpen: boolean;
+  setCmd: (patch: Partial<CmdState>) => void;
+  setUi: (patch: Partial<Pick<AppState, 'panelsHidden' | 'cmdlineHidden' | 'historyExpanded' | 'helpOpen'>>) => void;
   openTab: (kind: Exclude<TabKind, 'home'>, options?: { title?: string; files?: File[] }) => string;
   closeTab: (id: string) => void;
   activate: (id: string) => void;
@@ -51,20 +79,30 @@ const HISTORY_LIMIT = 200;
 
 let nextId = 1;
 
-export const initialState = (): Pick<AppState, 'tabs' | 'history' | 'activeId' | 'language' | 'toggles'> => ({
+type Data = 'tabs' | 'history' | 'activeId' | 'language' | 'toggles' | 'cmd' | 'panelsHidden' | 'cmdlineHidden' | 'historyExpanded' | 'helpOpen';
+
+export const initialState = (): Pick<AppState, Data> => ({
   tabs: [{ id: HOME_TAB_ID, kind: 'home', dirty: false, ribbonTab: 'home', ribbonCollapsed: false }],
   history: [],
   activeId: HOME_TAB_ID,
   language: 'en',
   toggles: { grid: false, snap: false, ortho: false, osnap: true, darkView: false },
+  cmd: { input: '', running: null, ask: null, last: null, recall: [], suggestion: null },
+  panelsHidden: false,
+  cmdlineHidden: false,
+  historyExpanded: false,
+  helpOpen: false,
 });
 
 /**
  * 앱 전체가 함께 쓰는 보관소 (설계서 5-1). 화면 부품은 읽기만 하고,
- * 값을 바꾸는 일은 U2부터 명령을 거친다 (지금은 탭·토글 동작만 있음).
+ * 값을 바꾸는 일은 명령(commands/)을 거친다. 탭 누르기처럼 명령이 없는 조작만 직접 바꾼다.
  */
 export const useApp = create<AppState>()((set, get) => ({
   ...initialState(),
+
+  setCmd: (patch) => set((s) => ({ cmd: { ...s.cmd, ...patch } })),
+  setUi: (patch) => set(patch),
 
   openTab: (kind, options) => {
     const id = `${kind}-${nextId++}`;

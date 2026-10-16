@@ -3,6 +3,7 @@ import { File as FileIcon, GitCompare, House, Image, Settings, Upload, Wrench, t
 import { compareTitle, routeDrop } from '../app/dropRouting';
 import { useApp } from '../app/store';
 import { useT } from '../i18n';
+import { runCommand } from '../commands/runner';
 import { useNotYet } from './notYet';
 
 /**
@@ -14,10 +15,11 @@ export function HomeScreen({ active }: { active: boolean }) {
   const notYet = useNotYet();
   const openTab = useApp((s) => s.openTab);
   const log = useApp((s) => s.log);
+  const panelsHidden = useApp((s) => s.panelsHidden);
   const [over, setOver] = useState(false);
 
-  const openCompare = (files?: File[]) => openTab('compare', { files, title: files ? compareTitle(t('tabs.compare'), files) : undefined });
-  const openPng = (files?: File[]) => openTab('png', { files, title: files ? `${t('tabs.png')} · ${files[0].name}` : undefined });
+  const openCompare = (files: File[]) => openTab('compare', { files, title: compareTitle(t('tabs.compare'), files) });
+  const openPng = (files: File[]) => openTab('png', { files, title: `${t('tabs.png')} · ${files[0].name}` });
 
   const handleDrop = (dropped: File[]) => {
     const route = routeDrop(dropped);
@@ -54,14 +56,14 @@ export function HomeScreen({ active }: { active: boolean }) {
 
   return (
     <div className="flex h-full min-h-0">
-      <nav aria-label={t('home.nav')} className="flex w-panel-left flex-none flex-col gap-0.5 border-r border-default bg-surface px-2.5 py-4">
+      {!panelsHidden && <nav aria-label={t('home.nav')} className="flex w-panel-left flex-none flex-col gap-0.5 border-r border-default bg-surface px-2.5 py-4">
         <NavItem icon={House} label={t('home.nav.home')} current onClick={() => undefined} />
-        <NavItem icon={FileIcon} label={t('home.nav.open')} onClick={() => notYet('OPEN', 'later')} />
-        <NavItem icon={GitCompare} label={t('home.nav.compare')} onClick={() => openCompare()} />
-        <NavItem icon={Image} label={t('home.nav.png')} onClick={() => openPng()} />
+        <NavItem icon={FileIcon} label={t('home.nav.open')} onClick={() => void runCommand('OPEN')} />
+        <NavItem icon={GitCompare} label={t('home.nav.compare')} onClick={() => void runCommand('CMP')} />
+        <NavItem icon={Image} label={t('home.nav.png')} onClick={() => void runCommand('PNG')} />
         <NavItem icon={Wrench} label={t('home.nav.toolSets')} tag={t('soon.laterTag')} onClick={() => notYet('TOOLSETS', 'later')} />
-        <NavItem icon={Settings} label={t('home.nav.settings')} onClick={() => notYet('OPTIONS', 'later')} />
-      </nav>
+        <NavItem icon={Settings} label={t('home.nav.settings')} onClick={() => void runCommand('OPTIONS')} />
+      </nav>}
 
       <main className="flex min-w-0 flex-1 flex-col gap-5 overflow-auto px-[30px] py-6">
         <div className="flex items-end justify-between gap-4">
@@ -73,9 +75,9 @@ export function HomeScreen({ active }: { active: boolean }) {
         </div>
 
         <div className="grid grid-cols-3 gap-[14px]">
-          <ActionCard primary icon={GitCompare} command="CMP" title={t('home.card.compare.title')} desc={t('home.card.compare.desc')} onClick={() => openCompare()} />
-          <ActionCard icon={FileIcon} command="OPEN" title={t('home.card.open.title')} desc={t('home.card.open.desc')} onClick={() => notYet('OPEN', 'later')} />
-          <ActionCard icon={Image} command="PNG" title={t('home.card.png.title')} desc={t('home.card.png.desc')} onClick={() => openPng()} />
+          <ActionCard primary icon={GitCompare} command="CMP" title={t('home.card.compare.title')} desc={t('home.card.compare.desc')} onClick={() => void runCommand('CMP')} />
+          <ActionCard icon={FileIcon} command="OPEN" title={t('home.card.open.title')} desc={t('home.card.open.desc')} onClick={() => void runCommand('OPEN')} />
+          <ActionCard icon={Image} command="PNG" title={t('home.card.png.title')} desc={t('home.card.png.desc')} onClick={() => void runCommand('PNG')} />
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-[18px]">

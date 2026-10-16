@@ -3,10 +3,12 @@ import { activeTab, LEGACY_KINDS, useApp, type DocTab } from '../app/store';
 import { ComparePage } from '../compare/ComparePage';
 import { PngTool } from '../png/PngTool';
 import { CommandLine } from './CommandLine';
+import { CommandListDialog } from './CommandListDialog';
 import { HomeScreen } from './HomeScreen';
 import { Ribbon } from './Ribbon';
 import { StatusBar } from './StatusBar';
 import { TitleBar } from './TitleBar';
+import { useGlobalKeys } from './useGlobalKeys';
 
 /**
  * 공통 틀 (설계서 2-2): 제목줄 · 리본 · 탭 내용 · 명령창 · 상태 표시줄.
@@ -16,6 +18,8 @@ import { TitleBar } from './TitleBar';
 export function AppShell() {
   const tabs = useApp((s) => s.tabs);
   const active = useApp(activeTab);
+  const cmdlineHidden = useApp((s) => s.cmdlineHidden);
+  useGlobalKeys();
 
   // 저장 안 된 탭이 있으면 브라우저 창을 닫기 전에 묻는다 (2-5)
   useEffect(() => {
@@ -45,8 +49,9 @@ export function AppShell() {
           </div>
         ))}
       </div>
-      <CommandLine compact={LEGACY_KINDS.includes(active.kind)} />
+      {!cmdlineHidden && <CommandLine compact={LEGACY_KINDS.includes(active.kind)} />}
       <StatusBar tab={active} />
+      <CommandListDialog />
     </div>
   );
 }
