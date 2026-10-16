@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { classifyTarget, routeKey } from '../app/keyboard';
-import { useApp } from '../app/store';
+import { activeTab, useApp } from '../app/store';
+import { findCommand } from '../commands/lookup';
+import { COMMANDS } from '../commands/registry';
 import { toggleAid } from '../commands/builtins';
 import { cancel, runCommand, submit } from '../commands/runner';
 import { translate } from '../i18n';
@@ -17,6 +19,12 @@ export function useGlobalKeys() {
         target: classifyTarget(document.activeElement), modalOpen: s.helpOpen,
       });
       if (!action) return;
+      // 그 탭에 없는 명령 (예: Home 탭의 PgDn·Ctrl+Z)은 가로채지 않는다
+      if (action.kind === 'run' && action.contextual) {
+        const def = findCommand(COMMANDS, action.command.split(' ')[0]);
+        const kind = activeTab(s).kind;
+        if (!def || (def.where && !def.where.includes(kind)) || kind === 'home') return;
+      }
       e.preventDefault();
       switch (action.kind) {
         case 'run': void runCommand(action.command, { quiet: true }); break;

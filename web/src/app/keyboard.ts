@@ -13,7 +13,7 @@ export type KeyTarget =
 export type KeyInput = { key: string; code?: string; ctrl: boolean; shift: boolean; alt: boolean; meta: boolean; target: KeyTarget; modalOpen: boolean };
 
 export type KeyAction =
-  | { kind: 'run'; command: string } // 명령 실행 (단축키)
+  | { kind: 'run'; command: string; contextual?: boolean } // 명령 실행 (단축키). contextual: 그 탭에 없는 명령이면 브라우저 기본 동작 그대로
   | { kind: 'osnap' } // F3: 오스냅 켜고 끄기 (OSNAP 명령은 설정 창이라 따로)
   | { kind: 'history' } // F2: 기록 펼치기
   | { kind: 'type'; char: string } // 명령창에 글자 넣기
@@ -21,8 +21,8 @@ export type KeyAction =
   | { kind: 'cancel' }; // 빈 곳에서 Esc = 지금 명령 취소
 
 /**
- * 단축키 (U2에서 동작하는 것만). 입력칸에 커서가 있어도 동작한다 (6-7).
- * F11·Ctrl+S·Ctrl+Z 같은 키는 그 명령이 생기는 단위에서 연결한다 (지금은 브라우저 기본 동작 그대로).
+ * 단축키 (동작하는 명령만). 입력칸에 커서가 있어도 동작한다 (6-7).
+ * F11·Ctrl+S 같은 키는 그 명령이 생기는 단위에서 연결한다 (지금은 브라우저 기본 동작 그대로).
  */
 const F_KEYS: Record<string, KeyAction> = {
   F1: { kind: 'run', command: 'HELP' },
@@ -35,17 +35,34 @@ const F_KEYS: Record<string, KeyAction> = {
 const CTRL_KEYS: Record<string, KeyAction> = {
   '0': { kind: 'run', command: 'PANELS' },
   '9': { kind: 'run', command: 'CMDLINE' },
+  o: { kind: 'run', command: 'OPEN', contextual: true },
+  e: { kind: 'run', command: 'EXPORT', contextual: true },
+};
+/** 입력칸 밖에서만: 입력칸 안의 Ctrl+Z·PgUp은 그 칸의 글자 되돌리기·이동이다. */
+const CTRL_OUTSIDE_FIELDS: Record<string, KeyAction> = {
+  z: { kind: 'run', command: 'UNDO', contextual: true },
+  y: { kind: 'run', command: 'REDO', contextual: true },
+};
+const PLAIN_OUTSIDE_FIELDS: Record<string, KeyAction> = {
+  PageUp: { kind: 'run', command: 'PAGE Previous', contextual: true },
+  PageDown: { kind: 'run', command: 'PAGE Next', contextual: true },
 };
 
 export function routeKey(k: KeyInput): KeyAction | null {
   const plain = !k.ctrl && !k.alt && !k.meta;
   if (plain && !k.shift && F_KEYS[k.key]) return F_KEYS[k.key];
-  if (k.ctrl && !k.alt && !k.meta && !k.shift && CTRL_KEYS[k.key]) return CTRL_KEYS[k.key];
+  const ctrlKey = k.key.length === 1 ? k.key.toLowerCase() : k.key;
+  const inField = k.target === 'cmdline' || k.target === 'field';
+  if (k.ctrl && !k.alt && !k.meta && !k.shift) {
+    if (CTRL_KEYS[ctrlKey]) return CTRL_KEYS[ctrlKey];
+    if (!inField && !k.modalOpen && CTRL_OUTSIDE_FIELDS[ctrlKey]) return CTRL_OUTSIDE_FIELDS[ctrlKey];
+  }
   if (!plain) return null;
   // 대화상자가 떠 있으면 글자·Enter·Esc는 대화상자 몫
   if (k.modalOpen) return null;
   // 입력칸에서는 그 칸이 글자를 받는다 (명령창은 자기 입력칸이 직접 처리)
-  if (k.target === 'cmdline' || k.target === 'field') return null;
+  if (inField) return null;
+  if (!k.shift && PLAIN_OUTSIDE_FIELDS[k.key]) return PLAIN_OUTSIDE_FIELDS[k.key];
   if (k.key === 'Escape') return { kind: 'cancel' };
   if (k.key === 'Enter' || k.key === ' ') return k.target === 'body' ? { kind: 'submit' } : null;
   if (k.key.length === 1 && k.key >= ' ' && k.key <= '~') return { kind: 'type', char: k.key };

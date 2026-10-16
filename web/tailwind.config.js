@@ -76,6 +76,8 @@ export default {
       minHeight: { touch: v('touch-target-min') },
       transitionDuration: { fast: v('motion-fast'), normal: v('motion-normal') },
       transitionTimingFunction: { standard: v('motion-ease') },
+      // 비교 중 막대 (ProgressDialog): 왼쪽에서 오른쪽으로 계속 흐른다
+      keyframes: { progress: { '0%': { transform: 'translateX(-100%)' }, '100%': { transform: 'translateX(300%)' } } },
       zIndex: scale('z', ['base', 'canvas-overlay', 'floating', 'dropdown', 'modal', 'toast']),
     },
   },

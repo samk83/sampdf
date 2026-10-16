@@ -10,13 +10,12 @@ const TOKENS = join(SRC, '..', '..', 'design', 'tokens.css');
 const ALLOWED = ['doc/palette.ts'];
 
 /**
- * 옛 비교·PNG 화면 (밝은 디자인). U3·U4에서 새 틀로 옮기면 목록에서 지운다.
+ * 옛 비교·PNG 화면 (밝은 디자인). U4에서 새 틀로 옮기면 목록에서 지운다.
  * 이 목록에 새 파일을 더하지 않는다.
  */
 const LEGACY = [
   'app/legacy.css',
-  'compare/ChangeList.tsx', 'compare/ComparePage.tsx', 'compare/DropZone.tsx', 'compare/Marks.tsx',
-  'compare/PageViewer.tsx', 'compare/SettingsMenu.tsx', 'compare/SplitPanes.tsx',
+  'compare/DropZone.tsx',
   'png/PngTool.tsx', 'ui/AppHeader.tsx', 'ui/Segmented.tsx',
 ];
 

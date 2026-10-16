@@ -1,13 +1,14 @@
 import { useRef } from 'react';
 import type { Change, PageSize, Rect } from '../api';
-import { clampRect, cloudPath, deltaAt, deltaTriangle, inflate } from './geometry';
+import { MARKUP_PALETTE } from '../doc/palette';
+import { cloudPath, deltaAt, deltaTriangle, inflate } from '../doc/geometry';
+import { autoCloud, autoHighlights, hasCloud, type MarkEdit } from './state';
 
-/** 사용자가 고친 표시 하나 (없는 값은 자동). 내려받을 때 그대로 서버로 보낸다. */
-export type MarkEdit = { cloud?: Rect; delta?: { x: number; y: number }; highlights?: Rect[] };
-
-export const hasCloud = (c: Change, cloudText: boolean) => c.category === 'graphic' || c.highlights.length === 0 || cloudText;
-export const autoCloud = (c: Change, page: PageSize) => clampRect(inflate(c.bounds, 6), page.width, page.height);
-export const autoHighlights = (c: Change) => c.highlights.map((h) => inflate(h, 1));
+// 도면 위 표시 색 = 내보낸 PDF와 같은 색 (doc/palette.ts). 고르기 표시는 화면 강조색.
+const RED = MARKUP_PALETTE['--markup-red'];
+const YELLOW = MARKUP_PALETTE['--markup-yellow'];
+const PAPER = MARKUP_PALETTE['--drawing-paper'];
+const ACCENT = { stroke: 'var(--color-accent)' };
 
 type Drag =
   | { kind: 'move-cloud' | 'move-delta'; id: string; x: number; y: number; cloud: Rect; delta: { x: number; y: number } }
@@ -23,6 +24,8 @@ type Props = {
   selectedId: string | null;
   zoom: number;
   onSelect: (id: string) => void;
+  /** 끌기 시작 (되돌리기 기록을 한 번만 남김). */
+  onEditStart: () => void;
   onEdit: (id: string, edit: MarkEdit) => void;
 };
 
@@ -47,8 +50,10 @@ const CURSORS = ['nwse-resize', 'nesw-resize', 'nwse-resize', 'nesw-resize'];
  * 글자 변경 → 노란 하이라이트, 그림 변경(설정에 따라 글자 변경도) → 빨간 구름 + △ 번호.
  * 표시를 누르면 선택되고, 끌어서 옮기거나 모서리로 크기를 바꿀 수 있다. △는 따로 옮길 수 있다.
  */
-export function RevisionMarks({ changes, page, labels, cloudText, edits, selectedId, zoom, onSelect, onEdit }: Props) {
+export function RevisionMarks({ changes, page, labels, cloudText, edits, selectedId, zoom, onSelect, onEditStart, onEdit }: Props) {
   const drag = useRef<Drag | null>(null);
+  // 실제로 움직였을 때만 되돌리기 기록 (누르기만 해서 고르면 기록 안 함)
+  const moved = useRef(false);
   const stroke = Math.max(1.5, 1.2 / zoom); // 화면에서 너무 가늘어지지 않게
   const handle = 9 / zoom; // 손잡이 크기: 화면에서 약 9px
   const hit = 12 / zoom; // 구름 선을 잡기 쉬운 굵기
@@ -57,6 +62,7 @@ export function RevisionMarks({ changes, page, labels, cloudText, edits, selecte
     e.stopPropagation(); // 도면 이동(끌기)으로 넘어가지 않게
     (e.currentTarget as Element).setPointerCapture(e.pointerId);
     drag.current = d;
+    moved.current = false;
     onSelect(d.id);
   };
 
@@ -65,6 +71,11 @@ export function RevisionMarks({ changes, page, labels, cloudText, edits, selecte
     if (!d) return;
     const dx = (e.clientX - d.x) / zoom;
     const dy = (e.clientY - d.y) / zoom;
+    if (!moved.current) {
+      if (dx === 0 && dy === 0) return;
+      moved.current = true;
+      onEditStart();
+    }
     const prev = edits[d.id] ?? {};
     if (d.kind === 'move-cloud') onEdit(d.id, { ...prev, cloud: shift(d.cloud, dx, dy), delta: prev.delta ? { x: d.delta.x + dx, y: d.delta.y + dy } : undefined });
     else if (d.kind === 'move-delta') onEdit(d.id, { ...prev, delta: { x: d.delta.x + dx, y: d.delta.y + dy } });
@@ -87,12 +98,12 @@ export function RevisionMarks({ changes, page, labels, cloudText, edits, selecte
           <g key={`${c.id}-hl`}>
             {highlights.map((h, i) => (
               <g key={i}>
-                <rect x={h.x0} y={h.y0} width={h.x1 - h.x0} height={h.y1 - h.y0} fill="#facc15" opacity={0.45}
+                <rect x={h.x0} y={h.y0} width={h.x1 - h.x0} height={h.y1 - h.y0} fill={YELLOW} opacity={0.5}
                   style={{ mixBlendMode: 'multiply', cursor: 'move' }}
                   onPointerDown={(ev) => start(ev, { kind: 'move-hl', id: c.id, index: i, x: ev.clientX, y: ev.clientY, highlights })} />
                 {selected && corners(h).map(([x, y], k) => (
-                  <rect key={k} x={x - handle / 2} y={y - handle / 2} width={handle} height={handle} fill="#ffffff" stroke="#a16207"
-                    strokeWidth={1.2 / zoom} style={{ cursor: CURSORS[k] }}
+                  <rect key={k} x={x - handle / 2} y={y - handle / 2} width={handle} height={handle} fill={PAPER}
+                    strokeWidth={1.2 / zoom} style={{ ...ACCENT, cursor: CURSORS[k] }}
                     onPointerDown={(ev) => start(ev, { kind: 'resize-hl', id: c.id, index: i, corner: k, x: ev.clientX, y: ev.clientY, highlights })} />
                 ))}
               </g>
@@ -115,19 +126,19 @@ export function RevisionMarks({ changes, page, labels, cloudText, edits, selecte
               <rect x={cloud.x0} y={cloud.y0} width={cloud.x1 - cloud.x0} height={cloud.y1 - cloud.y0} fill="transparent" style={{ cursor: 'move' }}
                 onPointerDown={(ev) => start(ev, { kind: 'move-cloud', id: c.id, x: ev.clientX, y: ev.clientY, cloud, delta: deltaCenter })} />
             )}
-            <path d={path} fill="none" stroke="#dc2626" strokeWidth={stroke} strokeLinejoin="round" pointerEvents="none" />
+            <path d={path} fill="none" stroke={RED} strokeWidth={stroke} strokeLinejoin="round" pointerEvents="none" />
             <path d={path} fill="none" stroke="transparent" strokeWidth={hit} style={{ cursor: 'move' }}
               onPointerDown={(ev) => start(ev, { kind: 'move-cloud', id: c.id, x: ev.clientX, y: ev.clientY, cloud, delta: deltaCenter })} />
             <g style={{ cursor: 'grab' }} onPointerDown={(ev) => start(ev, { kind: 'move-delta', id: c.id, x: ev.clientX, y: ev.clientY, cloud, delta: deltaCenter })}>
-              <polygon points={t.points} fill="#ffffff" fillOpacity={0.85} stroke="#dc2626" strokeWidth={stroke} strokeLinejoin="round" />
-              <text x={t.labelX} y={t.labelY} fill="#dc2626" fontSize={t.fontSize} fontWeight={700} textAnchor="middle"
+              <polygon points={t.points} fill={PAPER} fillOpacity={0.85} stroke={RED} strokeWidth={stroke} strokeLinejoin="round" />
+              <text x={t.labelX} y={t.labelY} fill={RED} fontSize={t.fontSize} fontWeight={700} textAnchor="middle"
                 dominantBaseline="central" fontFamily="Helvetica, Arial, sans-serif" style={{ userSelect: 'none' }}>
                 {label}
               </text>
             </g>
             {selected && corners(cloud).map(([x, y], k) => (
-              <rect key={k} x={x - handle / 2} y={y - handle / 2} width={handle} height={handle} fill="#ffffff" stroke="#1d4ed8"
-                strokeWidth={1.2 / zoom} style={{ cursor: CURSORS[k] }}
+              <rect key={k} x={x - handle / 2} y={y - handle / 2} width={handle} height={handle} fill={PAPER}
+                strokeWidth={1.2 / zoom} style={{ ...ACCENT, cursor: CURSORS[k] }}
                 onPointerDown={(ev) => start(ev, { kind: 'resize-cloud', id: c.id, corner: k, x: ev.clientX, y: ev.clientY, cloud })} />
             ))}
           </g>
@@ -149,7 +160,7 @@ export function Selection({ changes, selectedId, zoom, useOld, edits, page, clou
   const base = useOld ? c.boundsInOld : edited ? edited : page && hasCloud(c, cloudText ?? false) ? autoCloud(c, page) : c.bounds;
   const r = inflate(base, 8);
   return (
-    <rect x={r.x0} y={r.y0} width={r.x1 - r.x0} height={r.y1 - r.y0} rx={4} fill="none" stroke="#1d4ed8" pointerEvents="none"
+    <rect x={r.x0} y={r.y0} width={r.x1 - r.x0} height={r.y1 - r.y0} rx={4} fill="none" style={ACCENT} pointerEvents="none"
       strokeWidth={Math.max(1.5, 2 / zoom)} strokeDasharray={`${5 / Math.min(zoom, 1)} ${4 / Math.min(zoom, 1)}`} />
   );
 }

@@ -22,7 +22,7 @@ function useProgressiveSrc(src: string | null): string | null {
 }
 
 /** 페이지 위에 겹칠 그림 층: 지워진 선(곱하기 혼합), 겹쳐 보기의 원본(투명도) 등. */
-export type Layer = { key: string; url: (scale: number) => string; opacity: number; blend?: 'multiply' | 'normal' };
+export type Layer = { key: string; url: (scale: number) => string; opacity: number; blend?: 'multiply' | 'normal'; /** 페이지 pt 단위 밀기 (겹쳐 보기 미세 조정). */ offset?: { x: number; y: number } };
 
 type Props = {
   page: PageSize;
@@ -38,12 +38,15 @@ type Props = {
   label: string;
 };
 
-function LayerImage({ layer, scale }: { layer: Layer; scale: number }) {
+function LayerImage({ layer, scale, zoom }: { layer: Layer; scale: number; zoom: number }) {
   const src = useProgressiveSrc(layer.url(scale));
   if (!src) return null;
   return (
     <img src={src} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none"
-      style={{ opacity: layer.opacity, mixBlendMode: layer.blend === 'multiply' ? 'multiply' : 'normal' }} />
+      style={{
+        opacity: layer.opacity, mixBlendMode: layer.blend === 'multiply' ? 'multiply' : 'normal',
+        transform: layer.offset ? `translate(${layer.offset.x * zoom}px, ${layer.offset.y * zoom}px)` : undefined,
+      }} />
   );
 }
 
@@ -91,7 +94,7 @@ export function PageViewer({ page, imageUrl, view, onViewChange, onResize, layer
       ref={ref}
       role="img"
       aria-label={label}
-      className="relative h-full w-full cursor-grab overflow-hidden bg-legacy-canvas active:cursor-grabbing"
+      className="relative h-full w-full cursor-grab overflow-hidden bg-canvas active:cursor-grabbing"
       onPointerDown={(e) => {
         if (!view || (e.button !== 0 && e.button !== 1)) return;
         onBackgroundPointerDown?.();
@@ -107,9 +110,9 @@ export function PageViewer({ page, imageUrl, view, onViewChange, onResize, layer
       onPointerCancel={() => (drag.current = null)}
     >
       {box && (
-        <div className="absolute bg-white shadow-[0_1px_3px_rgba(16,24,40,0.12),0_8px_24px_rgba(16,24,40,0.08)]" style={box}>
+        <div className="absolute bg-[var(--drawing-paper)] shadow-sheet" style={box}>
           {src && <img src={src} alt="" draggable={false} className="absolute inset-0 h-full w-full select-none" />}
-          {layers?.map((l) => <LayerImage key={l.key} layer={l} scale={scale} />)}
+          {layers?.map((l) => <LayerImage key={l.key} layer={l} scale={scale} zoom={view!.zoom} />)}
           {overlay && (
             <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 ${page.width} ${page.height}`} preserveAspectRatio="none">
               {overlay}

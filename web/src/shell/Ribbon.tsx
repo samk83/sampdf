@@ -2,6 +2,8 @@ import { useApp, type DocTab } from '../app/store';
 import { useT, type MessageKey } from '../i18n';
 import { RibbonButton } from '../ui/RibbonButton';
 import { runCommand } from '../commands/runner';
+import { compareRibbonState } from '../compare/commands';
+import { useCompare } from '../compare/state';
 import { RIBBON, RIBBON_TABS } from './ribbonLayout';
 
 /**
@@ -11,6 +13,9 @@ import { RIBBON, RIBBON_TABS } from './ribbonLayout';
 export function Ribbon({ tab }: { tab: DocTab }) {
   const t = useT();
   const setRibbonTab = useApp((s) => s.setRibbonTab);
+  // 비교 탭: 눌린 상태(SBS·OV·SYNC)와 지금 못 쓰는 버튼. 비교 상태가 바뀌면 다시 그린다.
+  useCompare((x) => x.tabs[tab.id]);
+  const { pressed, disabled } = compareRibbonState();
 
   return (
     <div className="flex-none">
@@ -41,7 +46,7 @@ export function Ribbon({ tab }: { tab: DocTab }) {
                   (b.phase ? ` (${t('soon.phase2')})` : '');
                 return (
                   <RibbonButton key={b.id} icon={b.icon} label={label} tooltip={tooltip}
-                    tag={b.phase ? t('soon.phase2') : undefined}
+                    tag={b.phase ? t('soon.phase2') : undefined} pressed={pressed.has(b.command) || undefined} disabled={disabled.has(b.command)}
                     onClick={() => void runCommand(b.command)} />
                 );
               })}

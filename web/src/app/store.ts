@@ -14,7 +14,7 @@ export type DocTab = {
   /** 저장 안 된 변경 (●). 닫을 때·브라우저 창을 닫을 때 묻는다. */
   dirty: boolean;
   ribbonTab: RibbonTabId;
-  /** 리본을 접어 탭 줄만 보임. 옛 비교·PNG 화면 탭은 접힌 채 시작 (U3·U4까지 도면 칸을 넓게). */
+  /** 리본을 접어 탭 줄만 보임. 옛 PNG 화면 탭은 접힌 채 시작 (U4까지 도면 칸을 넓게). */
   ribbonCollapsed: boolean;
   /** 시작 화면에서 끌어다 놓아 열 때 넘겨받은 파일 (탭이 처음 그려질 때 한 번 쓴다). */
   files?: File[];
@@ -24,7 +24,7 @@ export const HOME_TAB_ID = 'home';
 
 /** 탭 종류별로 처음 열리는 리본 탭 (설계서 2-1 표). */
 /** 아직 옛 디자인 화면을 담은 탭 종류 (U3·U4에서 새 틀로 옮기면 비운다). */
-export const LEGACY_KINDS: TabKind[] = ['compare', 'png'];
+export const LEGACY_KINDS: TabKind[] = ['png'];
 
 export const FIRST_RIBBON: Record<TabKind, RibbonTabId> = { home: 'home', drawing: 'markup', compare: 'compare', png: 'tools' };
 
@@ -70,6 +70,8 @@ export type AppState = {
   /** 리본 탭을 누름: 다른 탭이면 그 탭을 펼쳐 보이고, 지금 탭을 다시 누르면 접고 펼친다. */
   setRibbonTab: (id: string, ribbonTab: RibbonTabId) => void;
   setDirty: (id: string, dirty: boolean) => void;
+  /** 탭 이름 바꾸기 (비교 탭: 파일을 열면 "원본 ↔ 리비전"). */
+  setTitle: (id: string, title: string) => void;
   toggle: (key: StatusToggleId) => void;
   /** 명령창 기록에 줄을 더한다 (최근 200줄만 남김). */
   log: (...lines: HistoryLine[]) => void;
@@ -135,6 +137,8 @@ export const useApp = create<AppState>()((set, get) => ({
     })),
 
   setDirty: (id, dirty) => set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, dirty } : t)) })),
+
+  setTitle: (id, title) => set((s) => ({ tabs: s.tabs.map((t) => (t.id === id && t.title !== title ? { ...t, title } : t)) })),
 
   toggle: (key) => set((s) => ({ toggles: { ...s.toggles, [key]: !s.toggles[key] } })),
 

@@ -73,9 +73,10 @@ export const overlayUrl = (compareId: string, pairIndex: number, scale: number) 
 export type MarkEditPayload = { label?: string; cloud?: Rect; delta?: { x: number; y: number }; highlights?: Rect[] };
 export type ExportOptions = { revisionLabel: string; excluded: string[]; cloudTextChanges: boolean; edits: Record<string, MarkEditPayload> };
 
-export async function runCompare(originalId: string, revisionId: string, ignoreTitleBlock: boolean): Promise<CompareResult> {
+export async function runCompare(originalId: string, revisionId: string, ignoreTitleBlock: boolean, signal?: AbortSignal): Promise<CompareResult> {
   const r = await fetch('/api/compare', {
     method: 'POST',
+    signal,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ originalId, revisionId, ignoreTitleBlock }),
   });

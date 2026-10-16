@@ -1,6 +1,7 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { activeTab, LEGACY_KINDS, useApp, type DocTab } from '../app/store';
-import { ComparePage } from '../compare/ComparePage';
+import { disposeTab } from '../compare/actions';
+import { CompareTab } from '../compare/CompareTab';
 import { PngTool } from '../png/PngTool';
 import { CommandLine } from './CommandLine';
 import { CommandListDialog } from './CommandListDialog';
@@ -13,13 +14,19 @@ import { useGlobalKeys } from './useGlobalKeys';
 /**
  * 공통 틀 (설계서 2-2): 제목줄 · 리본 · 탭 내용 · 명령창 · 상태 표시줄.
  * 모든 문서 탭은 그려 둔 채 숨기기만 해서, 탭을 바꿔도 확대·선택 같은 상태가 그대로 남는다 (2-1).
- * 비교·PNG 탭 안은 아직 옛 화면이다 (U3·U4에서 새 틀로 옮김).
+ * PNG 탭 안은 아직 옛 화면이다 (U4에서 새 틀로 옮김).
  */
 export function AppShell() {
   const tabs = useApp((s) => s.tabs);
   const active = useApp(activeTab);
   const cmdlineHidden = useApp((s) => s.cmdlineHidden);
   useGlobalKeys();
+
+  // 비교 탭을 닫으면 서버에 올린 파일을 닫고 그 탭의 비교 상태를 지운다
+  useEffect(() => useApp.subscribe((s, prev) => {
+    if (s.tabs === prev.tabs) return;
+    for (const t of prev.tabs) if (t.kind === 'compare' && !s.tabs.some((x) => x.id === t.id)) disposeTab(t.id);
+  }), []);
 
   // 저장 안 된 탭이 있으면 브라우저 창을 닫기 전에 묻는다 (2-5)
   useEffect(() => {
@@ -57,13 +64,11 @@ export function AppShell() {
 }
 
 function TabContent({ tab, active }: { tab: DocTab; active: boolean }) {
-  const setDirty = useApp((s) => s.setDirty);
-  const onDirtyChange = useCallback((dirty: boolean) => setDirty(tab.id, dirty), [setDirty, tab.id]);
   switch (tab.kind) {
     case 'home':
       return <HomeScreen active={active} />;
     case 'compare':
-      return <div className="legacy h-full"><ComparePage active={active} initialFiles={tab.files} onDirtyChange={onDirtyChange} /></div>;
+      return <CompareTab tabId={tab.id} active={active} initialFiles={tab.files} />;
     case 'png':
       return <div className="legacy h-full"><PngTool initialFile={tab.files?.[0]} /></div>;
     case 'drawing':

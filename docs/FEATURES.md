@@ -141,42 +141,50 @@
 | 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
 |---|---|---|---|
 | 앱 시작 (토큰·글꼴·CSS 불러오기), `#keytest`이면 키 시험 화면 | `app/main.tsx`, `app/App.tsx` | `design/tokens.css` | `index.html` |
-| 공용 상태 보관소 (문서 탭 열기·닫기·전환, 탭별 리본 탭·저장 안 됨, 상태 토글, 명령창 기록·입력·질문·이전 입력, 패널·명령창 숨김, 명령 목록 창) | `app/store.ts` (Zustand) | — | 공통 틀 전체 |
-| 키보드 분배: 글자 → 명령창(입력칸·대화상자에 커서가 있으면 그 칸), F1·F2·F3·F7·F8·F9·Ctrl+0·Ctrl+9, 빈 곳 Enter·Space = 실행, Esc = 취소 | `app/keyboard.ts`, `shell/useGlobalKeys.ts`, `shell/cmdlineFocus.ts` | `commands/runner` | `AppShell` |
+| 공용 상태 보관소 (문서 탭 열기·닫기·전환·이름, 탭별 리본 탭·저장 안 됨, 상태 토글, 명령창 기록·입력·질문·이전 입력, 패널·명령창 숨김, 명령 목록 창) | `app/store.ts` (Zustand) | — | 공통 틀 전체 |
+| 키보드 분배: 글자 → 명령창(입력칸·대화상자에 커서가 있으면 그 칸), F1·F2·F3·F7·F8·F9·Ctrl+0·Ctrl+9·Ctrl+O·Ctrl+E, 입력칸 밖에서 Ctrl+Z·Ctrl+Y·PgUp·PgDn(그 탭에 없는 명령이면 브라우저 기본), 빈 곳 Enter·Space = 실행, Esc = 취소 | `app/keyboard.ts`, `shell/useGlobalKeys.ts`, `shell/cmdlineFocus.ts` | `commands/runner` | `AppShell` |
 | 명령 등록표 (1단계 명령 전부 + 2단계 3개, 별칭·단축키·쓸 수 있는 탭·갈래) | `commands/registry.ts` | — | 리본, 명령창, 명령 목록 창 |
 | 명령 찾기·자동완성 순서·오타 제안(글자 차이 2 이하) | `commands/lookup.ts` | — | 명령창, runner |
 | 입력 해석: 좌표 `100,200`·`@100,50`·`@500<90`·거리, 오스냅 한 번(END…NEA), 옵션 앞글자, 숫자 | `commands/parseInput.ts` | — | runner (U7a부터 점 질문) |
 | 명령 실행: 질문(옵션·숫자·글자·점·고르기)과 답, 틀린 답은 빨간 줄 + 다시 묻기, Esc 취소, 빈 Enter 반복, 쓸 수 없는 탭·등록만 된 명령·2단계 안내, 버튼 = 명령(지금 명령 취소), 투명 명령(GRID 등) | `commands/runner.ts` | `commands/builtins`, `lookup`, `parseInput` | 명령창, 리본, 제목줄, 시작 화면, 상태 표시줄, 단축키 |
-| U2에서 동작하는 명령: `?`/HELP, GRID, ORTHO, SNAP, PANELS, CMDLINE, TABNEXT, TABPREV, CMP, PNG, EXIT(저장 안 됐으면 명령창에서 `[Yes/No]`) | `commands/builtins.ts` | `app/store` | runner |
+| 동작하는 명령: `?`/HELP, GRID, ORTHO, SNAP, PANELS, CMDLINE, TABNEXT, TABPREV, CMP, PNG, EXIT(저장 안 됐으면 명령창에서 `[Yes/No]`) + 비교 명령(`compare/commands.ts`를 합침) | `commands/builtins.ts` | `app/store`, `compare/commands` | runner |
 | 시작 화면에 끌어다 놓은 파일 → 열 탭 정하기 | `app/dropRouting.ts` | — | `shell/HomeScreen` |
 | 글꼴 앱 안에 넣기 (Pretendard·JetBrains Mono, 인터넷 없이) | `app/fonts.css` | npm `pretendard`, `@fontsource/jetbrains-mono` | `main.tsx` |
-| 옛 비교·PNG 화면 전용 밝은 스타일 (U3·U4에서 지움) | `app/legacy.css` | — | `shell/AppShell` |
+| 옛 PNG 화면 전용 밝은 스타일 (U4에서 지움) | `app/legacy.css` | — | `shell/AppShell` |
 | 브라우저 키 시험 화면 (위험 시험 R7, 주소 끝 `#keytest`) | `app/KeyTest.tsx` | `i18n` | `App` |
 | 화면 글자 번역 `t()` (영어 기준, 빠진 키는 영어, 1개/여러 개) | `i18n/index.ts`, `i18n/en.ts`, `i18n/ko.ts` | `app/store` (언어) | 새 화면 전체 |
-| 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄, 저장 안 된 탭이 있으면 창 닫기 전 확인, 칸 밖에 떨어뜨린 파일 무시 | `shell/AppShell.tsx` | 아래 부품 | `App` |
+| 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄, 저장 안 된 탭이 있으면 창 닫기 전 확인, 칸 밖에 떨어뜨린 파일 무시, 비교 탭을 닫으면 그 비교 정리 | `shell/AppShell.tsx` | 아래 부품 | `App` |
 | 제목줄 (앱 이름, 문서 탭 열기·닫기·가운데 버튼 닫기, ●, ↶↷, Focus) | `shell/TitleBar.tsx` | `ui/IconButton`, `app/store` | `AppShell` |
-| 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표). 지금 탭을 다시 누르면 접고 펼침, 옛 화면 탭은 접힌 채 시작 | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
+| 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표). 지금 탭을 다시 누르면 접고 펼침, 옛 화면(PNG) 탭은 접힌 채 시작, 비교 탭은 눌림(SBS·OV·SYNC)·흐림(결과 전 Next 등) | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
 | 명령창 (기록 2줄 + 입력 줄, 질문과 눌러서 고르는 [옵션], ↑↓ 이전 입력, Tab 완성·제안 받기, F2 기록 펼치기. 옛 화면 탭은 입력 줄만 + 마지막 기록) | `shell/CommandLine.tsx` | `commands/runner`, `ui/IconButton` | `AppShell` |
 | 명령 자동완성 목록 (시안 04: 이름·별칭·설명·단축키, 최대 8줄) | `shell/Autocomplete.tsx` | `commands/lookup` | `CommandLine` |
 | 명령 목록 창 (`?`·F1: 갈래별, 이 탭에서 못 씀·나중·Phase 2 표시, 거르기 칸, 누르면 실행) | `shell/CommandListDialog.tsx` | `ui/Dialog`, `commands/registry` | `AppShell` |
-| 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
+| 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 비교 탭: 페이지의 변경 수·못 연 파일·Sync pan·페이지·확대 비율, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
 | 시작 화면 (왼쪽 메뉴, 큰 카드 3개, 최근 목록 자리, 창 어디나 끌어다 놓기) | `shell/HomeScreen.tsx` | `app/dropRouting` | `AppShell` |
 | 명령이 없는 버튼(시작 화면 Tool sets) → 명령창에 "나중에" 안내. 명령이 있는 버튼은 모두 `runCommand` | `shell/notYet.ts` | `app/store` (기록) | 시작 화면 |
 | 새 기본 부품 (토큰만 사용): 아이콘 버튼, 리본 버튼("Phase 2" 꼬리표), 상태 토글, 대화상자(Esc 닫기, Tab이 상자 안에서만, 닫으면 커서 원위치) | `ui/IconButton.tsx`, `ui/RibbonButton.tsx`, `ui/StatusToggle.tsx`, `ui/Dialog.tsx` | lucide-react | 공통 틀 |
 | PDF에 넣는 마크업 색 (tokens.css와 같은지 테스트) | `doc/palette.ts` | — | (U7부터) 저장 |
 | 색 하드코딩 검사·마크업 색 비교 (테스트) | `app/tokens.test.ts` | `design/tokens.css` | `npm test` |
-| 옛 위쪽 도구 막대·아이콘 버튼 (비교·PNG 화면 안, U3·U4에서 지움) | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
+| 옛 위쪽 도구 막대·아이콘 버튼 (PNG 화면 안, U4에서 지움) | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
 | 서버 호출·자료 모양·파일 저장 | `api.ts` | — | 비교 화면, PNG 화면(저장) |
-| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기). 비교 탭 안에서 옛 디자인 그대로, 숨긴 탭은 키를 안 받음, 시작 화면에서 받은 파일을 바로 엶, 탭을 닫으면 서버 파일도 닫음, 지운 변경·고친 표시가 있으면 탭 ● | `compare/ComparePage.tsx` | 아래 부품들 | `shell/AppShell` (비교 탭마다 하나) |
-| 좌우 칸과 굵은 구분선 (끌어서 크기 조절, 두 번 누르면 반반, ← →) | `compare/SplitPanes.tsx` | — | `ComparePage` |
-| 표시 설정 (△ 번호 하나씩/같은 번호, 시작 번호, 글자 변경도 구름, 제목란 무시) | `compare/SettingsMenu.tsx` | `ui/Segmented` | `ComparePage` |
-| △ 번호 매기기 (1,2,3… / A,B,C… / 같은 번호) | `compare/numbering.ts` | — | `ComparePage` (화면·내려받기 공통) |
-| 둘 중 하나 고르기 버튼 묶음 | `ui/Segmented.tsx` | — | 비교 화면, 표시 설정 |
-| 도면 한 페이지 보기 (휠 확대, 끌어 이동, 해상도 단계 미리 받기, 겹침 층: 지워진 선·겹쳐 보기 원본 투명도) | `compare/PageViewer.tsx` | `compare/view.ts` | `ComparePage` |
-| 보기 계산 (맞춤, 커서 기준 확대, 변경 위치로 이동, 그림 배율 단계) | `compare/view.ts` | — | `PageViewer`, `ComparePage` |
-| 표시 그리기·수정 (하이라이트·구름·△, 누르면 선택, 끌어 옮기기, 모서리로 크기 조절, △ 따로 옮기기) | `compare/Marks.tsx` | `compare/geometry.ts` | `ComparePage` |
-| 구름 경로·△ 위치·설명 줄이기 (엔진 `RevisionMarks`와 같은 규칙) | `compare/geometry.ts` | — | `Marks`, `ChangeList` |
-| 파일 열기 칸 (클릭·끌어다 놓기) | `compare/DropZone.tsx` | — | 비교 화면, PNG 화면 |
-| 변경 목록 (필터, 선택, 지우기·되돌리기, 접기) | `compare/ChangeList.tsx` | `geometry.shortText` | `ComparePage` |
+| 비교 탭 (설계서 2-2·2-3, 시안 02~05·11): 왼쪽 Pages · 원본/리비전 칸(머리 줄: 이름·페이지·크기·× 닫기) 또는 겹쳐 보기 · 아래 변경 표 · 오른쪽 패널, 떠 있는 페이지·확대 막대, 빠진 페이지 안내, 칸마다 파일 놓기·못 여는 파일 카드, 비교 실패 카드(Try again), 경고 알림, 탭 이름 `Compare · 원본 ↔ 리비전`, 저장 안 된 일이 있으면 탭 ●. 키: Delete = 고른 변경 빼기, Esc = 비교 취소 또는 고르기 해제, 겹쳐 보기 미세 조정 중 화살표(Shift 10배) | `compare/CompareTab.tsx` | 아래 부품들, `viewer/PageViewer` | `shell/AppShell` (비교 탭마다 하나) |
+| 비교 상태 보관소 (탭마다: 두 파일, 결과, 설정, 보기 방식, 겹쳐 보기, 표시 수정·뺀 변경·검토됨 + 되돌리기·다시하기 기록, 고른 변경, 표 거르기) + 계산(△ 번호, 다음·이전 변경, 페이지 배지, CSV, 저장 안 된 일) | `compare/state.ts` (Zustand) | `doc/numbering`, `doc/geometry` | 비교 탭 부품 전체, 비교 명령 |
+| 비교 탭에서 하는 일: 파일 열기(올리는 사이 탭을 닫으면 서버 파일도 닫음), 비교 시작·취소(서버 작업도 멈춤), 칸 닫기, 탭 닫기 정리, 바꾸기, 설정(제목란 무시는 다시 비교), 변경 고르기·다음·이전, 내보내기 넣기·빼기, 검토됨, PDF·CSV 내려받기, 탭 이름 | `compare/actions.ts` | `api.ts`, `app/store` (기록) | 비교 탭 부품, 비교 명령 |
+| 비교 명령 (설계서 6-6): SWAP, SBS, OVERLAY(OV), SYNC, NEXT(N), PREV(PV), REVIEWED(RV, 다음으로), EXCLUDE(X), EXPORT, EXPORTCSV(EXC), NUDGE, NUMBERING(NUM, `[Each/Same]` + 시작 번호), 비교 탭의 OPEN·ZOOM(`[Extents/Window/In/Out]`, Window는 나중)·PAGE(번호 또는 `[Next/Previous]`)·UNDO·REDO. 리본 눌림·흐림 상태 | `compare/commands.ts` | `compare/actions`, `compare/state` | `commands/builtins` (합침), 리본 |
+| 파일 고르기 창 (빈 칸 또는 정한 칸) | `compare/filePicker.ts` | `compare/actions` | OPEN, Browse files, Choose another file |
+| 파일 놓는 칸 (시안 02: 끌어다 놓기, Browse files, 두 파일을 한 번에 놓으면 양쪽) | `compare/FileDrop.tsx` | `ui/Button` | 비교 탭 |
+| 왼쪽 패널: Pages(페이지 그림 + 변경 수·변경 없음·추가·빠짐 배지), Bookmarks·Layers는 "나중" 안내 | `compare/PagesPanel.tsx` | `ui/Badge`, `ui/EmptyState` | 비교 탭 |
+| 변경 표 (시안 04: 지금 페이지, 체크 = 내보내기에 넣기, △·종류·설명·일치도·상태, All/Text/Graphic 거르기, 접기, 누르면 그 자리로) | `compare/ChangeTable.tsx` | `ui/Table`, `ui/Badge` | 비교 탭 |
+| 오른쪽 패널: 비교 전 = Compare settings(시작 번호·번호 방식·글자 구름·제목란 무시·지워진 선 + Compare 버튼), 결과 = 요약(차이 없음 안내) + 설정, 변경을 고르면 = Change(상태·△ 번호·내보내기 넣기·되돌리기), 겹쳐 보기 = Overlay(색 구분·투명도·구름 보이기·정렬·미세 조정) | `compare/RightPanel.tsx` | `ui/Toggle`, `ui/Button` | 비교 탭 |
+| 비교 중 창 (시안 03: 움직이는 막대, 지난 초, 단계, Cancel·Esc) | `compare/ProgressDialog.tsx` | `ui/Button` | 비교 탭 |
+| 표시 그리기·수정 (하이라이트·구름·△, 누르면 선택, 끌어 옮기기, 모서리로 크기 조절, △ 따로 옮기기, 끌기 한 번 = 되돌리기 한 번) | `compare/RevisionMarks.tsx` | `doc/geometry`, `doc/palette` | 비교 탭 |
+| 좌우 칸과 구분선 (끌어서 크기 조절, 두 번 누르면 반반, ← →) | `compare/SplitPanes.tsx` | — | 비교 탭 |
+| 도면 한 페이지 보기 (휠 확대, 끌어 이동, 해상도 단계 미리 받기, 겹침 층: 지워진 선·겹쳐 보기 원본 투명도·미세 조정 이동) | `viewer/PageViewer.tsx` | `viewer/view.ts` | 비교 탭 (U6부터 도면 탭) |
+| 보기 계산 (맞춤, 커서 기준 확대, 변경 위치로 이동, 그림 배율 단계) | `viewer/view.ts` | — | `PageViewer`, 비교 탭 |
+| △ 번호 매기기 (1,2,3… / A,B,C… / 같은 번호) | `doc/numbering.ts` | — | 비교 상태 (화면·내려받기 공통) |
+| 구름 경로·△ 위치·설명 줄이기 (엔진 `RevisionMarks`와 같은 규칙) | `doc/geometry.ts` | — | `RevisionMarks`, `ChangeTable` |
+| 새 기본 부품 (U3): 버튼(primary·default·ghost), 켜고 끄기 줄, 배지, 빈 상태·오류 카드, 알림, 표 | `ui/Button.tsx`, `ui/Toggle.tsx`, `ui/Badge.tsx`, `ui/EmptyState.tsx`, `ui/Toast.tsx`, `ui/Table.tsx` | lucide-react | 비교 탭 (이후 모든 탭) |
+| 옛 파일 열기 칸 (PNG 화면 안, U4에서 지움) | `compare/DropZone.tsx` | — | PNG 화면 |
+| 둘 중 하나 고르기 버튼 묶음 (PNG 화면 안, U4에서 지움) | `ui/Segmented.tsx` | — | PNG 화면 |
 | 투명 PNG 화면 (슬라이더, 배경 색 자동·찍기, 부드럽게, 여백 자르기, 선 색 맞추기, 내려받기). PNG 탭 안에서 옛 디자인 그대로 | `png/PngTool.tsx` | `png/removeBackground.ts`, `DropZone` | `shell/AppShell` (PNG 탭마다 하나) |
 | 배경 지우기 계산 (브라우저 안에서만) | `png/removeBackground.ts` | — | `PngTool` |

@@ -1,5 +1,5 @@
 /*
- * 옛 비교·PNG 화면 전용 (밝은 화면). U3·U4에서 새 디자인으로 옮기면 이 파일을 지운다.
+ * 옛 PNG 화면 전용 (밝은 화면). U4에서 새 디자인으로 옮기면 이 파일을 지운다.
  * 색 하드코딩 검사에서 빠지는 파일 목록(tokens.test.ts의 LEGACY)에 들어 있다.
  */
 .legacy { color-scheme: light; color: #16181d; background: #f4f5f7; }

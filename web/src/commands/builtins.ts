@@ -1,4 +1,5 @@
 import { activeTab, HOME_TAB_ID, useApp, type StatusToggleId } from '../app/store';
+import { COMPARE_COMMANDS } from '../compare/commands';
 import { translate, type MessageKey } from '../i18n';
 import type { CommandContext } from './registry';
 
@@ -31,7 +32,7 @@ function switchTab(step: 1 | -1, ctx: CommandContext) {
 }
 
 /**
- * U2에서 실제로 동작하는 명령 (설계서 9-2 U2). 나머지 명령은 등록만 되어 있고,
+ * 실제로 동작하는 명령 (U2 공통 + U3 비교 탭). 나머지 명령은 등록만 되어 있고,
  * 부르면 "다음 업데이트에서" 안내가 나온다 (runner.ts).
  */
 export const BUILTINS: Record<string, (ctx: CommandContext) => void | Promise<void>> = {
@@ -55,6 +56,7 @@ export const BUILTINS: Record<string, (ctx: CommandContext) => void | Promise<vo
     }
     st().closeTab(tab.id);
   },
+  ...COMPARE_COMMANDS,
 };
 
 /** 다른 명령이 도는 중에도 끼어들어 실행하는 명령 (오토캐드의 투명 명령처럼, 지금 명령을 취소하지 않음). */

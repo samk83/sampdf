@@ -44,11 +44,23 @@ describe('키보드 분배 (설계서 2-5, 6-7)', () => {
   it('아직 명령이 없는 키와 브라우저 키는 건드리지 않는다', () => {
     expect(routeKey(key('F11'))).toBeNull();
     expect(routeKey(key('s', { ctrl: true }))).toBeNull();
-    expect(routeKey(key('z', { ctrl: true }))).toBeNull();
     expect(routeKey(key('c', { ctrl: true }))).toBeNull();
     expect(routeKey(key('Tab'))).toBeNull();
     expect(routeKey(key('ArrowUp'))).toBeNull();
     expect(routeKey(key('F7', { shift: true }))).toBeNull();
+  });
+
+  it('U3 단축키: Ctrl+O·Ctrl+E는 어디서나, Ctrl+Z·Y·PgUp·PgDn은 입력칸 밖에서만', () => {
+    expect(routeKey(key('o', { ctrl: true, target: 'field' }))).toEqual({ kind: 'run', command: 'OPEN', contextual: true });
+    expect(routeKey(key('E', { ctrl: true }))).toEqual({ kind: 'run', command: 'EXPORT', contextual: true });
+    expect(routeKey(key('z', { ctrl: true }))).toEqual({ kind: 'run', command: 'UNDO', contextual: true });
+    expect(routeKey(key('y', { ctrl: true, target: 'control' }))).toEqual({ kind: 'run', command: 'REDO', contextual: true });
+    expect(routeKey(key('z', { ctrl: true, target: 'field' }))).toBeNull();
+    expect(routeKey(key('z', { ctrl: true, target: 'cmdline' }))).toBeNull();
+    expect(routeKey(key('z', { ctrl: true, modalOpen: true }))).toBeNull();
+    expect(routeKey(key('PageDown'))).toEqual({ kind: 'run', command: 'PAGE Next', contextual: true });
+    expect(routeKey(key('PageUp', { target: 'control' }))).toEqual({ kind: 'run', command: 'PAGE Previous', contextual: true });
+    expect(routeKey(key('PageUp', { target: 'field' }))).toBeNull();
   });
 
   it('빈 곳의 Enter·Space = 실행(직전 명령 반복), 버튼 위에서는 버튼 누르기', () => {

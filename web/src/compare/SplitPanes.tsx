@@ -1,10 +1,12 @@
 import { useRef, useState, type ReactNode } from 'react';
+import { useT } from '../i18n';
 
 /**
  * 좌우 두 칸과 가운데 구분선. 구분선을 끌면 칸 너비가 바뀌고(20~80%), 두 번 누르면 반반으로 돌아간다.
  * 키보드: 구분선에 초점을 두고 ← → 로 조절.
  */
 export function SplitPanes({ left, right }: { left: ReactNode; right: ReactNode }) {
+  const t = useT();
   const [ratio, setRatio] = useState(0.5);
   const box = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -21,7 +23,7 @@ export function SplitPanes({ left, right }: { left: ReactNode; right: ReactNode 
       <div
         role="separator"
         aria-orientation="vertical"
-        aria-label="칸 나누기 (끌어서 크기 조절, 두 번 누르면 반반)"
+        aria-label={t('compare.pane.divider')}
         aria-valuenow={Math.round(ratio * 100)}
         tabIndex={0}
         onPointerDown={(e) => {
@@ -33,12 +35,9 @@ export function SplitPanes({ left, right }: { left: ReactNode; right: ReactNode 
           if (e.key === 'ArrowLeft') set(ratio - 0.02);
           if (e.key === 'ArrowRight') set(ratio + 0.02);
         }}
-        className="group relative flex w-2.5 flex-none cursor-col-resize items-center justify-center bg-[#c3c8d1] hover:bg-legacy-accent/60 focus:bg-legacy-accent/60 focus:outline-none"
+        className="group relative flex w-1.5 flex-none cursor-col-resize items-center justify-center bg-[var(--color-border)] hover:bg-accent focus-visible:bg-accent focus-visible:shadow-none"
       >
-        <span className="flex flex-col gap-1" aria-hidden>
-          {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-white/90" />)}
-        </span>
-      </div>
+              </div>
       <div className="flex min-w-0 flex-1">{right}</div>
     </div>
   );

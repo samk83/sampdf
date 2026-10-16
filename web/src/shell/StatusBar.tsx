@@ -3,6 +3,7 @@ import { useApp, type DocTab, type StatusToggleId } from '../app/store';
 import { useT, type MessageKey } from '../i18n';
 import { toggleAid } from '../commands/builtins';
 import { runCommand } from '../commands/runner';
+import { useCompare } from '../compare/state';
 import { StatusToggle } from '../ui/StatusToggle';
 
 const TOGGLES: StatusToggleId[] = ['grid', 'snap', 'ortho', 'osnap', 'darkView'];
@@ -17,7 +18,20 @@ export function StatusBar({ tab }: { tab: DocTab }) {
   // GRID·SNAP·ORTHO는 그 명령, OSNAP은 F3처럼 켜고 끄기만 (OSNAP 명령은 설정 창), DARK VIEW는 DARKVIEW 명령 (U10)
   const onToggle = (id: StatusToggleId) =>
     id === 'osnap' ? toggleAid('osnap') : void runCommand(id === 'darkView' ? 'DARKVIEW' : id.toUpperCase(), { quiet: id !== 'darkView' });
-  const left = tab.kind === 'compare' ? t('status.compare') : tab.kind === 'png' ? t('status.png') : t('status.ready');
+  const cmp = useCompare((x) => (tab.kind === 'compare' ? x.tabs[tab.id] : undefined));
+  let left = tab.kind === 'compare' ? t('status.compare') : tab.kind === 'png' ? t('status.png') : t('status.ready');
+  // 비교 탭: 지금 페이지의 변경 수 · 페이지 · 동기 이동 · 확대 비율 (시안 04)
+  const extra: string[] = [];
+  if (cmp?.comparing) left = `${left} · ${t('status.comparing')}`;
+  else if (cmp?.result) {
+    const page = cmp.result.pages[cmp.pairIndex];
+    left = `${left} · ${t('status.changesOnPage', { n: page?.changes.length ?? 0, p: cmp.pairIndex + 1 })}`;
+  } else if (cmp && (cmp.left.error || cmp.right.error)) {
+    left = t('status.openFailed', { n: Number(!!cmp.left.error) + Number(!!cmp.right.error) });
+  }
+  if (cmp?.sync && cmp.viewMode === 'side' && (cmp.left.file || cmp.right.file)) extra.push(t('status.syncOn'));
+  if (cmp?.result) extra.push(t('status.pageOf', { n: cmp.pairIndex + 1, total: cmp.result.pages.length }));
+  if (cmp?.zoom) extra.push(`${Math.round(cmp.zoom * 100)}%`);
 
   return (
     <footer className="flex h-statusbar flex-none items-center gap-4 border-t border-subtle bg-chrome px-3 text-xs text-fg-secondary">
@@ -31,6 +45,7 @@ export function StatusBar({ tab }: { tab: DocTab }) {
         </span>
       )}
       <span className="ml-auto flex items-center gap-4">
+        {extra.map((x) => <span key={x}>{x}</span>)}
         <span title={t('status.server')}>{window.location.host}</span>
         <span className="flex items-center gap-1" title={t('status.language')}>
           <Globe className="h-3 w-3" aria-hidden />
