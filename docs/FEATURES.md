@@ -114,7 +114,7 @@
 | 변경 성격 구분: 글자 변경(하이라이트) / 그림 변경(Cloud), 바뀐 글자 "이전 → 개정" 설명 | `PageComparer.Classify` | `TextDiff`, `Grouping`(글자 밖 차이 픽셀 수) | 웹 비교 (예정), `RevisionMarks` |
 | 문서 전체 비교 (페이지 짝, 페이지별 요약, 추가·빠진 페이지 알림) | `DocumentComparer.cs` | `PageComparer` | 웹 비교 (예정), 테스트 |
 | 지워진 선만 담은 층 (화면에서 리비전 위에 흐리게 겹치기) | `PageComparer.RenderRemovedLayer` | `ImageOps` | 웹 비교 (예정) |
-| 리비전 표시: 하이라이트 · Cloud + △ 리비전 번호(Cloud에만)를 표준 PDF 주석으로 | `RevisionMarks.cs` | `MarkupDraft`, `IPdfDocument.AddMarkup` | 웹 비교 (예정), 테스트 |
+| 리비전 표시: 하이라이트 · Cloud + △ 번호(Cloud에만, 글자 변경도 Cloud 설정 가능), 사용자 수정(번호·Cloud·△·하이라이트 위치) 반영 | `RevisionMarks.cs` | `MarkupDraft`, `IPdfDocument.AddMarkup` | 웹 비교 (예정), 테스트 |
 
 ## Cad 모듈
 
@@ -133,7 +133,7 @@
 | 서버 시작 (127.0.0.1:5180, 업로드 300MB, 브라우저 자동 열기 `--no-browser`) | `Program.cs` | — | `run-web.cmd`, `dotnet run` |
 | 올린 파일 보관 (메모리, 최근 24개, 문서별 잠금, 원본 바이트로 사본 열기) | `Services/DocumentStore.cs` | `MuPdfEngine` (그림은 PDF로) | `Endpoints` |
 | 비교 실행·결과 보관 (제목란 무시, 두 문서 잠금 순서) | `Services/CompareStore.cs` | `DocumentComparer` | `Endpoints` |
-| API: `/api/files`(올리기·정보·닫기), `/files/{id}/pages/{n}.png`, `/compare`, `/compare/{id}/pages/{i}/removed.png`, `/compare/{id}/export` | `Api/Endpoints.cs` | `PageComparer.RenderRemovedLayer`, `RevisionMarks.Apply` | 웹 화면 `api.ts` |
+| API: `/api/files`(올리기·정보·닫기), `/files/{id}/pages/{n}.png`, `/compare`, `/compare/{id}/pages/{i}/removed.png`, `/overlay.png`(색 구분 겹쳐 보기), `/compare/{id}/export`(번호·수정·글자 Cloud 반영) | `Api/Endpoints.cs` | `PageComparer.RenderRemovedLayer`, `RevisionMarks.Apply` | 웹 화면 `api.ts` |
 | 화면으로 보내는 자료 모양 | `Api/Dtos.cs` | — | `Endpoints`, 테스트 |
 
 ## 웹 화면 (`web/src`)
@@ -143,10 +143,14 @@
 | 탭 전환 (도면 비교 / 투명 PNG, 비교 상태 유지) | `App.tsx` | — | `main.tsx` |
 | 공통 위쪽 막대·아이콘 버튼 | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
 | 서버 호출·자료 모양·파일 저장 | `api.ts` | — | 비교 화면, PNG 화면(저장) |
-| 비교 화면 (좌우 칸, 자동 비교, 함께 이동, 자동 맞춤, 요약, 경고, 내려받기) | `compare/ComparePage.tsx` | 아래 부품들 | `App` |
-| 도면 한 페이지 보기 (휠 확대, 끌어 이동, 해상도 단계 미리 받기, 겹침 층) | `compare/PageViewer.tsx` | `compare/view.ts` | `ComparePage` |
+| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기) | `compare/ComparePage.tsx` | 아래 부품들 | `App` |
+| 좌우 칸과 굵은 구분선 (끌어서 크기 조절, 두 번 누르면 반반, ← →) | `compare/SplitPanes.tsx` | — | `ComparePage` |
+| 표시 설정 (△ 번호 하나씩/같은 번호, 시작 번호, 글자 변경도 구름, 제목란 무시) | `compare/SettingsMenu.tsx` | `ui/Segmented` | `ComparePage` |
+| △ 번호 매기기 (1,2,3… / A,B,C… / 같은 번호) | `compare/numbering.ts` | — | `ComparePage` (화면·내려받기 공통) |
+| 둘 중 하나 고르기 버튼 묶음 | `ui/Segmented.tsx` | — | 비교 화면, 표시 설정 |
+| 도면 한 페이지 보기 (휠 확대, 끌어 이동, 해상도 단계 미리 받기, 겹침 층: 지워진 선·겹쳐 보기 원본 투명도) | `compare/PageViewer.tsx` | `compare/view.ts` | `ComparePage` |
 | 보기 계산 (맞춤, 커서 기준 확대, 변경 위치로 이동, 그림 배율 단계) | `compare/view.ts` | — | `PageViewer`, `ComparePage` |
-| 표시 그리기 (하이라이트·구름·△, 선택 상자) | `compare/Marks.tsx` | `compare/geometry.ts` | `ComparePage` |
+| 표시 그리기·수정 (하이라이트·구름·△, 누르면 선택, 끌어 옮기기, 모서리로 크기 조절, △ 따로 옮기기) | `compare/Marks.tsx` | `compare/geometry.ts` | `ComparePage` |
 | 구름 경로·△ 위치·설명 줄이기 (엔진 `RevisionMarks`와 같은 규칙) | `compare/geometry.ts` | — | `Marks`, `ChangeList` |
 | 파일 열기 칸 (클릭·끌어다 놓기) | `compare/DropZone.tsx` | — | 비교 화면, PNG 화면 |
 | 변경 목록 (필터, 선택, 지우기·되돌리기, 접기) | `compare/ChangeList.tsx` | `geometry.shortText` | `ComparePage` |

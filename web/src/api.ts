@@ -66,6 +66,13 @@ export const pageImageUrl = (fileId: string, page: number, scale: number) => `/a
 export const removedLayerUrl = (compareId: string, pairIndex: number, scale: number) =>
   `/api/compare/${compareId}/pages/${pairIndex}/removed.png?scale=${scale}`;
 
+export const overlayUrl = (compareId: string, pairIndex: number, scale: number) =>
+  `/api/compare/${compareId}/pages/${pairIndex}/overlay.png?scale=${scale}`;
+
+/** 내려받기 때 보내는 표시 수정 (변경 ID별). */
+export type MarkEditPayload = { label?: string; cloud?: Rect; delta?: { x: number; y: number }; highlights?: Rect[] };
+export type ExportOptions = { revisionLabel: string; excluded: string[]; cloudTextChanges: boolean; edits: Record<string, MarkEditPayload> };
+
 export async function runCompare(originalId: string, revisionId: string, ignoreTitleBlock: boolean): Promise<CompareResult> {
   const r = await fetch('/api/compare', {
     method: 'POST',
@@ -77,11 +84,11 @@ export async function runCompare(originalId: string, revisionId: string, ignoreT
 }
 
 /** 표시가 들어간 PDF를 받아 브라우저 내려받기로 저장한다. */
-export async function exportPdf(compareId: string, revisionLabel: string, excluded: string[], fallbackName: string): Promise<void> {
+export async function exportPdf(compareId: string, options: ExportOptions, fallbackName: string): Promise<void> {
   const r = await fetch(`/api/compare/${compareId}/export`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ revisionLabel, excluded }),
+    body: JSON.stringify(options),
   });
   if (!r.ok) return fail(r);
   const blob = await r.blob();

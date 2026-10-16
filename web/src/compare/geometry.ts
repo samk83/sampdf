@@ -53,6 +53,15 @@ export function deltaTriangle(cloud: Rect, label: string, pageW: number, pageH: 
   };
 }
 
+/** △를 무게중심 위치(center)에 놓는다 (사용자가 옮긴 △). 엔진 RevisionMarks.DeltaAt과 같은 규칙. */
+export function deltaAt(center: { x: number; y: number }, label: string, pageW: number, pageH: number, size = 20) {
+  const s = size * (1 + 0.3 * Math.max(0, label.length - 1));
+  const h = (s * Math.sqrt(3)) / 2;
+  const cx = Math.min(Math.max(center.x, s / 2 + 1), pageW - s / 2 - 1);
+  const top = Math.min(Math.max(center.y - (h * 2) / 3, 1), pageH - h - 1);
+  return { points: `${cx},${top} ${cx + s / 2},${top + h} ${cx - s / 2},${top + h}`, labelX: cx, labelY: top + (h * 2) / 3, fontSize: Math.max(6, s * 0.5) };
+}
+
 /** 엔진 설명 문장('Text "BEAM" → "COLUMN"')에서 화면용 짧은 글자를 뽑는다. */
 export function shortText(description: string): string | null {
   const change = /"([^"]*)" → "([^"]*)"/.exec(description);
