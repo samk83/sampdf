@@ -3,7 +3,7 @@
 > 3단계 "설계" 결과 문서. 확정 시안(`design/screens/`, `design/brand.md`, `design/tokens.css`)을 실제로 만들 수 있게
 > 화면 구조·부품·데이터·명령·서버 연결·개발 순서를 정한다. Owner 승인 후 4단계 개발로 넘어간다.
 >
-> 상태: **초안 v0.2 (2026-10-16) — 1·2차 회의 범위(1~6장) 작성.** 7~10장은 3차 회의에서 채운다.
+> 상태: **초안 v0.3 (2026-10-16) — 1~10장 모두 작성, 별도 검토자 대조 후 고침, Owner 승인 대기.** 🟡 표시는 Owner 답이 없어 Claude 추천안으로 적은 것 (부록 A~C).
 > 근거 브리핑: 프로젝트 파일 `design-phase/설계-브리핑.md`
 
 ## 결정 표시 읽는 법
@@ -22,10 +22,10 @@
 4. 부품 목록·토큰 연결 (2차) — v0.2
 5. 상태·데이터 모델 (2차) — v0.2
 6. 명령 시스템 (2차) — v0.2
-7. 서버 API (3차)
-8. 다국어 (3차)
-9. 개발 순서와 단위별 완료 기준 (3차)
-10. 위험 시험 계획 (3차)
+7. 서버 API (3차) — v0.3
+8. 다국어 (3차) — v0.3
+9. 개발 순서와 단위별 완료 기준 (3차) — v0.3
+10. 위험 시험 계획 (3차) — v0.3
 
 ---
 
@@ -54,13 +54,16 @@
 | D2 | 01 최근 파일·마크업 수, 07 "Autosaved 1 min ago" | 3장 방식(서버가 내 PC 경로로 열고 저장)으로 가능하게 한다 | 🟡 추천안 적용 |
 | D3 | 06 비교 내보내기의 "My markups" | 비교 탭에서도 그리기·마크업 가능. 단 **오른쪽(리비전) 칸에만**. 왼쪽(원본) 칸에서 그리기 명령을 쓰면 명령창이 `Draw on the revised side.` 안내 | 🟡 추천안 적용 |
 | D4 | Draw 탭과 기획의 Markup 도구가 겹침, Home·Markup·View 리본 내용은 시안에 없음 | **Draw = CAD식 작도, Markup = Bluebeam식 표시**. 리비전 구름은 두 탭에 같은 명령(`REVCLOUD`)으로. 탭별 버튼은 2-4 | 🟡 추천안 적용 |
-| D5 | 검토 화면에 마크업 목록 없음 (09에 "Markups 5"만) | 검토 탭의 아래 칸 = **마크업 목록**(비교 탭의 변경 표와 같은 표 부품). 기본은 접힘, `MARKUPS` 명령·리본 버튼으로 펼침. 포커스 모드에서는 "Markups 5 Tab" 버튼으로 떠 있는 목록 | 🟡 추천안 적용 |
+| D5 | 검토 화면에 마크업 목록 없음 (09에 "Markups 5"만) | 검토 탭의 아래 칸 = **마크업 목록**(비교 탭의 변경 표와 같은 표 부품). 기본은 접힘, `MARKUPS` 명령·리본 버튼으로 펼침. 포커스 모드에서는 "Markups 5" 버튼으로 떠 있는 목록 (시안의 "Tab" 표시는 뺌: Tab 키는 명령 자동완성에 씀) | 🟡 추천안 적용 |
 | D6 | 상태 표시줄 mm 좌표, "Scale 1:100" | 1단계 축척 = **페이지마다 숫자로 입력**(기본값은 설정의 "Drawing scale"). 좌표·`@500<90` 입력은 이 축척을 쓴 실제 mm. 두 점 찍어 맞추기는 ⏳ 2단계 | 🟡 추천안 적용 |
 | D7 | 제목줄 되돌리기 하나 | **문서 탭마다 따로** 되돌리기·다시 하기 | 🟡 추천안 적용 |
 | D8 | 설정의 "日本語 Planned" | 언어 목록은 실제 있는 언어만 보여 준다 (English, 한국어) | 🟡 추천안 적용 |
 | D9 | 10 설정의 "Import from AutoCAD .pgp" | ⏳ 나중에. 버튼은 흐리게 + "Later" | 🟡 추천안 적용 |
 | D10 | 비교·검토 모두 오토캐드식 명령창, 단축키 오토캐드 방식 | 그대로 | ✅ 확정 |
 | D11 | 그린 것은 PDF 주석, 녹여 넣기는 내보낼 때 선택 | 그대로 | ✅ 확정 |
+| D12 | 01 "Recent comparisons" (변경 수·검토 수) | 누르면 두 파일을 다시 열고 **다시 비교**한다. 검토 표시·고친 표시는 되살리지 않는다 (비교 작업 저장은 ⏳ 나중에). 목록의 "N reviewed"는 1단계에서 빼고 변경 수만 | 🟡 추천안 적용 |
+| D13 | 04 변경 표의 Grid(`C-3`)·Match(98%) 칸, 오른쪽 패널의 변경별 Note·Status·Cloud color·Arc size, 02 "Show removed lines in red" | Grid 칸: 엔진에 격자 이름 인식이 없음 → 1단계에서 **칸을 빼고** ⏳ 나중에. Match: 지금 엔진의 확신도(높음/낮음)를 그대로 보여 줌. Note·Status·Cloud color·Arc size: 화면에서 기억하고 내보낼 때 반영(7-2 export 요청에 추가). Show removed lines: 지금 있는 기능 그대로 | 🟡 추천안 적용 |
+| D14 | 01 왼쪽 메뉴 "Tool sets" (옛 데스크톱의 Saved Tools) | 1단계 범위에 없음 → 메뉴에서 흐리게 + "Later" | 🟡 추천안 적용 |
 
 ### 1-3. 이번에 만들지 않는 것
 
@@ -133,11 +136,11 @@
 
 | 리본 탭 | 그룹 → 버튼 | 근거 |
 |---|---|---|
-| **Home** | File: New compare(`CMP`) · Open(`OPEN`) · Save(`QSAVE`) · Save as(`SAVEAS`) · Export PDF(`EXPORT`) / Edit: Undo(`U`) · Redo(`REDO`) · Copy(`COPYCLIP`) · Paste(`PASTECLIP`) · Erase(`E`) / Tools: Transparent PNG(`PNG`) · Settings(`OP`) | 새로 정함 |
+| **Home** | File: New compare(`CMP`) · Open(`OPEN`) · Save(`QSAVE`) · Save as(`SAVEAS`) · Export PDF(`EXPORT`) / Edit: Undo(`U`) · Redo(`REDO`) · Copy(`COPYCLIP`) · Paste(`PASTECLIP`) (도면·비교 탭: 고른 마크업, PNG 탭: 그림) · Erase(`E`) / Tools: Transparent PNG(`PNG`) · Settings(`OP`) | 새로 정함 |
 | **Compare** | Files: Open · Swap(`SWAP`) / View: Side by side(`SBS`) · Overlay(`OV`) · Sync pan(`SYNC`) / Revision marks: Cloud · Highlight · Delta / Review: Previous(`PREV`) · Next(`NEXT`) · Reviewed(`REVIEWED`) / Output: Export PDF · List CSV(`EXPORTCSV`) / 오른쪽 칸: △ numbering(Start·Each +1), Detect(Text→highlight, Ignore title block) | 04 그대로 |
-| **Markup** | Select: Select · Pan / Annotate: Text box(`TB`) · Callout(`CA`) · Note(`NOTE`) / Shapes: Cloud(`RC`) · Rectangle · Ellipse(`EL`) · Line · Arrow(`AR`) · Pen(`PEN`) · Highlight(`HL`) / Revision: Delta(`DELTA`) / List: Markups(`MARKUPS`) · Status(`STATUS`) / 오른쪽 칸: Layer · Color · Line width | 새로 정함 (PLAN 기능 4) |
-| **Draw** | Select: Select · Pan / Draw: Line(`L`) · Polyline(`PL`) · Circle(`C`) · Rectangle(`REC`) · Rev cloud(`RC`) · Hatch(`H`) · Text(`T`) / Modify: Move(`M`) · Copy(`CO`) · Erase(`E`) / Revision: Delta / Measure: Distance · Scale (D1: 흐리게, Phase 2) / 오른쪽 칸: Layer · Style(ByLayer·선 굵기·투명도) | 07 그대로 |
-| **View** | Navigate: Fit(`ZOOM E`) · Zoom in · Zoom out · Previous page · Next page / Display: Dark view(`DV`) · Grid(`GRID`) · Focus(`FOCUS`, F11) / Panels: Pages · Bookmarks · Layers · Properties · Command line(Ctrl+9) | 새로 정함 |
+| **Markup** | Select: Select · Pan / Annotate: Text box(`TB`) · Callout(`CA`) / Shapes: Cloud(`RC`) · Rectangle · Ellipse(`EL`) · Line · Arrow(`AW`) · Pen(`PEN`) · Highlight(`HL`) / Revision: Delta(`DELTA`) / List: Markups(`MARKUPS`) · Status(`STATUS`) / 오른쪽 칸: Layer · Color · Line width | 새로 정함 (PLAN 기능 4) |
+| **Draw** | Select: Select · Pan / Draw: Line(`L`) · Polyline(`PL`) · Circle(`C`) · Rectangle(`REC`) · Rev cloud(`RC`) · Hatch(`H`) · Text(`T`) / Modify: Move(`M`) · Copy(`CO`) · Erase(`E`) / Revision: Delta / Measure: Distance(`DIST`) · Scale(`CALIBRATE`, 두 점 축척 맞추기) (D1: 흐리게, Phase 2. 숫자로 축척 입력은 1단계 `PSCALE`, 상태 표시줄 축척을 눌러도 됨) / 오른쪽 칸: Layer · Style(ByLayer·선 굵기·투명도) | 07 그대로 |
+| **View** | Navigate: Fit(`ZOOM E`) · Zoom in · Zoom out · Previous page · Next page / Display: Dark view(`DARKVIEW`) · Grid(`GRID`) · Focus(`FOCUS`, F11) / Panels: Pages · Bookmarks · Layers · Properties · Command line(`CMDLINE`, Ctrl+9) | 새로 정함 |
 | **Tools** | PNG 탭일 때: Image · Background · Edges · Output (12 그대로). 다른 탭일 때: Transparent PNG · Settings · Command list(`?`) | 12 + 새로 정함 |
 
 > Markup 탭의 Text box·Callout은 Draw 탭의 Text(`T`, 한 줄 글자)와 다르다: 글상자·지시선이 있는 Bluebeam식 메모. 둘 다 PDF FreeText로 저장된다.
@@ -149,14 +152,21 @@
 | 글자 키 | 명령창에 입력 (단, 패널의 입력칸에 커서가 있을 때는 그 칸에) 🟡 |
 | Enter / Space | 실행. 빈 입력이면 직전 명령 반복 |
 | Esc | 지금 명령 취소, 한 번 더 누르면 선택 해제 |
+| Delete | 고른 마크업 지우기 (`ERASE`와 같음) / 비교 탭: 고른 변경 지우기 (지금 기능) |
 | F2 | 명령 기록 펼치기 |
 | F3 / F7 / F8 / F9 | OSNAP / GRID / ORTHO / SNAP 켜고 끄기 (오토캐드와 같음) 🟡 |
 | F11 | 포커스 모드 |
 | Ctrl+Z / Ctrl+Y | 되돌리기 / 다시 하기 (지금 탭만, D7) |
-| Ctrl+S / Ctrl+O / Ctrl+E | 저장 / 열기 / 내보내기 |
-| Ctrl+Tab | 다음 문서 탭 |
+| Ctrl+S / Ctrl+Shift+S / Ctrl+O / Ctrl+E | 저장 / 다른 이름으로 저장 / 열기 / 내보내기 |
+| F1 / Ctrl+0 / Ctrl+9 / PgUp·PgDn | 명령 목록 / 패널 숨기기 / 명령창 숨기기 / 이전·다음 페이지 (6-6) |
+| 탭 바꾸기 | 문서 탭을 누르거나 `TABNEXT`·`TABPREV` 명령 (Ctrl+Tab은 브라우저가 가져가서 못 씀) |
 | Shift (그리는 중) | 직교 잠깐 켜고 끄기 (10 설정) |
 | 휠 / 가운데 버튼 끌기 | 확대·축소 / 이동 (오토캐드와 같음) 🟡 |
+
+**브라우저가 가져가는 키 (규칙)** 🟡
+- **못 쓰는 키**: Ctrl+W(브라우저 탭 닫기), Ctrl+Tab·Ctrl+PgUp·Ctrl+PgDn(브라우저 탭 바꾸기), Ctrl+N·Ctrl+T. 이 앱의 명령에 배정하지 않는다.
+- **막을 수 있는지 시험이 필요한 키**: F11(브라우저 전체 화면), F1(도움말), F3(찾기), F7(캐럿 탐색), Ctrl+0(확대 초기화). U1에서 Chrome·Edge(Windows)로 시험한다 (위험 **R7**). F11을 막을 수 없으면 포커스 모드 키는 **Ctrl+Shift+F**로 바꾸고 화면의 "Focus F11" 글자도 바꾼다.
+- 탭을 닫다가 저장 안 된 변경을 잃지 않도록, 저장 안 된 탭이 있으면 브라우저 창을 닫을 때 확인 창을 띄운다.
 
 ---
 
@@ -187,7 +197,8 @@
 |---|---|---|
 | 저장 | `QSAVE`, Ctrl+S | Drawing 탭: 주석을 넣어 같은 파일에 저장 (편집 가능한 마크업) |
 | 다른 이름으로 저장 | `SAVEAS` | 새 경로에 저장, 탭이 새 파일을 가리킴 |
-| 내보내기 | `EXPORT`, Ctrl+E | 06 화면. 편집 가능 / 녹여 넣기, 페이지 범위. **새 파일** (기본 위치: 원본 폴더, 이름 `…_marked.pdf`) 🟡 |
+| 그림 파일(PNG·JPG·TIFF)을 도면 탭으로 연 경우 | Ctrl+S | 원본 그림은 바꾸지 않고 **Save as로 PDF 저장**을 묻는다 |
+| 내보내기 | `EXPORT`, Ctrl+E | 06 화면. 편집 가능 / 녹여 넣기, 페이지 범위. **새 파일** (기본 위치: **다운로드 폴더** — 06 화면 문구와 같음. 설정에서 "원본 폴더"로 바꿀 수 있음. 이름 `…_marked.pdf`) 🟡 |
 | 자동 저장 | (자동, 기본 2분) 🟡 | 원본은 건드리지 않고 **복구 사본**을 앱 데이터 폴더에. 정상 저장·닫기 후 지움. 비정상 종료 후 다시 열면 "복구할까요?" |
 | PNG 내려받기 | 12 화면 | 지금처럼 브라우저 내려받기 (작은 그림이라 충분) |
 
@@ -204,9 +215,9 @@
 
 ### 3-5. 안전 규칙
 
-- 서버의 파일 열기·저장 API는 **`127.0.0.1`에서 온 요청만** 받는다 (지금 `Program.cs`가 이 주소에만 열림 — 바꾸지 않는다).
+- 서버는 내 PC 안에서만 닿는 주소(`127.0.0.1`)에서만 열린다. 지금 `Program.cs`의 기본값이고, 다른 주소로 바꿔 실행하는 것은 개발·테스트용으로만 쓴다.
 - 다른 웹사이트가 내 PC 서버를 부르지 못하게 **요청 출처 검사**(같은 주소에서 온 화면만 허용)를 추가한다 🟡.
-- 서버는 PDF·그림 확장자만 열고, 저장은 `.pdf`·`.bak`·앱 데이터 폴더에만 쓴다.
+- 서버는 PDF·그림 확장자만 열고, 쓰는 것은 `.pdf`·`.bak`·안전 저장의 임시 파일(같은 폴더의 `.…saving`, 끝나면 지움)·앱 데이터 폴더뿐이다.
 
 ---
 
@@ -281,8 +292,8 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | `bg-primary`, `text-on-primary`, `text-accent`, `bg-accent-subtle` | `--color-primary` … |
 | `text-fg`, `text-fg-secondary`, `text-fg-muted`, `text-fg-faint` | `--color-text` … `--color-text-faint` |
 | `text-success`, `text-warning`, `text-danger` | 상태색 |
-| `border-default`, `border-subtle`, `border-strong` | 테두리 색 |
-| `p-1`~`p-8`, `gap-…` | `--space-1`~`--space-8` |
+| `border-default`, `border-subtle`, `border-strong` (테두리 **색**) | `--color-border`, `--color-border-subtle`, `--color-border-strong` (`--border-default` 등은 굵기까지 들어 있는 값이라 CSS에서 직접 씀) |
+| `p-1`~`p-6`, `p-8`, `gap-…` | `--space-1`~`--space-6`, `--space-8` (`--space-7`은 없음) |
 | `text-2xs`~`text-display` | `--font-size-*` |
 | `rounded-sm/md/lg` | `--radius-*` |
 | `shadow-sm/md/lg/sheet` | `--shadow-*` |
@@ -345,15 +356,15 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | `arrow` | 시작점·끝점 | Line + 화살촉 | ✅ |
 | `polyline` | 점 목록, 닫힘 여부 | 열림: **PolyLine** / 닫힘: Polygon | ❌ PolyLine 추가 필요 |
 | `rect` | 사각형 | Square | ✅ |
-| `circle` | 중심·반지름 | Circle (사각형으로 바꿔 저장) | ✅ (Ellipse로) |
+| `circle` | 중심·반지름 | Circle (사각형으로 바꿔 저장) + 앱 전용 종류 표시 `/DRKind Circle` | ⚠️ Ellipse로는 저장되지만, 표시가 없으면 다시 열 때 `ellipse`가 됨 → 표시 추가 필요 |
 | `ellipse` | 사각형 | Circle | ✅ |
 | `cloud` | 점 목록(닫힘), 볼록함 | Polygon + 구름 테두리 | ✅ |
-| `text` | 위치·글자·높이·각도 | FreeText (테두리 없음) | ✅ (테두리 없는 옵션 확인) |
+| `text` | 위치·글자·높이 | FreeText (테두리 0) | ✅ (△ 번호 글자에서 이미 씀). 회전은 엔진에 없음 → ⏳ 나중에 |
 | `textbox` | 사각형·글자 | FreeText | ✅ |
 | `callout` | 글 사각형·지시선 끝·꺾임점 | FreeText Callout | ✅ |
 | `ink` | 획 목록 | Ink | ✅ |
 | `highlight` | 사각형 | Square + 곱하기 혼합 | ✅ |
-| `delta` | 위치·번호 | 삼각형 + 글자 (지금 `RevisionMarks`와 같은 방식) | ✅ |
+| `delta` | 위치·번호 | 삼각형(Polygon) + 번호 글상자 = **주석 2개** (지금 `RevisionMarks`) + 둘을 묶는 앱 전용 표시 `/DRKind Delta`·`/DRGroup` | ⚠️ 지금은 다시 열면 따로 2개로 읽힘 → 묶음 표시 추가 필요 |
 | `hatch` | 경계 점 목록(여러 개 가능), 무늬·축척·각도 | 채운 Polygon + 무늬 겉모습 | ❌ 추가 필요, **위험 R2** (10장) |
 | `other` | 테두리 사각형만 | 원래 주석 그대로 보존 | ✅ (`MarkupKind.Other`) |
 
@@ -405,14 +416,15 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 - 명령 하나가 끝날 때 "바뀐 도형의 전·후 모습"을 한 묶음으로 기록 (예: MOVE로 3개를 옮기면 1묶음).
 - 그리는 중 `Undo` 옵션(LINE의 마지막 선 지우기)은 명령 안에서만 쓰는 것으로, 명령이 끝나면 1묶음이 된다.
-- 비교 탭의 표시 고치기·지우기·제외도 같은 방식으로 기록 (지금 따로 있는 되돌리기를 합침).
+- 비교 탭의 표시 고치기·지우기·제외도 같은 방식으로 기록한다. 지금 비교 화면에는 되돌리기 기록이 없고 "모두 되돌리기" 버튼만 있으므로 새로 만든다.
 - 탭마다 최근 200묶음. 저장해도 기록은 남는다.
 
 ### 5-9. 저장할 때 서버로 보내는 것
 
 - 도형마다 "새로 생김 / 바뀜 / 지워짐"을 표시해 두고, 저장할 때 **바뀐 것만** 보낸다.
-- 서버는 바뀐 주석을 같은 `id`로 지우고 다시 넣는다 (엔진 `DeleteMarkup` + `AddMarkup(id)` 이미 있음).
+- 서버는 새것은 `AddMarkup(id)`, 바뀐 것은 `ReplaceMarkup`(검토 상태·잠금·만든 날짜를 지켜 줌), 지운 것은 `DeleteMarkup` (셋 다 엔진에 이미 있음). △처럼 주석 2개로 된 도형은 묶음 단위로 바꾼다.
 - `readOnly` 주석은 절대 건드리지 않는다.
+- **서버 메모리 한도**: 지금 서버는 열린 문서 24개·비교 12개를 넘으면 오래된 것부터 버린다. 화면에 탭이 열려 있는 문서는 **버리지 않게** 고정하고, 탭을 닫을 때 서버에서도 닫는다 (7-2 `DELETE /files/{id}`).
 
 ---
 
@@ -489,7 +501,8 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | `QSAVE` | | Ctrl+S | 저장 |
 | `SAVEAS` | | Ctrl+Shift+S | 다른 이름으로 저장 |
 | `EXPORT` | `EXP` | Ctrl+E | 내보내기 창 (06) |
-| `EXIT` | | Ctrl+W | 지금 탭 닫기 |
+| `EXIT` | | | 지금 탭 닫기 (Ctrl+W는 브라우저가 가져감, 2-5) |
+| `TABNEXT` / `TABPREV` | | | 다음·이전 문서 탭 |
 | `CMP` | `COMPARE` | | 새 비교 탭 |
 | `PNG` | | | 새 투명 PNG 탭 |
 | `OPTIONS` | `OP` | | 설정 창 (10) |
@@ -498,10 +511,12 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | `ZOOM` | `Z` | 휠 | `[Extents/Window/In/Out]` |
 | `PAN` | `P` | 가운데 버튼 | 화면 이동 |
 | `PAGE` | `PG` | PgUp·PgDn | `[Next/Previous]` 또는 번호 |
-| `FOCUS` | | F11 | 포커스 모드 |
-| `DV` | `DARKVIEW` | | 어두운 도면 보기 |
-| `GRID` / `ORTHO` / `SNAP` / `OSNAP` | `OS`(설정 열기) | F7 / F8 / F9 / F3 | 상태 토글 |
+| `FOCUS` | | F11 (R7 시험 결과에 따라 Ctrl+Shift+F) | 포커스 모드 |
+| `DARKVIEW` | `DV` | | 어두운 도면 보기 |
+| `GRID` / `ORTHO` / `SNAP` | | F7 / F8 / F9 | 상태 토글 |
+| `OSNAP` | `OS` | F3 = 켜고 끄기 | 명령은 오토캐드처럼 오스냅 설정 창(10)을 연다 |
 | `PANELS` | | Ctrl+0 | 좌우 패널 숨기기·보이기 |
+| `CMDLINE` | | Ctrl+9 | 명령창 숨기기·보이기 |
 | `PSCALE` | | | 지금 페이지 축척 입력 (D6) |
 | `?` | `HELP` | F1 | 명령 목록 |
 
@@ -515,7 +530,7 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | `RECTANG` | `REC` | `Specify first corner:` → `Specify other corner or [Dimensions]:` |
 | `REVCLOUD` | `RC` | `Specify first corner or [Polygon/Object/ArcSize]:` → 사각형(기본) / 점 찍기 / 닫힌 도형 골라 구름으로 |
 | `HATCH` | `H` | `Specify first boundary point or [Select objects/Pattern/Scale/Angle]:` → `Specify next point or [Undo/Close/…]:` (08). `Pick internal point`는 Phase 2 |
-| `TEXT` | `T`, `DT` | `Specify start point:` → `Specify height <2.5>:` → `Specify rotation <0>:` → `Enter text:` |
+| `TEXT` | `T`, `DT` | `Specify start point:` → `Specify height <2.5>:` → `Enter text:` (회전은 ⏳ 나중에) |
 | `MOVE` | `M` | `Select objects:` → `Specify base point:` → `Specify second point:` |
 | `COPY` | `CO`, `CP` | MOVE와 같고 두 번째 점을 반복 (`[Exit]`) |
 | `ERASE` | `E` | `Select objects:` → Enter |
@@ -529,13 +544,12 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 |---|---|---|
 | `TEXTBOX` | `TB` | 글상자: 두 구석 → 글자 |
 | `CALLOUT` | `CA` | 지시선 끝 → (꺾임점) → 글 상자 → 글자 |
-| `NOTE` | | 메모 아이콘 |
-| `ARROW` | `AR` | 시작점 → 끝점 |
+| `ARROW` | `AW` | 시작점 → 끝점 (`AR`은 오토캐드 ARRAY라 쓰지 않음) |
 | `ELLIPSE` | `EL` | 두 구석 |
 | `PEN` | | 끌어서 자유 곡선, Enter 끝 |
 | `HIGHLIGHT` | `HL` | 두 구석 (노랑 반투명) |
-| `STATUS` | `ST` | 고른 마크업의 검토 상태 `[Open/InProgress/Resolved/Reopened]` |
-| `MARKUPS` | `ML` | 마크업 목록 펼치기·접기 (D5) |
+| `STATUS` | `RS` | 고른 마크업의 검토 상태 `[Open/InProgress/Resolved/Reopened]` (`ST`는 오토캐드 STYLE이라 쓰지 않음) |
+| `MARKUPS` | `MK` | 마크업 목록 펼치기·접기 (D5) |
 
 **Compare (비교 탭)**
 
@@ -556,14 +570,14 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 | 명령 | 하는 일 |
 |---|---|
-| `PASTECLIP` | 클립보드 그림 붙여넣기 (Ctrl+V) |
+| `PASTECLIP` | 클립보드 그림 붙여넣기 (Ctrl+V). 도면·비교 탭에서는 복사한 마크업 붙여넣기 — 같은 명령이 탭에 따라 대상이 다름 |
 | `BGREMOVE` | 흰 배경 지우기 |
 | `BGPICK` | 배경 색 찍기 |
 | `TOLERANCE` | 기준값 `<12>` |
 | `SMOOTH` | 가장자리 부드럽게 |
 | `CROP` | 여백 자르기 |
 | `PNGOUT` | PNG 내려받기 |
-| `COPYCLIP` | 결과를 클립보드로 (Ctrl+C) |
+| `COPYCLIP` | 결과 그림을 클립보드로 (Ctrl+C). 도면·비교 탭에서는 고른 마크업 복사 |
 
 **2단계 (등록만 하고 흐리게, D1)**: `DIST`(`DI`) 거리 재기, `CALIBRATE` 두 점 축척 맞추기, `PDFLAYER` PDF 레이어 켜고 끄기, HATCH의 `Pick internal point`.
 
@@ -579,6 +593,144 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 ---
 
+## 7. 서버 API (화면이 서버에 부탁하는 창구)
+
+### 7-1. 공통 규칙
+
+| 항목 | 규칙 |
+|---|---|
+| 주소 | `http://127.0.0.1:5180/api/…` (지금과 같음) |
+| 자료 모양 | JSON. 좌표는 페이지 pt (5-2) |
+| 오류 | `{ "code": "PDF-ENC-01", "message": "…", "hint": "…" }`. 화면은 `code`로 번역된 문장을 보여 주고(8장), 없으면 `message`를 그대로 (11 화면의 "Error code PDF-ENC-01"). 지금은 `{error}` 모양이므로 **모든 창구와 `api.ts`를 함께 바꾼다** 🟡 |
+| 안전 | 모든 요청에서 **Host가 `127.0.0.1` 또는 `localhost`(서버가 실제로 열린 포트)이고, 요청 출처(Origin)가 없거나 같은 주소일 때만** 받는다 (3-5). 파일 경로를 받는 창구는 3-5의 확장자·폴더 규칙을 지킨다 |
+| 큰 작업 | 비교·내보내기·저장은 취소할 수 있게 (지금 비교처럼 요청 취소 = 작업 중단) |
+
+### 7-2. 창구 목록
+
+**지금 있는 것 (그대로 또는 조금 바꿈)**
+
+| 창구 | 하는 일 | 바꿀 점 |
+|---|---|---|
+| `POST /files` | 파일 올리기 (끌어다 놓기) | 그대로 |
+| `GET /files/{id}` · `DELETE /files/{id}` | 정보 · 닫기 | 정보에 `path`(있으면)·수정 시각·축척·레이어 표 추가 |
+| `GET /files/{id}/pages/{n}.png?scale=` | 페이지 그림 | **`markups=readonly`가 기본**: 이 앱이 고칠 수 있는 주석은 빼고 그림 (5-5). 내보내기 미리보기용으로 `all`·`none` |
+| `POST /compare` · `GET /compare/{id}` | 비교 실행·결과 | 그대로 |
+| `GET /compare/{id}/pages/{i}/removed.png` · `overlay.png` | 지워진 선 · 겹쳐 보기 | 그대로 |
+| `POST /compare/{id}/export` | 표시 넣은 리비전 PDF | 리비전 칸의 내 마크업(D3)·레이어 고르기·녹여 넣기·**저장 경로** 추가. 경로가 없으면 지금처럼 내려받기 |
+
+**새로 만들 것 (1단계)**
+
+| 창구 | 하는 일 | 쓰는 화면 |
+|---|---|---|
+| `GET /fs/places` | 바탕 화면·문서·다운로드·드라이브·최근 폴더 | 파일 열기 창 |
+| `GET /fs/list?path=` | 폴더 안의 폴더와 PDF·그림 파일 (이름·크기·수정 시각) | 파일 열기 창 |
+| `POST /files/open` `{path}` | 경로로 열기 (이미 열려 있으면 같은 `id`) | Open, 최근 파일 |
+| `GET /files/{id}/pages/{n}/thumb.png` | 썸네일 | Pages 패널, 시작 화면 |
+| `GET /files/{id}/outline` | 책갈피 | Bookmarks 패널 |
+| `GET /files/{id}/markups` | 도형 목록(5-3)·레이어 표·페이지별 축척 | 탭 열 때 |
+| `PUT /files/{id}/markups` | 바뀐 도형만 `{added, updated, deleted}` + 레이어 표·축척 → 서버의 열린 문서에 반영 (파일에는 아직 안 씀) | 저장 직전, 자동 저장 |
+| `POST /files/{id}/save` `{path?, expectedModified}` | 파일로 저장. `path` 없으면 원래 경로. 밖에서 바뀌었으면 `FILE-CHANGED` 오류 → 화면이 물음. 처음 덮어쓸 때 `.bak` (3-1) | Ctrl+S, Save as |
+| `POST /files/{id}/autosave` | 복구 사본 쓰기 | 2분마다 |
+| `GET /recovery` · `POST /recovery/{key}/restore` · `DELETE /recovery/{key}` | 복구 사본 목록·되살리기·버리기 | 시작할 때 |
+| `POST /files/{id}/export` `{pages, layers, flatten, path?}` | 검토 탭 내보내기 (06) | Export |
+| `GET /recent` · `DELETE /recent/{key}` | 최근 파일·비교 | 시작 화면 |
+| `GET /settings` · `PUT /settings` | 설정 (3-4 `settings.json`) | 설정 창, 앱 시작 |
+
+**2단계 (자리만 정함, 만들지 않음)**
+
+| 창구 | 하는 일 |
+|---|---|
+| `GET /files/{id}/pages/{n}/vectors` | 페이지의 선·호 목록 (오스냅 "PDF 도면 선" 공급자, 5-7) |
+| `GET /files/{id}/pdf-layers` · `PUT …` | PDF 원래 레이어(OCG) 목록·켜고 끄기 |
+
+### 7-3. 엔진에 새로 필요한 것
+
+| 무엇 | 왜 | 위험 |
+|---|---|---|
+| `PolylineDraft` → PDF PolyLine | 열린 폴리선 (5-3) | 낮음 |
+| `HatchDraft` → 채운 Polygon + 무늬 겉모습 | 해칭 | **R2** |
+| 앱 전용 종류·묶음 표시로 `circle`·`delta` 다시 읽기 (`/DRKind`, `/DRGroup`) | 5-3 | 낮음 |
+| "고칠 수 있는 주석만 빼고 그리기" | 5-5 | 낮음 |
+| 주석·문서의 앱 전용 값 읽고 쓰기 (`/DRLayer`, `/DRByLayer`, `/DRLayers`, `/DRScale`) | 5-2, 5-4 | 낮음 (`/DRStatus`·`/DRKind`가 이미 같은 방식) |
+| 경로 저장 + 수정 시각 확인 + `.bak` | 3장 | R4 |
+| 비교 내보내기 요청에 변경별 메모·검토 상태·구름 색·볼록함 추가 (`MarkEditDto` 확장) | D13 | 낮음 |
+
+---
+
+## 8. 다국어 🟡 추천안 적용: 간단한 자체 방식
+
+| 항목 | 규칙 |
+|---|---|
+| 글자 파일 | `web/src/i18n/en.ts`(기준), `ko.ts`. 키는 화면별로 묶음: `compare.run`, `cmd.LINE.desc`, `prompt.firstPoint`, `error.PDF-ENC-01` |
+| 쓰는 법 | 화면 코드에 글자를 직접 쓰지 않고 `t('compare.run')`. 바뀌는 값은 `t('compare.changes', { n: 4 })` → "4 changes" |
+| 빠진 번역 | `ko.ts`에 없는 키는 영어로 보여 준다. 테스트가 빠진 키 목록을 출력하고, **한국어를 켜는 개발 단위(U11)에서는 빠진 키가 0개여야 통과** |
+| 영어 1개/여러 개 | `{ one: '1 change', other: '{n} changes' }` 두 가지만 지원 |
+| 숫자·날짜 | 브라우저 기본 기능(Intl)으로 언어에 맞게 (`48,020` / `2026. 10. 14.`) |
+| 번역하지 않는 것 | 명령 이름·별칭, 프롬프트의 대괄호 옵션 단어(`[Undo/Close]` — 옵션 글자를 쳐야 하므로), 레이어 이름, 오스냅 이름(END·MID…), 파일 이름 |
+| 번역하는 것 | 리본·패널·대화상자 글자, 명령 설명, 프롬프트 문장(`Specify next point` → `다음 점 지정`), 오류·안내 |
+| 바꾸는 때 | 설정에서 고르면 바로 (다시 시작 없음, 10 화면 문구) |
+| 글자 길이 | 한국어·영어 둘 다에서 버튼 글자가 잘리지 않는지 U11에서 화면 캡처로 확인 |
+| 라이브러리 | 쓰지 않음 (브리핑 3-8). 나중에 언어가 많아지면 react-i18next로 옮기기 쉽게 키 이름 규칙만 맞춰 둔다 |
+
+---
+
+## 9. 개발 순서와 단위별 완료 기준
+
+### 9-1. 모든 단위에 공통인 완료 기준
+
+| # | 기준 | 확인 방법 |
+|---|---|---|
+| C1 | 웹 테스트 통과 (`cd web && npm test`), 빌드 통과 (`npm run build`, 타입 검사 포함) | Linux에서 실행 |
+| C2 | .NET 테스트 통과 (`dotnet test`) — 서버·엔진을 고친 단위 | Linux에서 실행 |
+| C3 | 토큰 검사 통과 (4-4의 색 하드코딩 검사) | 테스트에 포함 |
+| C4 | 그 단위의 화면을 헤드리스 브라우저(1440×900, 1280×800)로 캡처해 **확정 시안과 나란히 비교**, 다른 점 기록 | 캡처 첨부 |
+| C5 | 기존 기능 회귀 없음 (비교·PNG의 지금 동작) | 테스트 + 캡처 |
+| C6 | `docs/FEATURES.md`·`CHANGELOG.md` 갱신, 커밋 | |
+| C7 | Windows 실행 확인은 **Owner**. 못 한 것은 "Windows 확인 전"이라고 적는다 | Owner |
+
+### 9-2. 개발 단위
+
+| 단위 | 내용 | 이 단위의 완료 기준 (C1~C7 외) | 시안 |
+|---|---|---|---|
+| **R1** (U1과 나란히) | 위험 시험: 실제 CAD PDF에서 선 뽑기 (10장) | 결과 보고서 `docs/risk-r1.md`. 2단계 진행 여부 판단 | — |
+| **U1** | 토큰 연결 + 글꼴 넣기 + 공통 틀(제목줄·리본·좌우 패널·명령창 자리·상태 표시줄) + 문서 탭 + Zustand + **다국어 틀(`t()`, `en.ts`)** — 이후 모든 화면 글자는 처음부터 `t()`로 쓴다 + 브라우저 키 시험(R7) | 빈 Home 탭이 새 디자인으로 뜸. 탭 열고 닫기. 인터넷을 끊어도 글꼴 정상 | 01 틀 |
+| **U2** | 명령 시스템 핵심: 등록표·명령창·자동완성·오타 제안·기록·키보드 분배(6-7)·리본 버튼 = 명령 | `?`·`GRID`·`ORTHO`·`PANELS`·`CMDLINE`·`EXIT`·`TABNEXT` 동작 (`OP`·`FOCUS`·`DARKVIEW`는 등록만, 실제 동작은 U9·U10). `LNE` → 제안. 입력칸에 커서 있을 때 글자가 명령창으로 안 감 (테스트) | 04 자동완성, 11 |
+| **U3** | 비교 탭을 새 틀로 옮기기 (상태를 보관소로, 변경 표 = `Table`, 오른쪽 패널, 진행 창, 오류·차이 없음 화면) + 비교 명령(6-6) + 되돌리기 합치기 | 지금 되는 비교 기능이 모두 그대로 동작. 02~05·11 캡처 비교 | 02~05, 11 |
+| **U4** | 투명 PNG 탭 옮기기 + PNG 명령 | 지금 기능 그대로, 12 캡처 비교 | 12 |
+| **U5** | 파일 열기 창·경로로 열기·최근 파일 + 시작 화면 (서버 창구 7-2의 `fs`·`open`·`recent`) | 한글·띄어쓰기 경로 열기. 없어진 최근 파일 흐리게 | 01, 파일 열기 창(새 시안) |
+| **U6** | 검토 탭 보기: 페이지·썸네일·책갈피·확대, 기존 주석 읽어 SVG로 보이기, 마크업 목록, 속성 패널(읽기) | 다른 프로그램에서 만든 주석이 있는 PDF를 열어 위치가 정확(엔진 테스트 PDF로 자동 비교) | 07 틀 |
+| **U7a** | 작도 기반: 점 입력(클릭·좌표·거리), 고무줄 선, 직교·격자, 고르기(5-6), 되돌리기, `LINE`·`PLINE`·`RECTANG`·`CIRCLE` + **저장·Save as·`.bak`·자동 저장·복구** (`PUT /markups`, `save`, `autosave`, `recovery`) | 좌표 `@500<90`이 축척대로 정확(계산 테스트). 저장 후 다시 열면 같은 자리. 저장 중 서버를 강제로 꺼도 원본이 안 깨짐(테스트). 밖에서 바뀐 파일은 덮어쓰기 전에 물음 | 07 |
+| **U7b** | `REVCLOUD`·`TEXT`·`DELTA` + Markup 탭 도구(`TEXTBOX`·`CALLOUT`·`ARROW`·`ELLIPSE`·`PEN`·`HIGHLIGHT`·`STATUS`) | 저장한 PDF를 Bluebeam·Acrobat에서 열어 보임 (Owner, R3) | 09 |
+| **U7c** | `MOVE`·`COPY`·`ERASE`·속성 패널 편집 | 여러 개 고르고 옮기고 되돌리기 | 07 |
+| **U7d** | 레이어 (`LAYER`, 패널, ByLayer, 켜고 끄기·잠금, 저장) | 저장 후 다시 열면 레이어 유지 | 07 |
+| **U7e** | 오스냅 (내 도형, 7종, 한 번만 쓰기, 표시) | 각 종류별 계산 테스트, 07처럼 표시 | 07 |
+| **U7f** | `HATCH` (경계 그리기·닫힌 도형 고르기, 무늬 5개) | Bluebeam·Acrobat에서 무늬 확인 (Owner, R2) | 08 |
+| **U8** | 내보내기 창 (검토·비교 공통, 편집 가능/녹여 넣기, 페이지·레이어 고르기) | 녹여 넣은 PDF에는 주석이 없고 그림으로 들어감(엔진 테스트) | 06 |
+| **U9** | 설정 창 (언어 칸 자리·단위·축척·오스냅·별칭 편집·작도·비교 기본값) | 별칭을 바꾸면 바로 명령창에 반영, 다시 시작해도 유지 | 10 |
+| **U10** | 포커스 모드 + 어두운 도면 보기 | F11로 들어가고 나옴, 떠 있는 도구·명령창 동작, DV는 내보낸 PDF에 영향 없음 | 09 |
+| **U11** | 한국어 (`ko.ts` 채우기) | 빠진 키 0개, 한국어 화면 캡처 12장에서 글자 잘림 없음 | 전체 |
+| **U12** | 마무리 점검 (ship-check 스킬, 5단계) | — | — |
+
+순서 이유: 틀(U1)과 명령창(U2)이 모든 화면의 바탕이라 먼저. 이미 되는 비교(U3)·PNG(U4)를 먼저 옮겨 **새 틀이 실제 기능을 담을 수 있는지** 확인한 뒤, 새 기능(U5~)으로 간다. 저장은 저장할 도형이 처음 생기는 U7a에 함께 넣어, 그려 놓고 저장 못 하는 상태가 없게 한다. 다국어 틀은 U1에 넣어 나중에 모든 화면 글자를 다시 고치는 일을 막는다.
+
+---
+
+## 10. 위험 시험 계획
+
+| # | 위험 | 시험 방법 | 통과 기준 | 실패하면 | 언제 · 누가 |
+|---|---|---|---|---|---|
+| **R1** | PDF 도면 선 뽑기 (2단계 오스냅·안쪽 클릭 해칭의 바탕) | 작은 실험 프로그램으로 실제 CAD PDF 1~2장에서 MuPDF `GetDrawings` 실행: 선 개수·걸린 시간·메모리, 뽑은 선을 그림으로 다시 그려 원본과 겹쳐 보기 | A1 한 장 3초 이내, 메모리 1GB 이내, 겹쳐 봤을 때 선 위치가 맞음 🟡 | 2단계 PDF 오스냅을 "포기 또는 다른 방법"으로 회의. 1단계에는 영향 없음 | U1과 나란히 · Claude (샘플은 Owner) |
+| **R2** | 해칭 무늬가 다른 프로그램에서 보이나 | U7f에서 무늬 5개를 넣은 PDF를 Bluebeam·Acrobat에서 열기·옮기기·저장 | 보임. 고치면 단색이 되는 것은 허용(DECISIONS에 이미 적음) | 무늬를 선 주석 묶음으로 저장하는 방법으로 바꿈 | U7f · Owner(Windows) |
+| **R3** | 폴리선(PolyLine)·원(표시 붙은 Ellipse)·△ 묶음이 다른 프로그램에서 같게 보이나 | U7b에서 같은 방식 | 위치·크기·색이 같음 | 폴리선은 선 주석 여러 개로 대체 | U7b · Owner |
+| **R4** | Windows 경로 저장 | 한글·띄어쓰기 경로, OneDrive 폴더, 네트워크 드라이브, **Bluebeam이 열고 있는 파일**에 저장 | 저장되거나, 안 되면 이유와 해결 방법을 알려 줌 (원본은 안 깨짐) | 그 경우만 Save as로 유도 | U7a · Owner |
+| **R5** | 도형이 많을 때 속도 | 한 페이지에 도형 2,000개를 만들어 확대·이동·오스냅 | 끊김 없이 움직임(화면 갱신 1초에 30번 이상) | 그 층만 Canvas로 그리기 (5-5) | U7e · Claude |
+| **R6** | PDF 진짜 레이어(OCG) | 레이어가 있는 CAD PDF에서 켜고 끄기 | 페이지 그림에서 그 레이어만 사라짐 | 2단계 레이어 기능 회의 | 2단계 시작 전 · Claude |
+| **R7** | 브라우저가 가져가는 키 (F11·F1·F3·F7·Ctrl+0) | Chrome·Edge(Windows)에서 각 키를 눌러 앱이 받는지 확인 | 받으면 그대로, 못 받으면 2-5 규칙대로 다른 키 | 2-5의 대체 키 사용 | U1 · Claude(Linux 크롬) + Owner(Windows) |
+
+**Owner에게 필요한 것**: 실제 CAD에서 뽑은 PDF 1~2장 (회사·현장 정보 없는 것, 선이 많은 도면 1장 + 레이어가 있는 도면 1장이면 좋음). 프로젝트 파일에 올려 주면 된다.
+
+---
+
 ## 부록 A. 1차 회의에서 Owner가 확인할 것
 
 답이 없으면 아래 추천안대로 2차 회의(4~6장)로 넘어간다.
@@ -587,7 +739,7 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 |---|---|---|
 | Q1 | 파일 열기·저장 방식 | 서버가 내 PC 경로로 직접 (3장) |
 | Q2 | 탭 구조 | 문서 탭 = 작업 하나 (2-1) |
-| Q3 | 2단계 기능을 1단계 화면에 어떻게 | 흐리게 + "Phase 2" (D1) |
+| Q3 | 2단계 기능을 1단계 화면에 어떻게 | 흐리게 + "Phase 2" (D1). 시안에 있지만 1단계에 없는 것도 같은 방식 (D12~D14) |
 | Q4 | Draw / Markup 탭 나누기 | Draw = 작도, Markup = Bluebeam식 표시 (D4, 2-4) |
 | Q5 | 비교 탭에서 그리기 | 리비전 칸에만 (D3) |
 | Q6 | Drawing 탭 Ctrl+S | 같은 파일에 저장 + 처음 한 번 `.bak` (3-1) |
@@ -597,7 +749,7 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 ## 부록 B. 2차 회의(4~6장)에서 Owner가 확인할 것
 
-답이 없으면 아래 추천안대로 3차 회의(7~10장)로 넘어간다.
+답이 없으면 아래 추천안대로 둔다.
 
 | # | 질문 | 적용한 추천안 |
 |---|---|---|
@@ -608,4 +760,21 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | Q14 | 고르기 방식 | 오토캐드 방식 (왼→오 = 완전히 안, 오→왼 = 걸친 것) (5-6) |
 | Q15 | 오스냅 계산 | 브라우저 (5-7) |
 | Q16 | 글꼴 | 앱 안에 넣기 (인터넷 없이 동작) (4-4) |
-| Q17 | 명령·별칭 목록 | 6-6 표. 빠졌거나 바꾸고 싶은 명령이 있으면 말하기 |
+| Q17 | 명령·별칭 목록 | 6-6 표. 오토캐드와 겹치는 별칭은 피함(ARROW=`AW`, STATUS=`RS`). 빠졌거나 바꾸고 싶은 명령이 있으면 말하기 |
+| Q17b | 브라우저가 가져가는 키 | Ctrl+W·Ctrl+Tab은 안 씀, F11은 시험 후 안 되면 Ctrl+Shift+F (2-5, R7) |
+
+## 부록 C. 3차 회의(7~10장)에서 Owner가 확인할 것
+
+| # | 질문 | 적용한 추천안 |
+|---|---|---|
+| Q18 | 오류 표시 | 오류 코드 + 번역된 문장 + 해결 방법 (7-1) |
+| Q19 | 다국어 방식 | 간단한 자체 방식, 옵션 단어 `[Undo/Close]`는 영어 고정 (8장) |
+| Q20 | 개발 순서 | U1 → U12 (9-2). 비교·PNG를 먼저 옮기고 새 기능 |
+| Q21 | 위험 시험 R1 통과 기준 | A1 한 장 3초·1GB 이내 (10장) |
+| Q22 | 실제 CAD PDF 샘플 | 1~2장 올려 주기 (Q9와 같음) |
+
+## 승인 후 할 일
+
+1. Owner가 🟡 항목을 확인(또는 번호로 수정)하고 "설계 승인"이라고 하면, 확정된 결정을 `docs/DECISIONS.md`에 옮기고, `docs/PLAN.md`도 맞춘다(5장 "데이터 저장 위치": 메모리에만 → 내 PC 경로로 열고 저장 + 앱 데이터 폴더). 그리고 `CLAUDE.md` 진행 단계 3을 체크한다.
+2. 앱 전용 파일 열기 창 시안 1장을 `design/source/`로 추가해 확인받는다 (Q8).
+3. 4단계 개발을 U1부터 시작한다 (Owner가 "코딩 진행해"라고 한 뒤).
