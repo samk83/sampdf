@@ -1,0 +1,130 @@
+/* 디자인 토큰: Sam Drawing Tools — S1 Slate (확정 2026-10-16)
+ * 공통 규칙은 design.md 3장. 컴포넌트에서는 값을 직접 쓰지 말고 이 변수를 쓴다.
+ * 오토캐드풍 슬레이트를 재해석한 어두운 테마 하나가 기본이다 (밝은 테마 없음).
+ * "어두운 도면 보기"는 테마가 아니라 도면 그림에만 거는 보기 옵션이다 (--drawing-dark-filter). */
+:root {
+  /* Color — 기본 역할 (하네스 공통 이름) */
+  --color-primary: #126fa8;          /* 주요 버튼 채움 */
+  --color-on-primary: #ffffff;
+  --color-accent: #2ba8e0;           /* 선택 테두리, 켜진 토글, 링크, 명령 옵션 */
+  --color-on-accent: #0b1620;
+  --color-background: #232a33;       /* 앱 바탕, 입력칸 바탕 */
+  --color-surface: #2a323d;          /* 패널, 리본, 대화상자 */
+  --color-text: #e3e8ee;
+  --color-text-muted: #a0acba;       /* 보조 글자 */
+  --color-border: #3a4553;
+  --color-success: #8ce99a;          /* 어두운 바탕 위 글자·배지 */
+  --color-warning: #ffe066;
+  --color-danger: #ff8787;
+
+  /* Color — 이 앱 전용 */
+  --color-chrome: #1a1f26;           /* 제목줄, 상태 표시줄 */
+  --color-surface-sunken: #252c36;   /* 패널 머리, 명령창 기록, 표 머리 */
+  --color-surface-pressed: #35404d;  /* 눌린 버튼, 선택된 메뉴 */
+  --color-canvas: #1c2229;           /* 도면 뒤 작업 공간 */
+  --color-border-subtle: #313a46;    /* 패널 안 구분선 */
+  --color-border-strong: #4a5666;    /* 입력칸·버튼 테두리 */
+  --color-text-secondary: #c3ccd6;
+  --color-text-faint: #93a0ae;       /* 단위, 단축키, 그룹 이름 (보조 정보만) */
+  --color-primary-deep: #0d5584;     /* 큰 버튼 그라데이션 끝 */
+  --color-accent-subtle: rgb(43 168 224 / 0.16); /* 선택된 줄, 켜진 토글 바탕 */
+  --color-cmdline-float: rgb(26 31 38 / 0.86);  /* 도면 위에 떠 있는 명령창 */
+
+  /* Color — 도면 위 표시 (흰 종이 기준. 내보낸 PDF와 같은 색) */
+  --markup-red: #e5383b;             /* 리비전 구름, △, REVIEW 레이어 */
+  --markup-red-text: #c92a2a;
+  --markup-yellow: #ffd43b;          /* 글자 변경 하이라이트 (50% 투명) */
+  --markup-orange: #ff922b;          /* HATCH 레이어 기본 */
+  --markup-blue: #1c7ed6;            /* NOTES, 겹쳐 보기의 리비전 */
+  --overlay-original: #e03131;       /* 겹쳐 보기의 원본 */
+  --overlay-revised: #1c7ed6;
+  --snap-marker: #f59f00;            /* 오스냅 표시와 이름표 테두리 */
+  --drawing-paper: #ffffff;
+  --drawing-ink: #1b1f24;
+  --drawing-dark-filter: invert(1) hue-rotate(180deg); /* 어두운 도면 보기 (DV) */
+
+  /* Typography */
+  --font-family-base: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-family-mono: "JetBrains Mono", ui-monospace, Consolas, monospace; /* 명령창, 좌표, 레이어 이름 */
+  --font-size-2xs: 10.5px;           /* 리본 그룹 이름, 상태 토글 */
+  --font-size-xs: 11.5px;            /* 리본 버튼 글자, 보조 설명 */
+  --font-size-sm: 12.5px;            /* 표, 패널 본문, 명령창 */
+  --font-size-md: 13px;              /* 기본 본문 */
+  --font-size-lg: 15px;              /* 대화상자 제목, 카드 제목 */
+  --font-size-xl: 22px;              /* 시작 화면 제목 */
+  --font-size-display: 30px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Layout — 고정 크기 (1440×900 기준) */
+  --size-titlebar: 32px;
+  --size-ribbon-tabs: 30px;
+  --size-ribbon: 78px;
+  --size-statusbar: 26px;
+  --size-cmdline-input: 32px;
+  --size-panel-left: 212px;
+  --size-panel-right: 256px;
+  --size-control: 30px;              /* 입력칸, 작은 버튼 높이 */
+  --size-icon: 16px;
+  --size-icon-ribbon: 20px;
+
+  /* Radius — 각진 모양이 S1의 특징 */
+  --radius-sm: 2px;                  /* 버튼, 입력칸, 토글, 칩 */
+  --radius-md: 3px;                  /* 떠 있는 명령창, 메뉴 */
+  --radius-lg: 4px;                  /* 대화상자, 카드 */
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 8px 24px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 30px 80px rgb(0 0 0 / 0.6);  /* 대화상자 */
+  --shadow-sheet: 0 6px 24px rgb(0 0 0 / 0.5); /* 도면 종이 */
+
+  /* Border */
+  --border-width: 1px;
+  --border-default: var(--border-width) solid var(--color-border);
+  --border-subtle: var(--border-width) solid var(--color-border-subtle);
+  --border-control: var(--border-width) solid var(--color-border-strong);
+  --focus-ring: 0 0 0 2px var(--color-accent);
+
+  /* Motion — 빠르고 짧게 */
+  --motion-fast: 100ms;
+  --motion-normal: 180ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Breakpoint (참고값: 미디어 쿼리에는 같은 값을 직접 적는다). PC 전용, 최소 1280 */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1280px;
+
+  /* Z-index */
+  --z-base: 0;
+  --z-canvas-overlay: 10;            /* 오스냅 표시, 그리는 중인 선 */
+  --z-floating: 50;                  /* 떠 있는 명령창, 미니 도구 막대, 포커스 모드 패널 */
+  --z-dropdown: 100;                 /* 명령 자동완성, 메뉴 */
+  --z-modal: 1000;
+  --z-toast: 1100;
+
+  /* Touch (PC 전용 앱. 마우스 기준 최소 크기) */
+  --touch-target-min: 28px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+  }
+}

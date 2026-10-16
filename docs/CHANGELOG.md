@@ -2,6 +2,14 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-16 — 시안 확정, 디자인 시스템 저장
+
+**무엇을**: `design/tokens.css`(S1 Slate 실제 값, 이 앱 전용 토큰 포함), `design/brand.md`(화면 뼈대·색 역할·글꼴·모양·명령창 규칙·화면 목록), `design/screens/` 확정 화면 12개(브라우저에서 바로 열림, `../tokens.css` 사용) + 예시 도면 SVG, 생성 스크립트 `design/source/`. `design/README.md` 확정 기록, `CLAUDE.md` 진행 단계 갱신, 다음 세션 안내 `docs/NEXT-SESSION.md`.
+
+**왜**: Owner "확정". 설계는 새 채팅에서 시작.
+
+**확인**: contrast.py 9개 조합 통과(미달 0) + 앱 전용 12개 조합 4.5:1 이상. 헤드리스 Chromium으로 6개 화면 캡처 확인, 그 과정에서 설정 창 잘림·해칭 레이어 색·시작 화면 줄바꿈을 고침. Windows 브라우저 확인은 안 함.
+
 ## 2026-10-16 — 최종 시안 스킨 변경 (S1 Slate)
 
 **무엇을**: 스킨 3안 비교 화면(캔버스 "Skin" 페이지) 제작 후, Owner가 고른 S1 Slate를 최종 12화면에 적용. 어두운 도면 보기 옵션을 상태 표시줄(DARK VIEW)·설정·포커스 모드 화면에 표시. 결정은 `docs/DECISIONS.md`, 기록은 `design/README.md`.
