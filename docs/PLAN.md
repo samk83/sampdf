@@ -1,6 +1,6 @@
 # 기획서: Sam Drawing Tools
 
-> 원본: "도면 검토용 PDF 프로그램 개인용 기획서 v0.2"와 "DRAWING DIFFERENCE CHECKER — PRODUCT REQUIREMENTS v1.0"을 바탕으로, 이후 Owner 결정(웹 전환, PDF 중심, DWG·Word 제외, 오토캐드식 명령창·작도, 영어 기본·다국어 등)을 반영해 정리. 마지막 수정: 2026-10-16
+> 원본: "도면 검토용 PDF 프로그램 개인용 기획서 v0.2"와 "DRAWING DIFFERENCE CHECKER — PRODUCT REQUIREMENTS v1.0"을 바탕으로, 이후 Owner 결정(웹 전환, PDF 중심, DWG·Word 제외, 오토캐드식 명령창·작도, 영어 기본·다국어 등)을 반영해 정리. 마지막 수정: 2026-10-16 (설계 승인 반영)
 
 ## 1. 목적
 Bluebeam Revu에 익숙한 흐름으로 PDF 도면을 검토하고, 도면이 개정되었을 때 **바뀐 부분을 빠짐없이 자동으로 찾아 표시**한다. 결과는 다른 프로그램(Bluebeam·Acrobat)에서도 열고 고칠 수 있는 표준 PDF 주석으로 내보낸다.
@@ -43,7 +43,7 @@ Bluebeam Revu에 익숙한 흐름으로 PDF 도면을 검토하고, 도면이 �
 ## 5. 사용 환경
 - 기기·OS·브라우저: Windows PC, Chrome/Edge, 화면 1440×900 기준(최소 1280)
 - 온라인/오프라인: 내 PC 안에서만 동작 (127.0.0.1). 인터넷 없어도 기능 동작
-- 데이터 저장 위치: 올린 파일은 메모리에만, 결과는 내려받은 PDF·PNG 파일
+- 데이터 저장 위치: 내 PC의 파일을 경로로 직접 열고 저장(처음 덮어쓸 때 `.bak`), 끌어다 놓은 파일은 메모리에 두고 저장할 때 위치를 물음. 설정·최근 파일·복구 사본은 앱 데이터 폴더(`%APPDATA%\SamDrawingTools\`). 자세한 것은 `docs/DESIGN-SPEC.md` 3장
 
 ## 6. 정한 기본값 (Owner가 바꿀 수 있음)
 - △ 번호: 하나씩 올라감(1, 2, 3…), 글자 변경도 구름 표시
