@@ -2,6 +2,14 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-16 — 설계 시작 안내 갱신
+
+**무엇을**: `docs/NEXT-SESSION.md` 시작 프롬프트를 지금 브랜치(`claude/project-thread-5mv5zs`)로 고치고, 읽을 목록에 `design/source/`·`tailwind.config.js` 추가, "알려진 정리 거리" 표 추가(포커스 모드 색 `#0f1216` 토큰 없음, 웹 Tailwind가 토큰 미사용). `design/README.md`의 빈칸 줄 삭제.
+
+**왜**: 옛 브랜치를 가리키던 안내를 바로잡고, 설계 단계에서 정리할 것을 미리 남기기 위해 (Owner 승인).
+
+**확인**: `export_static.py` 재실행 결과가 저장된 화면과 같음. 코드 변경 없음.
+
 ## 2026-10-16 — 시안 확정, 디자인 시스템 저장
 
 **무엇을**: `design/tokens.css`(S1 Slate 실제 값, 이 앱 전용 토큰 포함), `design/brand.md`(화면 뼈대·색 역할·글꼴·모양·명령창 규칙·화면 목록), `design/screens/` 확정 화면 12개(브라우저에서 바로 열림, `../tokens.css` 사용) + 예시 도면 SVG, 생성 스크립트 `design/source/`. `design/README.md` 확정 기록, `CLAUDE.md` 진행 단계 갱신, 다음 세션 안내 `docs/NEXT-SESSION.md`.

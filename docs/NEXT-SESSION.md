@@ -1,25 +1,32 @@
 # 다음 세션 시작 안내 — 3단계 설계
 
-> 2026-10-16 작성. 시안이 확정되었고, 다음은 **설계**다. 새 채팅 첫 메시지로 아래 "시작 프롬프트"를 붙여 넣는다.
+> 2026-10-16 작성, 같은 날 브랜치·알려진 정리 거리 갱신. 시안이 확정되었고, 다음은 **설계**다. 새 채팅 첫 메시지로 아래 "시작 프롬프트"를 붙여 넣는다.
 
 ## 시작 프롬프트 (복사해서 새 채팅에 붙여 넣기)
 
 ```text
-samk83/sampdf 저장소의 claude/gracious-cori-qj4ytn 브랜치에서 이어서 작업하자.
+samk83/sampdf 저장소의 claude/project-thread-5mv5zs 브랜치에서 이어서 작업하자.
 3단계 "설계"를 시작할 거야. 코딩은 하지 말고, 먼저 아래 문서를 읽고 현재 상태를 파악해 줘.
 
 1) CLAUDE.md (작업 규칙·진행 단계)
 2) docs/NEXT-SESSION.md (이 안내, 설계에서 정할 것 목록)
 3) docs/PLAN.md, docs/DECISIONS.md, docs/FEATURES.md
 4) design.md, design/brand.md, design/tokens.css, design/README.md
-5) design/screens/ 확정 화면 12개 (브라우저로 열어 캡처해서 직접 봐 줘)
-6) 지금 코드 구조: web/src, src/DrawingReview.Web, src/DrawingReview.Engine, src/DrawingReview.Compare
+5) design/screens/ 확정 화면 12개 (헤드리스 브라우저로 캡처해서 직접 봐 줘)
+6) design/source/ (chrome.py의 공통 부품, sheet_svg.py의 구름·△ 그리기)
+7) 지금 코드: web/src (ui, compare, png), web/tailwind.config.js,
+   src/DrawingReview.Web, src/DrawingReview.Engine, src/DrawingReview.Compare
+
+이미 알려진 정리 거리:
+- 포커스 모드 도면 뒤 색 #0f1216이 tokens.css에 없음
+- web/tailwind.config.js가 tokens.css를 안 쓰고 옛 밝은 색을 직접 적어 둠
 
 다 읽었으면 내가 이해하기 쉽게
-- 지금까지 된 것 / 확정된 디자인 요약
-- 설계에서 정해야 할 것과 각각의 추천안(장단점)
-- 설계 문서를 어떤 순서로 만들지
-를 브리핑해 줘. 나는 코딩 초보라서 어려운 용어는 쉽게 풀어서 설명해 줘.
+- 지금까지 된 것 / 확정된 디자인 요약 (표로)
+- 설계에서 정할 것(화면 구조, 부품 목록, 명령 시스템, 작도·마크업 데이터, 서버 API,
+  다국어, 토큰 적용, 개발 순서, 위험 확인)과 각각의 추천안·장단점
+- 설계 문서(docs/DESIGN-SPEC.md)를 어떤 순서로 만들지
+를 브리핑해 줘. 나는 코딩 초보라서 어려운 용어는 괄호로 쉽게 풀어 줘.
 ```
 
 ## 지금 상태 (2026-10-16)
@@ -48,6 +55,13 @@ samk83/sampdf 저장소의 claude/gracious-cori-qj4ytn 브랜치에서 이어서
 8. **개발 순서**: 작은 단위로 나누기 (예: 토큰·공통 틀 → 명령창 → 비교 화면 다시 맞추기 → 검토 모드 + 작도 1단계 → 다국어 → 2단계).
 9. **위험 확인**: PDF 선 추출을 실제 CAD PDF로 먼저 시험할지 (2단계 오스냅의 가능성 확인).
 
+## 알려진 정리 거리 (2026-10-16 확인)
+| # | 내용 | 제안 |
+|---|---|---|
+| 1 | 포커스 모드 화면(09)은 `S2` 변형(`chrome.py`)으로 만들어져 도면 뒤 색 `#0f1216`을 쓰는데, `tokens.css`에는 없음 | 토큰 추가(`--color-canvas-dark` 등) 또는 `--color-canvas`로 통일. 설계에서 결정 |
+| 2 | `web/tailwind.config.js`가 `tokens.css`를 쓰지 않고 옛 밝은 색(`#e9ebef` 등)·IBM Plex 글꼴을 직접 적어 둠 | 설계 7번에서 Tailwind 색 이름을 `var(--color-…)`에 연결하는 방식 추천 |
+| 3 | `python3 design/source/export_static.py` 재실행 결과가 저장된 화면과 완전히 같음 (git 변경 없음) | 확인됨. 생성 스크립트를 믿고 써도 됨 |
+
 설계 결과는 문서(예: `docs/DESIGN-SPEC.md`)로 남기고 Owner 승인 후 4단계 개발로 넘어간다.
 
 ## 작업 규칙 요약 (CLAUDE.md와 Owner 선호)
@@ -55,7 +69,7 @@ samk83/sampdf 저장소의 claude/gracious-cori-qj4ytn 브랜치에서 이어서
 - 회의 → 비판적 검토 → 변경 계획 브리핑 → **"코딩 진행할까요?"** → "코딩해 / 코딩 진행해" 같은 명확한 지시 후에만 코딩. 질문이 오면 멈추고 회의로.
 - 기능은 파일·폴더로 나누고 `docs/FEATURES.md`에 기록. 작업 단위마다 커밋(무엇·왜·확인 결과), `docs/CHANGELOG.md` 갱신.
 - 확인하지 못한 것은 확인했다고 말하지 않는다 (특히 Windows).
-- 브랜치 `claude/gracious-cori-qj4ytn`에서만 작업·푸시. PR은 요청할 때만.
+- 브랜치 `claude/project-thread-5mv5zs`에서만 작업·푸시. PR은 요청할 때만.
 - 라이브러리 문서는 Context7 사용 (연결에 로그인이 필요할 수 있음).
 
 ## 참고 링크
