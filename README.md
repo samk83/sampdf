@@ -52,5 +52,6 @@ docs/                          설계·검증·기능 문서
    ```
 6. `validation/output/markup-roundtrip.pdf`를 Acrobat Reader와 Bluebeam에서 열어
    [docs/engine-validation.md의 체크리스트](docs/engine-validation.md#sam이-직접-확인할-항목-windows)를 확인한다.
-7. **CAD 비교 해 보기** (선택): 메뉴 Compare → Compare CAD Drawings (DWG/DXF)… 에서 이전·개정 DWG(또는 DXF)를 차례로 고른다.
+7. **PDF 비교 시험 파일**: `samples/compare/original.pdf`(원본)와 `revision.pdf`(리비전). Compare → Compare Drawings…에서 차례로 고른다.
+8. **CAD 비교 해 보기** (선택): 메뉴 Compare → Compare CAD Drawings (DWG/DXF)… 에서 이전·개정 DWG(또는 DXF)를 차례로 고른다.
    변경 목록에 설명이 보이면 정상. 변경을 수락(Accept)한 뒤 "Export clouds to DXF/DWG…"로 사본을 만들고 AutoCAD에서 REVISION 도면층을 확인한다.

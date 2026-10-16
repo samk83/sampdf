@@ -49,11 +49,22 @@ public static class PageComparer
 
         // PDF 글자 비교: 짝이 없는 단어(내용이나 위치가 바뀐 글자)를 변경으로 칠한다.
         // 작은 글씨의 치수 변경은 픽셀 차이가 적어 놓치기 쉬우므로 글자 정보로 보강한다 (기획서 3장 "텍스트 추출 활용").
+        // 바뀐 단어 상자는 textMask에도 칠해, 영역마다 "글자 밖의 차이"가 있는지(그림 변경인지) 가린다.
+        List<TextWord> addedWords = [], removedWords = [];
+        using var textMask = new Mat(added.Size(), MatType.CV_8UC1, Scalar.All(0));
         if (oldPage.Words != null && newPage.Words != null)
         {
-            var (addedWords, removedWords) = TextDiff.Compare(oldPage.Words(), newPage.Words(), alignment.Transform);
-            foreach (var w in addedWords) added[ImageOps.ToPixelRect(w, zoom, added.Size())].SetTo(Scalar.All(255));
-            foreach (var w in removedWords) removed[ImageOps.ToPixelRect(w, zoom, removed.Size())].SetTo(Scalar.All(255));
+            (addedWords, removedWords) = TextDiff.Compare(oldPage.Words(), newPage.Words(), alignment.Transform);
+            foreach (var w in addedWords)
+            {
+                added[ImageOps.ToPixelRect(w.Bounds, zoom, added.Size())].SetTo(Scalar.All(255));
+                textMask[ImageOps.ToPixelRect(w.Bounds.Inflate(1.5), zoom, added.Size())].SetTo(Scalar.All(255));
+            }
+            foreach (var w in removedWords)
+            {
+                removed[ImageOps.ToPixelRect(w.Bounds, zoom, removed.Size())].SetTo(Scalar.All(255));
+                textMask[ImageOps.ToPixelRect(w.Bounds.Inflate(1.5), zoom, added.Size())].SetTo(Scalar.All(255));
+            }
         }
 
         foreach (var r in settings.IgnoreRegions)
@@ -68,19 +79,51 @@ public static class PageComparer
         ImageOps.RemoveSpecks(removed, settings.NoisePixels);
 
         var inverse = alignment.Transform.Inverse();
-        var regions = Grouping.Group(added, removed, (int)Math.Ceiling(settings.GroupDistancePt * zoom), zoom)
+        var regions = Grouping.Group(added, removed, (int)Math.Ceiling(settings.GroupDistancePt * zoom), zoom, textMask)
             .Select(g =>
             {
                 var total = g.Added + g.Removed;
                 var kind = g.Added > 0 && g.Removed > 0 ? ChangeKind.Modified : g.Added > 0 ? ChangeKind.Added : ChangeKind.Removed;
                 var confidence = total < settings.LowConfidencePixels || !alignment.IsReliable ? ChangeConfidence.Low : ChangeConfidence.High;
-                return (g.Bounds, kind, g.Added, g.Removed, confidence);
+                return (g, kind, confidence);
             })
-            .OrderBy(g => Math.Round(g.Bounds.Y0 / 50)).ThenBy(g => g.Bounds.X0) // 위에서 아래, 왼쪽에서 오른쪽
-            .Select((g, i) => new ChangeRegion(i + 1, g.kind, g.Bounds, inverse.Apply(g.Bounds), g.Added, g.Removed, g.confidence))
+            .OrderBy(x => Math.Round(x.g.Bounds.Y0 / 50)).ThenBy(x => x.g.Bounds.X0) // 위에서 아래, 왼쪽에서 오른쪽
+            .Select((x, i) => Classify(new ChangeRegion(i + 1, x.kind, x.g.Bounds, inverse.Apply(x.g.Bounds), x.g.Added, x.g.Removed, x.confidence),
+                x.g.NonText, settings.NoisePixels, addedWords, removedWords))
             .ToList();
 
         return new CompareResult(regions, alignment, settings, newPage.Width, newPage.Height, sw.Elapsed, warnings);
+    }
+
+    /// <summary>
+    /// 영역의 성격을 정한다 (웹 비교 화면의 표시 규칙):
+    /// - 글자 밖의 차이가 잡음 수준이고, 개정 도면에 새로 생기거나 바뀐 단어가 있으면 → 글자 변경 (하이라이트)
+    /// - 그 밖에는 → 그림 변경 (Cloud). 안에 바뀐 단어가 있으면 하이라이트도 함께 한다.
+    /// - 글자가 지워지기만 한 곳은 개정 도면에 칠할 글자가 없으므로 그림 변경(Cloud)으로 본다.
+    /// 설명에는 바뀐 글자를 "이전 → 개정"으로 적는다.
+    /// </summary>
+    private static ChangeRegion Classify(ChangeRegion r, int nonTextPixels, int noisePixels, List<TextWord> addedWords, List<TextWord> removedWords)
+    {
+        var area = r.Bounds.Inflate(1);
+        var inNew = addedWords.Where(w => area.Intersects(w.Bounds)).OrderBy(w => Math.Round(w.Bounds.Y0)).ThenBy(w => w.Bounds.X0).ToList();
+        var inOld = removedWords.Where(w => area.Intersects(w.Bounds)).OrderBy(w => Math.Round(w.Bounds.Y0)).ThenBy(w => w.Bounds.X0).ToList();
+        var textOnly = inNew.Count > 0 && nonTextPixels <= noisePixels;
+        var oldText = string.Join(" ", inOld.Select(w => w.Text));
+        var newText = string.Join(" ", inNew.Select(w => w.Text));
+        var description = (inOld.Count, inNew.Count) switch
+        {
+            ( > 0, > 0) => $"Text \"{oldText}\" → \"{newText}\"",
+            (0, > 0) => $"Text added \"{newText}\"",
+            ( > 0, 0) => $"Text removed \"{oldText}\"",
+            _ => "",
+        };
+        if (!textOnly && description.Length > 0) description = "Drawing changed; " + char.ToLowerInvariant(description[0]) + description[1..];
+        return r with
+        {
+            Category = textOnly ? ChangeCategory.Text : ChangeCategory.Graphic,
+            TextHighlights = inNew.Select(w => w.Bounds).ToList(),
+            Description = description,
+        };
     }
 
     /// <summary>

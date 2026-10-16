@@ -82,6 +82,15 @@ public enum ChangeConfidence
     Low,
 }
 
+/// <summary>변경의 성격: 글자만 바뀌었는지(하이라이트로 표시), 그림이 바뀌었는지(Revision Cloud로 표시).</summary>
+public enum ChangeCategory
+{
+    /// <summary>선·도형 등 그림 변경 (글자 삭제 포함). Cloud로 표시한다.</summary>
+    Graphic,
+    /// <summary>글자만 바뀜 (새로 생기거나 바뀐 단어). 하이라이트로 표시한다.</summary>
+    Text,
+}
+
 public enum ChangeStatus
 {
     Pending,
@@ -103,6 +112,12 @@ public sealed record ChangeRegion(
 
     /// <summary>변경 설명 (CAD 비교: "Dimension \"6000\" → \"6500\"" 등). PDF 픽셀 비교는 비어 있다.</summary>
     public string Description { get; init; } = "";
+
+    /// <summary>글자 변경인지 그림 변경인지. 그림 변경 안에도 바뀐 글자가 있으면 TextHighlights에 함께 담긴다.</summary>
+    public ChangeCategory Category { get; init; } = ChangeCategory.Graphic;
+
+    /// <summary>개정 도면에서 새로 생기거나 바뀐 단어 상자 (하이라이트할 곳, 개정 도면 좌표).</summary>
+    public IReadOnlyList<PageRect> TextHighlights { get; init; } = [];
 }
 
 /// <summary>비교 설정. 결과와 함께 저장해 같은 조건으로 다시 비교할 수 있게 한다 (재현성 — 기획서 8장).</summary>

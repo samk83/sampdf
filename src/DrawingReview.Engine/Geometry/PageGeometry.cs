@@ -20,6 +20,7 @@ public readonly record struct PageRect(double X0, double Y0, double X1, double Y
     }
 
     public PageRect Inflate(double amount) => new(X0 - amount, Y0 - amount, X1 + amount, Y1 + amount);
+    public bool Intersects(PageRect o) => X0 <= o.X1 && o.X0 <= X1 && Y0 <= o.Y1 && o.Y0 <= Y1;
 
     public bool Contains(PageRect other) =>
         other.X0 >= X0 && other.Y0 >= Y0 && other.X1 <= X1 && other.Y1 <= Y1;

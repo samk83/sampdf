@@ -107,7 +107,9 @@
 | 페이지 비교 (렌더→정렬→차이→글자→잡음→묶기), 겹쳐 보기, 합치기·나누기, PNG | `PageComparer.cs` | `Aligner`, `ImageOps`, `TextDiff` | `CompareViewModel` |
 | 자동·수동 정렬 | `Aligner.cs` | OpenCV (ORB, RANSAC, ECC) | `PageComparer`, `CompareViewModel` |
 | 이미지 처리·영역 묶기 | `ImageOps.cs` | OpenCV | `PageComparer`, `Aligner` |
-| 단어 비교 | `TextDiff.cs` | `TextWord` | `PageComparer` |
+| 단어 비교 (바뀐 단어 목록) | `TextDiff.cs` | `TextWord` | `PageComparer` |
+| 변경 성격 구분: 글자 변경(하이라이트) / 그림 변경(Cloud), 바뀐 글자 "이전 → 개정" 설명 | `PageComparer.Classify` | `TextDiff`, `Grouping`(글자 밖 차이 픽셀 수) | 웹 비교 (예정), `RevisionMarks` |
+| 리비전 표시: 하이라이트·Cloud·△ 리비전 번호를 표준 PDF 주석으로 | `RevisionMarks.cs` | `MarkupDraft`, `IPdfDocument.AddMarkup` | 웹 비교 (예정), 테스트 |
 
 ## Cad 모듈
 

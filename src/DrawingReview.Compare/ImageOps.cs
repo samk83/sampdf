@@ -103,9 +103,10 @@ internal static class ImageOps
 /// <summary>가까운 차이 픽셀을 한 변경 영역으로 묶는다.</summary>
 internal static class Grouping
 {
-    public readonly record struct DiffGroup(PageRect Bounds, int Added, int Removed);
+    /// <summary>NonText: 바뀐 글자 상자(textMask) 밖에 있는 차이 픽셀 수. 0이면 글자만 바뀐 영역.</summary>
+    public readonly record struct DiffGroup(PageRect Bounds, int Added, int Removed, int NonText = 0);
 
-    public static List<DiffGroup> Group(Mat added, Mat removed, int groupPixels, double zoom)
+    public static List<DiffGroup> Group(Mat added, Mat removed, int groupPixels, double zoom, Mat? textMask = null)
     {
         using var combined = new Mat();
         Cv2.BitwiseOr(added, removed, combined);
@@ -119,6 +120,8 @@ internal static class Grouping
         labels.GetArray(out int[] lab);
         added.GetArray(out byte[] a);
         removed.GetArray(out byte[] r);
+        byte[]? t = null;
+        textMask?.GetArray(out t);
         int w = added.Width;
         var minX = Enumerable.Repeat(int.MaxValue, n).ToArray();
         var minY = Enumerable.Repeat(int.MaxValue, n).ToArray();
@@ -126,6 +129,7 @@ internal static class Grouping
         var maxY = new int[n];
         var addCount = new int[n];
         var remCount = new int[n];
+        var nonText = new int[n];
         for (int i = 0; i < lab.Length; i++)
         {
             bool isA = a[i] != 0, isR = r[i] != 0;
@@ -138,6 +142,7 @@ internal static class Grouping
             if (y > maxY[l]) maxY[l] = y;
             if (isA) addCount[l]++;
             if (isR) remCount[l]++;
+            if (t == null || t[i] == 0) nonText[l]++;
         }
 
         var result = new List<DiffGroup>();
@@ -146,7 +151,7 @@ internal static class Grouping
             if (addCount[l] + remCount[l] == 0) continue;
             // 픽셀 경계를 포함하도록 1픽셀 넓힌다
             var bounds = new PageRect(minX[l] / zoom, minY[l] / zoom, (maxX[l] + 1) / zoom, (maxY[l] + 1) / zoom);
-            result.Add(new DiffGroup(bounds, addCount[l], remCount[l]));
+            result.Add(new DiffGroup(bounds, addCount[l], remCount[l], nonText[l]));
         }
         return result;
     }

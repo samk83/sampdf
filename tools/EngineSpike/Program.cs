@@ -34,6 +34,18 @@ var densePath = Path.Combine(samplesDir, "dense-vector.pdf");
 File.WriteAllBytes(planSetPath, VirtualDrawings.CreatePlanSet());
 File.WriteAllBytes(densePath, VirtualDrawings.CreateDenseVectorSheet());
 
+// 1-1) 도면 비교 시험용 쌍: 원본 + 리비전 (글자 변경 2곳, 선 추가 1곳, 보 삭제 1곳)
+var compareDir = Path.Combine(root, "samples", "compare");
+Directory.CreateDirectory(compareDir);
+File.WriteAllBytes(Path.Combine(compareDir, "original.pdf"), ComparePairs.Sheet());
+File.WriteAllBytes(Path.Combine(compareDir, "revision.pdf"), ComparePairs.Sheet(new ComparePairs.Revision
+{
+    Note = "VERIFY CLEARANCE AT COLUMN",
+    Dimension = "3500",
+    AddLine = true,
+    RemoveBeam = true,
+}));
+
 // 2) 모든 마크업 도구를 페이지마다 적용
 var roundTripPath = Path.Combine(outDir, "markup-roundtrip.pdf");
 using (var doc = engine.Open(planSetPath))

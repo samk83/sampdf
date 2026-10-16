@@ -9,12 +9,13 @@ namespace DrawingReview.Compare;
 /// </summary>
 public static class TextDiff
 {
-    public static (List<PageRect> Added, List<PageRect> Removed) Compare(
+    /// <returns>추가된 단어(개정 도면 좌표)와 삭제된 단어(이전 도면 단어를 개정 도면 좌표로 옮긴 것).</returns>
+    public static (List<TextWord> Added, List<TextWord> Removed) Compare(
         IReadOnlyList<TextWord> oldWords, IReadOnlyList<TextWord> newWords, AlignmentTransform transform)
     {
         var movedOld = oldWords.Select(w => w with { Bounds = transform.Apply(w.Bounds) }).ToList();
         var usedOld = new bool[movedOld.Count];
-        var added = new List<PageRect>();
+        var added = new List<TextWord>();
         foreach (var w in newWords)
         {
             var tol = w.Bounds.Height / 2 + 2;
@@ -27,9 +28,9 @@ public static class TextDiff
                 if (d <= tol && d < best) { best = d; match = i; }
             }
             if (match >= 0) usedOld[match] = true;
-            else added.Add(w.Bounds);
+            else added.Add(w);
         }
-        var removed = movedOld.Where((_, i) => !usedOld[i]).Select(w => w.Bounds).ToList();
+        var removed = movedOld.Where((_, i) => !usedOld[i]).ToList();
         return (added, removed);
     }
 
