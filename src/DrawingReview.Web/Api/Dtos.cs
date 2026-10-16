@@ -52,5 +52,22 @@ public sealed record CompareDto(string Id, string OriginalId, string RevisionId,
 
 public sealed record CompareRequest(string OriginalId, string RevisionId, bool IgnoreTitleBlock = false);
 
-/// <summary>내려받기 요청: △ 리비전 번호와 화면에서 지운 변경 ID들.</summary>
-public sealed record ExportRequest(string RevisionLabel = "1", IReadOnlyList<string>? Excluded = null);
+public sealed record PointDto(double X, double Y);
+
+/// <summary>화면에서 고친 표시 하나: △ 번호, 옮기거나 크기를 바꾼 Cloud·△·하이라이트 (없으면 자동).</summary>
+public sealed record MarkEditDto(string? Label = null, RectDto? Cloud = null, PointDto? Delta = null, IReadOnlyList<RectDto>? Highlights = null)
+{
+    public RevisionMarkEdit ToEdit() => new()
+    {
+        Label = Label,
+        Cloud = Cloud is { } c ? new PageRect(c.X0, c.Y0, c.X1, c.Y1) : null,
+        Delta = Delta is { } d ? new PagePoint(d.X, d.Y) : null,
+        Highlights = Highlights?.Select(h => new PageRect(h.X0, h.Y0, h.X1, h.Y1)).ToList(),
+    };
+}
+
+/// <summary>
+/// 내려받기 요청: 기본 △ 번호, 화면에서 지운 변경 ID들, 글자 변경도 Cloud로 할지, 변경 ID별 수정.
+/// </summary>
+public sealed record ExportRequest(string RevisionLabel = "1", IReadOnlyList<string>? Excluded = null, bool CloudTextChanges = false,
+    IReadOnlyDictionary<string, MarkEditDto>? Edits = null);

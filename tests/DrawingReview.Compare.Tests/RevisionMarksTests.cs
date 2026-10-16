@@ -104,3 +104,47 @@ public class RevisionSamplePairTests(ITestOutputHelper output)
         Assert.Equal(2, result.Regions.Count(r => r.Category == ChangeCategory.Graphic));
     }
 }
+
+/// <summary>사용자 수정(번호·Cloud 위치·△ 위치·하이라이트)과 "글자 변경도 Cloud" 설정.</summary>
+public class RevisionMarkEditTests
+{
+    private static ChangeRegion Text() => new(1, ChangeKind.Modified, new Engine.Geometry.PageRect(100, 100, 160, 112), new Engine.Geometry.PageRect(100, 100, 160, 112), 10, 10, ChangeConfidence.High)
+        { Category = ChangeCategory.Text, TextHighlights = [new Engine.Geometry.PageRect(100, 100, 160, 112)] };
+
+    private static ChangeRegion Graphic() => new(2, ChangeKind.Added, new Engine.Geometry.PageRect(300, 300, 500, 310), new Engine.Geometry.PageRect(300, 300, 500, 310), 50, 0, ChangeConfidence.High);
+
+    [Fact]
+    public void Text_changes_get_cloud_and_delta_when_enabled()
+    {
+        var off = RevisionMarks.Build(Text(), new RevisionMarkOptions(), 1000, 800);
+        Assert.Single(off); // 하이라이트만
+        var on = RevisionMarks.Build(Text(), new RevisionMarkOptions { CloudTextChanges = true }, 1000, 800);
+        Assert.Contains(on, d => d is HighlightDraft);
+        Assert.Contains(on, d => d is CloudDraft { Intensity: > 0 });
+        Assert.Contains(on, d => d is TextBoxDraft { Text: "1" });
+    }
+
+    [Fact]
+    public void Edits_override_label_cloud_delta_and_highlights()
+    {
+        var edit = new RevisionMarkEdit
+        {
+            Label = "7",
+            Cloud = new Engine.Geometry.PageRect(280, 280, 520, 330),
+            Delta = new Engine.Geometry.PagePoint(600, 200),
+        };
+        var drafts = RevisionMarks.Build(Graphic(), new RevisionMarkOptions(), 1000, 800, edit);
+        var cloud = (CloudDraft)drafts.First(d => d is CloudDraft { Intensity: > 0 });
+        Assert.Equal(280, cloud.Vertices.Min(v => v.X), 3);
+        Assert.Equal(330, cloud.Vertices.Max(v => v.Y), 3);
+        var tri = (CloudDraft)drafts.First(d => d is CloudDraft { Intensity: 0 });
+        Assert.Equal(600, tri.Vertices.Average(v => v.X), 3);  // 무게중심 = 옮긴 위치
+        Assert.Equal(200, tri.Vertices.Average(v => v.Y), 3);
+        Assert.Contains(drafts, d => d is TextBoxDraft { Text: "7" });
+
+        var moved = RevisionMarks.Build(Text(), new RevisionMarkOptions(), 1000, 800,
+            new RevisionMarkEdit { Highlights = [new Engine.Geometry.PageRect(10, 10, 50, 20)] });
+        var h = Assert.IsType<HighlightDraft>(Assert.Single(moved));
+        Assert.Equal(new Engine.Geometry.PageRect(10, 10, 50, 20), h.Rect);
+    }
+}

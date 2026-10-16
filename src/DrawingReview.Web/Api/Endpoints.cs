@@ -86,6 +86,24 @@ public static class Endpoints
             return Results.File(png, "image/png");
         });
 
+        // 겹쳐 보기(색 구분): 원본만 빨강, 리비전만 파랑, 공통은 회색. 정렬 변환을 반영한다.
+        api.MapGet("/compare/{id}/pages/{index:int}/overlay.png", async (string id, int index, double? scale, CompareStore compares) =>
+        {
+            if (compares.Get(id) is not { } s || index < 0 || index >= s.Result.Pages.Count) return Results.NotFound();
+            var pair = s.Result.Pages[index];
+            if (pair.Result is not { } result || pair.OldPage is not int op || pair.NewPage is not int np) return Results.NotFound();
+            var original = compares.Original(s);
+            var revision = compares.Revision(s);
+            var png = await CompareStore.WithBothAsync(original, revision, () => Task.Run(() =>
+            {
+                var zoom = ClampScale(revision.Document.GetPageInfo(np), scale ?? 1);
+                var image = PageComparer.RenderOverlay(PageSource.From(original.Document, op), PageSource.From(revision.Document, np),
+                    result.Alignment.Transform, zoom, inkThreshold: result.Settings.InkThreshold);
+                return PageComparer.EncodePng(image);
+            }));
+            return Results.File(png, "image/png");
+        });
+
         // 표시가 들어간 리비전 PDF. 원본 파일은 그대로 두고, 같은 바이트로 연 사본에 표시를 넣는다.
         api.MapPost("/compare/{id}/export", async (string id, ExportRequest req, CompareStore compares, DocumentStore docs) =>
         {
@@ -94,16 +112,19 @@ public static class Endpoints
             var excluded = new HashSet<string>(req.Excluded ?? []);
             var label = string.IsNullOrWhiteSpace(req.RevisionLabel) ? "1" : req.RevisionLabel.Trim();
             if (label.Length > 4) return Results.BadRequest(Error("The revision number can be up to 4 characters."));
+            if (req.Edits?.Values.Any(e => e.Label is { Length: > 4 }) == true) return Results.BadRequest(Error("The revision number can be up to 4 characters."));
             var bytes = await Task.Run(() =>
             {
                 using var copy = docs.OpenCopy(revision);
-                var options = new RevisionMarkOptions { RevisionLabel = label, Author = Environment.UserName };
+                var options = new RevisionMarkOptions { RevisionLabel = label, Author = Environment.UserName, CloudTextChanges = req.CloudTextChanges };
                 for (int i = 0; i < s.Result.Pages.Count; i++)
                 {
                     var pair = s.Result.Pages[i];
                     if (pair.Result is not { } result || pair.NewPage is not int np) continue;
-                    var keep = result.Regions.Where(r => !excluded.Contains(ChangeDto.IdOf(i, r.Number)));
-                    RevisionMarks.Apply(copy, np, keep, options);
+                    var index = i;
+                    var keep = result.Regions.Where(r => !excluded.Contains(ChangeDto.IdOf(index, r.Number)));
+                    RevisionMarks.Apply(copy, np, keep, options,
+                        r => req.Edits != null && req.Edits.TryGetValue(ChangeDto.IdOf(index, r.Number), out var e) ? e.ToEdit() : null);
                 }
                 var temp = Path.Combine(Path.GetTempPath(), "drawing-compare-" + Guid.NewGuid().ToString("N") + ".pdf");
                 try

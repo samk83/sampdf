@@ -81,6 +81,29 @@ public class WebApiTests(WebApiTests.App factory) : IClassFixture<WebApiTests.Ap
     }
 
     [Fact]
+    public async Task Export_applies_numbering_cloud_text_and_moved_marks()
+    {
+        var client = factory.CreateClient();
+        var original = await Upload(client, ComparePairs.Sheet(), "a.pdf");
+        var revision = await Upload(client, ComparePairs.Sheet(Revision), "b.pdf");
+        var result = await Compare(client, original, revision);
+        var changes = result.Pages[0].Changes;
+        var overlay = await client.GetAsync($"/api/compare/{result.Id}/pages/0/overlay.png?scale=0.5");
+        Assert.Equal(HttpStatusCode.OK, overlay.StatusCode);
+
+        // 하나씩 올라가는 번호 + 첫 변경의 Cloud를 옮김
+        var edits = changes.Select((c, i) => (c, i)).ToDictionary(x => x.c.Id, x => new MarkEditDto(Label: (x.i + 1).ToString()));
+        edits[changes[0].Id] = edits[changes[0].Id] with { Cloud = new RectDto(50, 50, 150, 120), Delta = new PointDto(170, 40) };
+        var export = await client.PostAsJsonAsync($"/api/compare/{result.Id}/export", new ExportRequest("1", null, CloudTextChanges: true, Edits: edits));
+        Assert.True(export.IsSuccessStatusCode, await export.Content.ReadAsStringAsync());
+        using var marked = new MuPdfEngine().Open(await export.Content.ReadAsByteArrayAsync());
+        var marks = marked.GetMarkups(0);
+        Assert.Equal(4, marks.Count(m => m.Draft is CloudDraft { Intensity: > 0 }));       // 글자 변경도 Cloud
+        Assert.Equal(["1", "2", "3", "4"], marks.Select(m => m.Draft).OfType<TextBoxDraft>().Select(t => t.Text).Order());
+        Assert.Contains(marks, m => m.Draft is CloudDraft { Intensity: > 0 } c && Math.Abs(c.Vertices.Min(v => v.X) - 50) < 0.5 && Math.Abs(c.Vertices.Max(v => v.Y) - 120) < 0.5);
+    }
+
+    [Fact]
     public async Task Png_files_compare_too()
     {
         var client = factory.CreateClient();
