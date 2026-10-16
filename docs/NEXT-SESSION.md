@@ -4,6 +4,7 @@
 
 > **2026-10-16 갱신 — 설계 승인됨**: `docs/DESIGN-SPEC.md` v1.0 (Owner "설계승인"). 결정은 `docs/DECISIONS.md`에 옮김.
 > 다음은 **4단계 개발**: Owner가 "코딩 진행해"라고 하면 설계서 9장의 U1(토큰·글꼴·공통 틀·문서 탭·Zustand·다국어 틀·브라우저 키 시험 R7)부터.
+> **2026-10-16 갱신 — U1 완료** (브랜치 `claude/project-thread-5mv5zs`, `docs/CHANGELOG.md` 맨 위). 다음은 **U2 명령 시스템**. U2에서 정할 것: Ctrl+9(`CMDLINE`)는 브라우저 탭 이동 키라 못 쓸 가능성이 큼 (`docs/risk-r7.md`). Owner Windows 확인 요청: 새 화면 실행, `#keytest` 키 시험.
 > 위험 시험 R1은 Owner의 실제 CAD PDF 1~2장이 필요하다. 아래 "시작 프롬프트"와 "설계에서 정할 것"은 설계 시작 때의 기록이다.
 
 ## 시작 프롬프트 (복사해서 새 채팅에 붙여 넣기)
@@ -63,7 +64,7 @@ samk83/sampdf 저장소의 claude/project-thread-5mv5zs 브랜치에서 이어�
 | # | 내용 | 제안 |
 |---|---|---|
 | 1 | 포커스 모드 화면(09)은 `S2` 변형(`chrome.py`)으로 만들어져 도면 뒤 색 `#0f1216`을 쓰는데, `tokens.css`에는 없음 | 토큰 추가(`--color-canvas-dark` 등) 또는 `--color-canvas`로 통일. 설계에서 결정 |
-| 2 | `web/tailwind.config.js`가 `tokens.css`를 쓰지 않고 옛 밝은 색(`#e9ebef` 등)·IBM Plex 글꼴을 직접 적어 둠 | 설계 7번에서 Tailwind 색 이름을 `var(--color-…)`에 연결하는 방식 추천 |
+| 2 | ~~`web/tailwind.config.js`가 `tokens.css`를 쓰지 않음~~ | U1에서 해결 (옛 비교·PNG 화면용 `legacy-*` 색만 U3·U4까지 남음) |
 | 3 | `python3 design/source/export_static.py` 재실행 결과가 저장된 화면과 완전히 같음 (git 변경 없음) | 확인됨. 생성 스크립트를 믿고 써도 됨 |
 
 설계 결과는 문서(예: `docs/DESIGN-SPEC.md`)로 남기고 Owner 승인 후 4단계 개발로 넘어간다.

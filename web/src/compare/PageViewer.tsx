@@ -91,7 +91,7 @@ export function PageViewer({ page, imageUrl, view, onViewChange, onResize, layer
       ref={ref}
       role="img"
       aria-label={label}
-      className="relative h-full w-full cursor-grab overflow-hidden bg-canvas active:cursor-grabbing"
+      className="relative h-full w-full cursor-grab overflow-hidden bg-legacy-canvas active:cursor-grabbing"
       onPointerDown={(e) => {
         if (!view || (e.button !== 0 && e.button !== 1)) return;
         onBackgroundPointerDown?.();

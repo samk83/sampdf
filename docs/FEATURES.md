@@ -140,10 +140,26 @@
 
 | 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
 |---|---|---|---|
-| 탭 전환 (도면 비교 / 투명 PNG, 비교 상태 유지) | `App.tsx` | — | `main.tsx` |
-| 공통 위쪽 막대·아이콘 버튼 | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
+| 앱 시작 (토큰·글꼴·CSS 불러오기), `#keytest`이면 키 시험 화면 | `app/main.tsx`, `app/App.tsx` | `design/tokens.css` | `index.html` |
+| 공용 상태 보관소 (문서 탭 열기·닫기·전환, 탭별 리본 탭·저장 안 됨, 상태 토글, 명령창 기록) | `app/store.ts` (Zustand) | — | 공통 틀 전체 |
+| 시작 화면에 끌어다 놓은 파일 → 열 탭 정하기 | `app/dropRouting.ts` | — | `shell/HomeScreen` |
+| 글꼴 앱 안에 넣기 (Pretendard·JetBrains Mono, 인터넷 없이) | `app/fonts.css` | npm `pretendard`, `@fontsource/jetbrains-mono` | `main.tsx` |
+| 옛 비교·PNG 화면 전용 밝은 스타일 (U3·U4에서 지움) | `app/legacy.css` | — | `shell/AppShell` |
+| 브라우저 키 시험 화면 (위험 시험 R7, 주소 끝 `#keytest`) | `app/KeyTest.tsx` | `i18n` | `App` |
+| 화면 글자 번역 `t()` (영어 기준, 빠진 키는 영어, 1개/여러 개) | `i18n/index.ts`, `i18n/en.ts`, `i18n/ko.ts` | `app/store` (언어) | 새 화면 전체 |
+| 공통 틀: 제목줄·리본·탭 내용·명령창·상태 표시줄 | `shell/AppShell.tsx` | 아래 부품 | `App` |
+| 제목줄 (앱 이름, 문서 탭 열기·닫기·가운데 버튼 닫기, ●, ↶↷, Focus) | `shell/TitleBar.tsx` | `ui/IconButton`, `app/store` | `AppShell` |
+| 리본 탭 6개 + 그룹·버튼 (설계서 2-4 표) | `shell/Ribbon.tsx`, `shell/ribbonLayout.ts` | `ui/RibbonButton` | `AppShell` (Home 탭 제외) |
+| 명령창 자리 (기록 2줄 + 입력 줄. 입력은 U2) | `shell/CommandLine.tsx` | `app/store` (기록) | `AppShell` |
+| 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
+| 시작 화면 (왼쪽 메뉴, 큰 카드 3개, 최근 목록 자리, 창 어디나 끌어다 놓기) | `shell/HomeScreen.tsx` | `app/dropRouting` | `AppShell` |
+| 아직 동작하지 않는 버튼 → 명령창에 안내 (U2에서 명령 실행으로 바뀜) | `shell/notYet.ts` | `app/store` (기록) | 리본, 제목줄, 시작 화면 |
+| 새 기본 부품 (토큰만 사용): 아이콘 버튼, 리본 버튼("Phase 2" 꼬리표), 상태 토글 | `ui/IconButton.tsx`, `ui/RibbonButton.tsx`, `ui/StatusToggle.tsx` | lucide-react | 공통 틀 |
+| PDF에 넣는 마크업 색 (tokens.css와 같은지 테스트) | `doc/palette.ts` | — | (U7부터) 저장 |
+| 색 하드코딩 검사·마크업 색 비교 (테스트) | `app/tokens.test.ts` | `design/tokens.css` | `npm test` |
+| 옛 위쪽 도구 막대·아이콘 버튼 (비교·PNG 화면 안, U3·U4에서 지움) | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
 | 서버 호출·자료 모양·파일 저장 | `api.ts` | — | 비교 화면, PNG 화면(저장) |
-| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기) | `compare/ComparePage.tsx` | 아래 부품들 | `App` |
+| 비교 화면 (나란히/겹쳐 보기, 같이/따로 이동, 자동 비교, 자동 맞춤, 요약, 경고, 표시 수정, 내려받기). 비교 탭 안에서 옛 디자인 그대로, 숨긴 탭은 키를 안 받음, 시작 화면에서 받은 파일을 바로 엶 | `compare/ComparePage.tsx` | 아래 부품들 | `shell/AppShell` (비교 탭마다 하나) |
 | 좌우 칸과 굵은 구분선 (끌어서 크기 조절, 두 번 누르면 반반, ← →) | `compare/SplitPanes.tsx` | — | `ComparePage` |
 | 표시 설정 (△ 번호 하나씩/같은 번호, 시작 번호, 글자 변경도 구름, 제목란 무시) | `compare/SettingsMenu.tsx` | `ui/Segmented` | `ComparePage` |
 | △ 번호 매기기 (1,2,3… / A,B,C… / 같은 번호) | `compare/numbering.ts` | — | `ComparePage` (화면·내려받기 공통) |
@@ -154,5 +170,5 @@
 | 구름 경로·△ 위치·설명 줄이기 (엔진 `RevisionMarks`와 같은 규칙) | `compare/geometry.ts` | — | `Marks`, `ChangeList` |
 | 파일 열기 칸 (클릭·끌어다 놓기) | `compare/DropZone.tsx` | — | 비교 화면, PNG 화면 |
 | 변경 목록 (필터, 선택, 지우기·되돌리기, 접기) | `compare/ChangeList.tsx` | `geometry.shortText` | `ComparePage` |
-| 투명 PNG 화면 (슬라이더, 배경 색 자동·찍기, 부드럽게, 여백 자르기, 선 색 맞추기, 내려받기) | `png/PngTool.tsx` | `png/removeBackground.ts`, `DropZone` | `App` |
+| 투명 PNG 화면 (슬라이더, 배경 색 자동·찍기, 부드럽게, 여백 자르기, 선 색 맞추기, 내려받기). PNG 탭 안에서 옛 디자인 그대로 | `png/PngTool.tsx` | `png/removeBackground.ts`, `DropZone` | `shell/AppShell` (PNG 탭마다 하나) |
 | 배경 지우기 계산 (브라우저 안에서만) | `png/removeBackground.ts` | — | `PngTool` |

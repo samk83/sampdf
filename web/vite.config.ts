@@ -10,6 +10,8 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
+    // design/tokens.css는 web 밖(저장소의 design 폴더)에 있다 (설계서 4-4: 토큰 파일 하나만)
+    fs: { allow: ['..'] },
     proxy: { '/api': 'http://127.0.0.1:5180' },
   },
 });

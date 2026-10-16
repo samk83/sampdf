@@ -14,7 +14,7 @@ Sam이 혼자 쓰는 도면 검토 프로그램. Bluebeam Revu처럼 PDF 도면�
 - [x] 1. 기획서로 시작 (기획서 v0.2 + Drawing Difference Checker PRD, 이후 Owner 결정 반영 → `docs/PLAN.md`)
 - [x] 2. 시안 (design-board) — 확정: A 배치 + 포커스 모드 + S1 Slate, 영어 기본. 기록 `design/README.md`, 결과 `design/brand.md`·`design/tokens.css`·`design/screens/`
 - [x] 3. 설계 (확정 시안 기준 화면 구조·부품·데이터 연결, Owner 승인) — `docs/DESIGN-SPEC.md` 2026-10-16 승인
-- [ ] 4. 개발 (작은 단위로 구현·테스트·커밋)
+- [ ] 4. 개발 (작은 단위로 구현·테스트·커밋) — 진행 중: U1 완료, 다음 U2 (`docs/DESIGN-SPEC.md` 9장)
 - [ ] 5. 출시 전 점검 (ship-check)
 
 참고: 엔진(PDF 처리·비교)과 첫 웹 화면은 시안 단계 전에 먼저 만들어져 있다. 시안 확정 후 웹 화면을 확정 디자인으로 다시 맞춘다.

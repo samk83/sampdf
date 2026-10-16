@@ -12,7 +12,7 @@ export function Segmented<T extends string>({ label, value, options, onChange }:
       {options.map((o) => (
         <button key={o.value} type="button" role="radio" aria-checked={value === o.value} onClick={() => onChange(o.value)}
           className={`inline-flex h-[30px] items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 text-[13px] ${
-            value === o.value ? 'bg-white font-semibold text-ink shadow-[0_1px_2px_rgba(0,0,0,0.08)]' : 'text-[#3f4552] hover:text-ink'
+            value === o.value ? 'bg-white font-semibold text-legacy-ink shadow-[0_1px_2px_rgba(0,0,0,0.08)]' : 'text-[#3f4552] hover:text-legacy-ink'
           }`}>
           {o.icon}
           {o.label}

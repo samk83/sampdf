@@ -13,7 +13,10 @@
 | lucide-react | 0.460.0 | 웹 화면 아이콘 | ISC | https://lucide.dev |
 | Tailwind CSS | 3.4.15 | 웹 화면 스타일 (빌드할 때만) | MIT | https://tailwindcss.com |
 | Vite, TypeScript, Vitest | 5.4.11, 5.6.3, 2.1.5 | 웹 화면 빌드·검사 (배포물에 포함되지 않음) | MIT, Apache-2.0, MIT | https://vitejs.dev |
-| IBM Plex Sans KR / Mono | — | 웹 화면 글꼴 (Google Fonts에서 불러옴. 인터넷이 없으면 시스템 글꼴) | SIL OFL 1.1 | https://github.com/IBM/plex |
+| Pretendard | 1.3.9 (npm `pretendard`) | 웹 화면 기본 글꼴 (한국어·영어). 앱 안에 넣음 (400·500·600·700) | SIL OFL 1.1 | https://github.com/orioncactus/pretendard |
+| JetBrains Mono | 5.2.8 (npm `@fontsource/jetbrains-mono`) | 명령창·좌표·단축키 글꼴. 앱 안에 넣음 (라틴 400·500·600) | SIL OFL 1.1 | https://github.com/JetBrains/JetBrainsMono |
+| Zustand | 5.0.15 | 웹 화면 공용 상태 보관소 | MIT | https://github.com/pmndrs/zustand |
+| @types/node | 22.10.2 | 테스트에서 파일 읽기 타입 (배포물에 포함되지 않음) | MIT | https://github.com/DefinitelyTyped/DefinitelyTyped |
 | Microsoft.AspNetCore.Mvc.Testing | 8.0.10 | 웹 서버 자동 테스트 (배포물에 포함되지 않음) | MIT | https://github.com/dotnet/aspnetcore |
 | xUnit | 2.5.3 | 자동 테스트 (배포물에 포함되지 않음) | Apache-2.0 | https://github.com/xunit/xunit |
 

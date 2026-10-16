@@ -33,7 +33,7 @@ export function SplitPanes({ left, right }: { left: ReactNode; right: ReactNode 
           if (e.key === 'ArrowLeft') set(ratio - 0.02);
           if (e.key === 'ArrowRight') set(ratio + 0.02);
         }}
-        className="group relative flex w-2.5 flex-none cursor-col-resize items-center justify-center bg-[#c3c8d1] hover:bg-accent/60 focus:bg-accent/60 focus:outline-none"
+        className="group relative flex w-2.5 flex-none cursor-col-resize items-center justify-center bg-[#c3c8d1] hover:bg-legacy-accent/60 focus:bg-legacy-accent/60 focus:outline-none"
       >
         <span className="flex flex-col gap-1" aria-hidden>
           {[0, 1, 2].map((i) => <span key={i} className="h-1 w-1 rounded-full bg-white/90" />)}

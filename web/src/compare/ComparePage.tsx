@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, ChevronLeft, ChevronRight, Columns2, Download, Layers, Link2, Link2Off, Loader2, Maximize, PanelRightOpen, X, ZoomIn, ZoomOut } from 'lucide-react';
 import { closeFile, exportPdf, overlayUrl, pageImageUrl, removedLayerUrl, runCompare, uploadFile, type Change, type CompareResult, type FileInfo, type MarkEditPayload, type PageSize } from '../api';
-import { AppHeader, IconButton, type Tab } from '../ui/AppHeader';
+import { AppHeader, IconButton } from '../ui/AppHeader';
 import { Segmented } from '../ui/Segmented';
 import { ChangeList, type Filter } from './ChangeList';
 import { DropZone } from './DropZone';
@@ -20,7 +20,7 @@ type PaneSize = { width: number; height: number };
  * 도면 비교 화면: 왼쪽 원본, 오른쪽 리비전. 두 파일이 모두 열리면 자동으로 비교하고
  * 리비전 칸에 하이라이트·구름·△를 보여 준다. 내려받기는 표시를 넣은 리비전 PDF.
  */
-export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+export function ComparePage({ active, initialFiles }: { active: boolean; initialFiles?: File[] }) {
   const [left, setLeft] = useState<Side>(emptySide);
   const [right, setRight] = useState<Side>(emptySide);
   const [result, setResult] = useState<CompareResult | null>(null);
@@ -67,6 +67,15 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
       set({ file: current.file, busy: false, error: (e as Error).message });
     }
   };
+
+  // 시작 화면에서 끌어다 놓은 파일로 탭이 열리면 바로 연다 (첫 파일 = 원본, 둘째 = 리비전)
+  const initialOpened = useRef(false);
+  useEffect(() => {
+    if (initialOpened.current || !initialFiles?.length) return;
+    initialOpened.current = true;
+    if (initialFiles[0]) void open('left', initialFiles[0]);
+    if (initialFiles[1]) void open('right', initialFiles[1]);
+  }, []);
 
   const close = (side: 'left' | 'right') => {
     const s = side === 'left' ? left : right;
@@ -194,6 +203,7 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
   // Delete 키: 선택한 변경 지우기, Esc: 선택 해제 (글자 입력 중에는 무시)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (!active) return; // 숨겨진 문서 탭은 키를 받지 않는다
       const typing = (e.target as HTMLElement)?.closest('input, textarea');
       if (typing) return;
       if (e.key === 'Escape') setSelectedId(null);
@@ -204,7 +214,7 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [selectedId]);
+  }, [selectedId, active]);
 
   const download = async () => {
     if (!result || !right.file) return;
@@ -238,10 +248,8 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
   ) : null;
 
   return (
-    <div className="flex h-screen flex-col bg-[#f4f5f7] text-ink">
+    <div className="flex h-full flex-col bg-[#f4f5f7] text-legacy-ink">
       <AppHeader
-        tab={tab}
-        onTab={onTab}
         left={result && (
           <div aria-label="변경 요약" className="flex flex-wrap gap-1.5">
             {totals.added > 0 && <Chip className="bg-[#e0ecff] text-[#1e40af]">추가 {totals.added}</Chip>}
@@ -266,7 +274,7 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
                 ]} />
             )}
             {pageCount > 1 && (
-              <div className="flex items-center gap-0.5 border-l border-line pl-2">
+              <div className="flex items-center gap-0.5 border-l border-legacy-line pl-2">
                 <IconButton label="이전 페이지" disabled={pairIndex === 0} onClick={() => setPairIndex((i) => Math.max(0, i - 1))}>
                   <ChevronLeft className="h-[18px] w-[18px]" aria-hidden />
                 </IconButton>
@@ -276,24 +284,24 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
                 </IconButton>
               </div>
             )}
-            <div className="flex items-center gap-0.5 border-l border-line pl-2">
+            <div className="flex items-center gap-0.5 border-l border-legacy-line pl-2">
               <IconButton label="축소" onClick={() => zoomBy(1 / 1.25)} disabled={!rightView && !leftView}><ZoomOut className="h-[18px] w-[18px]" aria-hidden /></IconButton>
               <span className="w-11 text-center font-mono text-[13px] text-[#3f4552]">{zoomPercent ? `${zoomPercent}%` : '–'}</span>
               <IconButton label="확대" onClick={() => zoomBy(1.25)} disabled={!rightView && !leftView}><ZoomIn className="h-[18px] w-[18px]" aria-hidden /></IconButton>
               <IconButton label="화면에 맞추기" onClick={fit} disabled={!rightView && !leftView}><Maximize className="h-[18px] w-[18px]" aria-hidden /></IconButton>
             </div>
             {viewMode === 'side' ? (
-              <label className="flex cursor-pointer items-center gap-1.5 border-l border-line pl-2.5 text-[13px] text-[#3f4552]">
+              <label className="flex cursor-pointer items-center gap-1.5 border-l border-legacy-line pl-2.5 text-[13px] text-[#3f4552]">
                 <input type="checkbox" checked={showRemoved} onChange={(e) => setShowRemoved(e.target.checked)} className="h-4 w-4 accent-[#dc2626]" />
                 지워진 선 보기
               </label>
             ) : (
-              <div className="flex items-center gap-2.5 border-l border-line pl-2.5 text-[13px] text-[#3f4552]">
+              <div className="flex items-center gap-2.5 border-l border-legacy-line pl-2.5 text-[13px] text-[#3f4552]">
                 <label className="flex items-center gap-2">
                   원본 투명도
                   <input type="range" min={0} max={100} value={Math.round(overlayOpacity * 100)} disabled={overlayColor} aria-label="원본 투명도"
                     onChange={(e) => setOverlayOpacity(Number(e.target.value) / 100)} className="w-24 accent-[#1d4ed8] disabled:opacity-40" />
-                  <span className="w-9 font-mono text-xs">{Math.round(overlayOpacity * 100)}%</span>
+                  <span className="w-9 font-mono text-[12px] leading-[16px]">{Math.round(overlayOpacity * 100)}%</span>
                 </label>
                 <label className="flex cursor-pointer items-center gap-1.5">
                   <input type="checkbox" checked={overlayColor} onChange={(e) => setOverlayColor(e.target.checked)} className="h-4 w-4 accent-[#1d4ed8]" />
@@ -303,7 +311,7 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
             )}
             <SettingsMenu value={settings} onChange={setSettings} />
             <button type="button" onClick={download} disabled={!result || exporting}
-              className="ml-1 inline-flex h-[38px] items-center gap-2 rounded-lg bg-accent px-3.5 text-sm font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
+              className="ml-1 inline-flex h-[38px] items-center gap-2 rounded-lg bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
               {exporting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> : <Download className="h-4 w-4" aria-hidden />}
               PDF 내려받기
             </button>
@@ -366,8 +374,8 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
           )}
           {comparing && (
             <div className="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-[1px]">
-              <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 text-sm font-semibold shadow-lg">
-                <Loader2 className="h-5 w-5 animate-spin text-accent" aria-hidden /> 비교하는 중…
+              <div className="flex items-center gap-3 rounded-xl bg-white px-5 py-4 text-[14px] leading-[20px] font-semibold shadow-lg">
+                <Loader2 className="h-5 w-5 animate-spin text-legacy-accent" aria-hidden /> 비교하는 중…
               </div>
             </div>
           )}
@@ -379,14 +387,14 @@ export function ComparePage({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void 
             onSelect={select} onRemove={remove} onRestoreAll={() => setExcluded(new Set())} onCollapse={() => setListOpen(false)} />
         )}
         {result && !listOpen && (
-          <div className="flex flex-none flex-col items-center border-l border-line bg-white p-1.5">
+          <div className="flex flex-none flex-col items-center border-l border-legacy-line bg-white p-1.5">
             <IconButton label="변경 목록 펼치기" onClick={() => setListOpen(true)}><PanelRightOpen className="h-[18px] w-[18px]" aria-hidden /></IconButton>
-            <span className="mt-2 rounded-full bg-ink px-1.5 py-0.5 text-[11px] font-bold text-white">{visible.length}</span>
+            <span className="mt-2 rounded-full bg-legacy-ink px-1.5 py-0.5 text-[11px] font-bold text-white">{visible.length}</span>
           </div>
         )}
       </div>
 
-      <footer className="flex h-[34px] items-center gap-2 border-t border-line bg-white px-4 text-xs text-muted">
+      <footer className="flex h-[34px] items-center gap-2 border-t border-legacy-line bg-white px-4 text-[12px] leading-[16px] text-legacy-muted">
         내 PC에서만 처리 · 두 파일이 모두 열리면 자동으로 비교합니다 · 올린 원본 파일은 바뀌지 않아요
         {pair?.alignment && <span className="ml-auto font-mono">정렬: {pair.alignment}</span>}
       </footer>
@@ -400,22 +408,22 @@ function pageNote(file: FileInfo | null, page: number | null) {
 }
 
 function Chip({ className, children }: { className: string; children: React.ReactNode }) {
-  return <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${className}`}>{children}</span>;
+  return <span className={`rounded-full px-2.5 py-1 text-[12px] leading-[16px] font-semibold ${className}`}>{children}</span>;
 }
 
 function Pane({ title, side, pageNote, onClose, closeLabel, children }: {
   title: string; side: Side; pageNote: string | null; onClose: () => void; closeLabel?: string; children: React.ReactNode;
 }) {
   return (
-    <section aria-label={title} className="flex min-h-0 min-w-0 flex-1 flex-col bg-canvas">
-      <div className="flex h-10 flex-none items-center justify-between border-b border-line bg-white pl-3.5 pr-2 text-[13px]">
+    <section aria-label={title} className="flex min-h-0 min-w-0 flex-1 flex-col bg-legacy-canvas">
+      <div className="flex h-10 flex-none items-center justify-between border-b border-legacy-line bg-white pl-3.5 pr-2 text-[13px]">
         <div className="flex min-w-0 items-center gap-2">
           <span className="font-bold text-[#4a505c]">{title}</span>
           {side.file && <span className="truncate">{side.file.name}</span>}
           {pageNote && <span className="whitespace-nowrap text-[#6b7280]">· {pageNote}</span>}
         </div>
         {side.file && (
-          <button type="button" aria-label={closeLabel ?? `${title} 닫기`} onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-[#eef0f3]">
+          <button type="button" aria-label={closeLabel ?? `${title} 닫기`} onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-md text-legacy-muted hover:bg-[#eef0f3]">
             <X className="h-4 w-4" aria-hidden />
           </button>
         )}
@@ -426,5 +434,5 @@ function Pane({ title, side, pageNote, onClose, closeLabel, children }: {
 }
 
 function MissingPage({ text }: { text: string }) {
-  return <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted">{text}</div>;
+  return <div className="flex h-full items-center justify-center p-8 text-center text-[14px] leading-[20px] text-legacy-muted">{text}</div>;
 }

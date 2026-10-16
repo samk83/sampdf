@@ -1,0 +1,79 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+import { activeTab, HOME_TAB_ID, initialState, useApp } from './store';
+
+const s = () => useApp.getState();
+
+describe('문서 탭 (설계서 2-1)', () => {
+  beforeEach(() => useApp.setState(initialState()));
+
+  it('처음에는 Home 탭 하나', () => {
+    expect(s().tabs.map((t) => t.kind)).toEqual(['home']);
+    expect(activeTab(s()).id).toBe(HOME_TAB_ID);
+  });
+
+  it('탭을 열면 그 탭으로 가고, 종류별 첫 리본 탭이 정해진다', () => {
+    const c = s().openTab('compare');
+    expect(s().activeId).toBe(c);
+    expect(activeTab(s()).ribbonTab).toBe('compare');
+    const p = s().openTab('png');
+    expect(activeTab(s()).ribbonTab).toBe('tools');
+    expect(s().tabs.map((t) => t.id)).toEqual([HOME_TAB_ID, c, p]);
+  });
+
+  it('Home 탭은 닫을 수 없다', () => {
+    s().closeTab(HOME_TAB_ID);
+    expect(s().tabs).toHaveLength(1);
+  });
+
+  it('지금 탭을 닫으면 오른쪽, 없으면 왼쪽 탭으로 간다', () => {
+    const a = s().openTab('compare');
+    const b = s().openTab('png');
+    const c = s().openTab('compare');
+    s().activate(b);
+    s().closeTab(b);
+    expect(s().activeId).toBe(c);
+    s().closeTab(c);
+    expect(s().activeId).toBe(a);
+    s().closeTab(a);
+    expect(s().activeId).toBe(HOME_TAB_ID);
+  });
+
+  it('다른 탭을 닫아도 지금 탭은 그대로', () => {
+    const a = s().openTab('compare');
+    const b = s().openTab('png');
+    s().closeTab(a);
+    expect(s().activeId).toBe(b);
+  });
+
+  it('없는 탭으로는 가지 않는다', () => {
+    s().activate('nope');
+    expect(s().activeId).toBe(HOME_TAB_ID);
+  });
+
+  it('탭마다 리본 탭·저장 안 됨 표시를 따로 기억한다', () => {
+    const a = s().openTab('compare');
+    const b = s().openTab('compare');
+    s().setRibbonTab(a, 'view');
+    s().setDirty(b, true);
+    expect(s().tabs.find((t) => t.id === a)).toMatchObject({ ribbonTab: 'view', dirty: false });
+    expect(s().tabs.find((t) => t.id === b)).toMatchObject({ ribbonTab: 'compare', dirty: true });
+  });
+});
+
+describe('상태 토글과 명령창 기록', () => {
+  beforeEach(() => useApp.setState(initialState()));
+
+  it('토글은 켜고 끈다 (OSNAP은 처음부터 켜짐)', () => {
+    expect(s().toggles.osnap).toBe(true);
+    s().toggle('grid');
+    expect(s().toggles.grid).toBe(true);
+    s().toggle('grid');
+    expect(s().toggles.grid).toBe(false);
+  });
+
+  it('기록은 최근 200줄만 남긴다', () => {
+    for (let i = 0; i < 205; i++) s().log({ text: `line ${i}`, kind: 'info' });
+    expect(s().history).toHaveLength(200);
+    expect(s().history[0].text).toBe('line 5');
+  });
+});

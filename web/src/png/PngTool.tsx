@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Download, Pipette, X } from 'lucide-react';
 import { saveBlob } from '../api';
 import { DropZone } from '../compare/DropZone';
-import { AppHeader, type Tab } from '../ui/AppHeader';
+import { AppHeader } from '../ui/AppHeader';
 import { detectBackground, fromHex, opaqueBounds, removeBackground, toHex, type Rgb } from './removeBackground';
 
 const ACCEPT = '.png,.jpg,.jpeg,.bmp,.webp,image/png,image/jpeg,image/bmp,image/webp';
@@ -30,7 +30,7 @@ async function loadImage(file: File): Promise<Loaded> {
  * 투명 PNG 만들기: 흰(또는 한 가지 색) 배경을 지운다. 도장·서명·로고·스캔한 도면 조각용.
  * 슬라이더를 움직이면 바로 다시 계산한다. 그림은 서버로 보내지 않는다.
  */
-export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
+export function PngTool({ initialFile }: { initialFile?: File }) {
   const [image, setImage] = useState<Loaded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,6 +60,14 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
       setBusy(false);
     }
   };
+
+  // 시작 화면에서 끌어다 놓은 그림으로 탭이 열리면 바로 연다
+  const initialOpened = useRef(false);
+  useEffect(() => {
+    if (initialOpened.current || !initialFile) return;
+    initialOpened.current = true;
+    void open(initialFile);
+  }, []);
 
   // 원래 그림 그리기
   useEffect(() => {
@@ -109,17 +117,17 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-[#f4f5f7] text-ink">
-      <AppHeader tab={tab} onTab={onTab} right={
+    <div className="flex h-full flex-col bg-[#f4f5f7] text-legacy-ink">
+      <AppHeader right={
         <button type="button" onClick={download} disabled={!image}
-          className="inline-flex h-[38px] items-center gap-2 rounded-lg bg-accent px-3.5 text-sm font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
+          className="inline-flex h-[38px] items-center gap-2 rounded-lg bg-legacy-accent px-3.5 text-[14px] leading-[20px] font-semibold text-white hover:bg-[#1e40af] disabled:bg-[#c7cdd8]">
           <Download className="h-4 w-4" aria-hidden /> PNG 내려받기
         </button>
       } />
       <div className="flex min-h-0 flex-1">
         <div className="grid min-w-0 flex-1 grid-cols-2 gap-px bg-[#d5d9e0]">
-          <section aria-label="원래 그림" className="flex min-h-0 flex-col bg-canvas">
-            <div className="flex h-10 flex-none items-center justify-between border-b border-line bg-white pl-3.5 pr-2 text-[13px]">
+          <section aria-label="원래 그림" className="flex min-h-0 flex-col bg-legacy-canvas">
+            <div className="flex h-10 flex-none items-center justify-between border-b border-legacy-line bg-white pl-3.5 pr-2 text-[13px]">
               <div className="flex min-w-0 gap-2">
                 <span className="font-bold text-[#4a505c]">원래 그림</span>
                 {image && <span className="truncate">{image.name}</span>}
@@ -127,7 +135,7 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               </div>
               {image && (
                 <button type="button" aria-label="그림 닫기" onClick={() => { setImage(null); setResultSize(null); }}
-                  className="flex h-8 w-8 items-center justify-center rounded-md text-muted hover:bg-[#eef0f3]">
+                  className="flex h-8 w-8 items-center justify-center rounded-md text-legacy-muted hover:bg-[#eef0f3]">
                   <X className="h-4 w-4" aria-hidden />
                 </button>
               )}
@@ -136,15 +144,15 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               {image ? (
                 <div className="flex h-full items-center justify-center p-7">
                   <canvas ref={originalCanvas} onClick={pickAt} aria-label={picking ? '배경 색을 찍을 곳을 누르세요' : '원래 그림'}
-                    className={`max-h-full max-w-full shadow-[0_1px_3px_rgba(16,24,40,0.12)] ${picking ? 'cursor-crosshair outline outline-2 outline-offset-4 outline-accent' : ''}`} />
+                    className={`max-h-full max-w-full shadow-[0_1px_3px_rgba(16,24,40,0.12)] ${picking ? 'cursor-crosshair outline outline-2 outline-offset-4 outline-legacy-accent' : ''}`} />
                 </div>
               ) : (
                 <DropZone title="그림 열기" busy={busy} error={error} onFile={open} accept={ACCEPT} formats={['PNG', 'JPG', 'BMP', 'WEBP']} />
               )}
             </div>
           </section>
-          <section aria-label="투명 결과" className="flex min-h-0 flex-col bg-canvas">
-            <div className="flex h-10 flex-none items-center gap-2 border-b border-line bg-white px-3.5 text-[13px]">
+          <section aria-label="투명 결과" className="flex min-h-0 flex-col bg-legacy-canvas">
+            <div className="flex h-10 flex-none items-center gap-2 border-b border-legacy-line bg-white px-3.5 text-[13px]">
               <span className="font-bold text-[#4a505c]">결과</span>
               <span className="text-[#6b7280]">바둑판 무늬 = 투명{resultSize ? ` · ${resultSize.width} × ${resultSize.height}` : ''}</span>
             </div>
@@ -152,34 +160,34 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
               {image ? (
                 <canvas ref={resultCanvas} aria-label="배경을 지운 결과" className="checker max-h-full max-w-full shadow-[0_1px_3px_rgba(16,24,40,0.12)]" />
               ) : (
-                <p className="text-sm text-muted">왼쪽에 그림을 열면 여기에 결과가 보여요.</p>
+                <p className="text-[14px] leading-[20px] text-legacy-muted">왼쪽에 그림을 열면 여기에 결과가 보여요.</p>
               )}
             </div>
           </section>
         </div>
 
-        <aside aria-label="설정" className="flex w-[300px] flex-none flex-col gap-5 border-l border-line bg-white p-[18px]">
+        <aside aria-label="설정" className="flex w-[300px] flex-none flex-col gap-5 border-l border-legacy-line bg-white p-[18px]">
           <div className="flex flex-col gap-2.5">
             <div className="flex items-baseline justify-between">
-              <label htmlFor="threshold" className="text-sm font-semibold">배경 기준</label>
+              <label htmlFor="threshold" className="text-[14px] leading-[20px] font-semibold">배경 기준</label>
               <span className="font-mono text-[13px] text-[#3f4552]">{threshold}</span>
             </div>
             <input id="threshold" type="range" min={150} max={254} value={threshold} onChange={(e) => setThreshold(Number(e.target.value))} className="w-full accent-[#1d4ed8]" />
-            <div className="flex justify-between text-xs text-muted"><span>연한 얼룩까지</span><span>배경 색만</span></div>
+            <div className="flex justify-between text-[12px] leading-[16px] text-legacy-muted"><span>연한 얼룩까지</span><span>배경 색만</span></div>
           </div>
 
           <div className="flex flex-col gap-2.5">
-            <div className="text-sm font-semibold">배경 색</div>
+            <div className="text-[14px] leading-[20px] font-semibold">배경 색</div>
             <div className="flex items-center gap-2.5">
               <span className="h-9 w-9 rounded-lg border border-[#c3c8d1]" style={{ background: toHex(background) }} />
               <span className="flex-1 font-mono text-[13px] text-[#3f4552]">{toHex(background)}{autoBackground ? ' (자동)' : ''}</span>
               <button type="button" aria-label="그림에서 배경 색 찍기" title="그림에서 배경 색 찍기" aria-pressed={picking} disabled={!image}
                 onClick={() => setPicking((p) => !p)}
-                className={`flex h-10 w-10 items-center justify-center rounded-lg border disabled:opacity-40 ${picking ? 'border-accent bg-accent-soft text-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border disabled:opacity-40 ${picking ? 'border-legacy-accent bg-legacy-accent-soft text-legacy-accent' : 'border-[#d5d9e0] text-[#3f4552] hover:bg-[#f4f5f7]'}`}>
                 <Pipette className="h-[17px] w-[17px]" aria-hidden />
               </button>
             </div>
-            {picking && <p className="text-xs text-accent">왼쪽 그림에서 배경 부분을 누르세요.</p>}
+            {picking && <p className="text-[12px] leading-[16px] text-legacy-accent">왼쪽 그림에서 배경 부분을 누르세요.</p>}
           </div>
 
           <div className="flex flex-col">
@@ -194,7 +202,7 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
             )}
           </div>
 
-          <p className="mt-auto text-xs leading-relaxed text-muted">그림은 브라우저 안에서만 처리돼요. 슬라이더를 움직이면 결과가 바로 바뀝니다.</p>
+          <p className="mt-auto text-[12px] leading-[16px] leading-relaxed text-legacy-muted">그림은 브라우저 안에서만 처리돼요. 슬라이더를 움직이면 결과가 바로 바뀝니다.</p>
         </aside>
       </div>
     </div>
@@ -203,7 +211,7 @@ export function PngTool({ tab, onTab }: { tab: Tab; onTab: (t: Tab) => void }) {
 
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <label className="flex min-h-11 cursor-pointer items-center justify-between text-sm">
+    <label className="flex min-h-11 cursor-pointer items-center justify-between text-[14px] leading-[20px]">
       {label}
       <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-[18px] w-[18px] accent-[#1d4ed8]" />
     </label>
