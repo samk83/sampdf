@@ -2,6 +2,14 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-16 — 디자인 시안 2회차 선택, 오토캐드식 명령창 결정, 최종 시안
+
+**무엇을**: 2회차 선택(A + D 포커스 모드)과 새 아이디어(오토캐드식 명령창, 간단한 작도, 해칭, 영어 기본·다국어)를 `docs/PLAN.md`(기능 5·7·8 추가, 기본값·위험·범위 밖), `docs/DECISIONS.md`(7건), `design/README.md`(2회차 선택, 최종 회차)에 기록. 캔버스에 최종 시안 12화면(영어) 제작, 공통 도면 부품에 영어 글자(lang) 추가.
+
+**왜**: Owner 결정 — A를 기본으로 D를 포커스 모드로, 두 모드 모두 오토캐드처럼 명령창으로 작업, 해칭도 단순하게, CAD에서 뽑은 PDF 기준, 기본 영어.
+
+**확인**: 화면은 캔버스에 올렸지만 캡처로 직접 확인하지는 않음. 코드 변경 없음.
+
 ## 2026-10-16 — 하네스 적용, 디자인 시안 1회차
 
 **무엇을**: ai-company-harness 0.2.0 설치(`.claude/skills` kickoff·design-board·ship-check, `.claude/rules/design.md`, 루트 `design.md`). 프로젝트 안내 문서 `CLAUDE.md`, 정리한 기획 `docs/PLAN.md`, 결정 기록 `docs/DECISIONS.md`, 시안 기록 `design/README.md`, 1회차 지시문 `design/prompts/round1.md`. 시안 1회차 5안(A~E) × 비교 결과 화면을 캔버스로 제작 (Owner가 직접 디자인을 요청해 Claude가 만듦).
