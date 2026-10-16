@@ -28,7 +28,7 @@
 | 마크업 조회 모델 (`MarkupInfo`, `MarkupKind`) | `Markups/MarkupInfo.cs` | 좌표 모델 | `GetMarkups`, (향후) Review List |
 | 스타일·색상 (`MarkupStyle`, `RgbColor`) | `Markups/MarkupStyle.cs` | — | 마크업 입력 모델, (향후) Saved Tools |
 | 안전 저장 (임시 파일 → 검증 → 교체) | `Persistence/SafeFileSaver.cs` | — | `MuPdfDocument.SaveTo`, (향후) 프로젝트 데이터 저장 |
-| MuPDF 열기 (메모리로 읽어 파일 잠금 없음) | `MuPdf/MuPdfEngine.cs` | — | 앱의 문서 열기 |
+| MuPDF 열기 (메모리로 읽어 파일 잠금 없음). 그림(PNG·JPG·TIFF·BMP)은 PDF로 바꿔 연다 | `MuPdf/MuPdfEngine.cs` | — | 앱의 문서 열기, 웹 비교 |
 | 문서 조작 (페이지 정보, 렌더링, 검색, 주석 조회·삭제, 저장, 보안 정보) | `MuPdf/MuPdfDocument.cs` | `SafeFileSaver`, `MuPdfCoordinates` | `IPdfDocument` 사용처 전체 |
 | 마크업 → 표준 PDF 주석 변환 | `MuPdf/MuPdfMarkupWriter.cs` | `MuPdfCoordinates` | `MuPdfDocument.AddMarkup` |
 | 보이는 좌표 ↔ MuPDF/PDF 좌표 변환 (회전·CropBox 보정) | `MuPdf/MuPdfCoordinates.cs` | — | Writer, Document |
@@ -109,7 +109,9 @@
 | 이미지 처리·영역 묶기 | `ImageOps.cs` | OpenCV | `PageComparer`, `Aligner` |
 | 단어 비교 (바뀐 단어 목록) | `TextDiff.cs` | `TextWord` | `PageComparer` |
 | 변경 성격 구분: 글자 변경(하이라이트) / 그림 변경(Cloud), 바뀐 글자 "이전 → 개정" 설명 | `PageComparer.Classify` | `TextDiff`, `Grouping`(글자 밖 차이 픽셀 수) | 웹 비교 (예정), `RevisionMarks` |
-| 리비전 표시: 하이라이트·Cloud·△ 리비전 번호를 표준 PDF 주석으로 | `RevisionMarks.cs` | `MarkupDraft`, `IPdfDocument.AddMarkup` | 웹 비교 (예정), 테스트 |
+| 문서 전체 비교 (페이지 짝, 페이지별 요약, 추가·빠진 페이지 알림) | `DocumentComparer.cs` | `PageComparer` | 웹 비교 (예정), 테스트 |
+| 지워진 선만 담은 층 (화면에서 리비전 위에 흐리게 겹치기) | `PageComparer.RenderRemovedLayer` | `ImageOps` | 웹 비교 (예정) |
+| 리비전 표시: 하이라이트 · Cloud + △ 리비전 번호(Cloud에만)를 표준 PDF 주석으로 | `RevisionMarks.cs` | `MarkupDraft`, `IPdfDocument.AddMarkup` | 웹 비교 (예정), 테스트 |
 
 ## Cad 모듈
 

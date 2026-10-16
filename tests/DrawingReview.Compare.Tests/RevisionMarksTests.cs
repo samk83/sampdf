@@ -8,7 +8,7 @@ using R = DrawingReview.TestData.ComparePairs.Revision;
 
 namespace DrawingReview.Compare.Tests;
 
-/// <summary>글자 변경 → 하이라이트, 그림 변경 → Cloud, 모든 변경에 △ 리비전 번호.</summary>
+/// <summary>글자 변경 → 하이라이트, 그림 변경 → Cloud + △ 리비전 번호.</summary>
 public class RevisionMarksTests(ITestOutputHelper output)
 {
     private static readonly MuPdfEngine Engine = new();
@@ -70,9 +70,9 @@ public class RevisionMarksTests(ITestOutputHelper output)
         // 그림 변경의 Cloud 1개 (구름 강도 > 0)
         var cloud = Assert.Single(marks, m => m.Draft is CloudDraft { Intensity: > 0 });
         Assert.True(cloud.Draft is CloudDraft c && c.Vertices.Min(v => v.X) < graphic.Bounds.X0 && c.Vertices.Max(v => v.X) > graphic.Bounds.X1);
-        // 변경마다 △ 삼각형 + 번호 "2"
-        Assert.Equal(2, marks.Count(m => m.Draft is CloudDraft { Intensity: 0, Vertices.Count: 3 }));
-        Assert.Equal(2, marks.Count(m => m.Draft is TextBoxDraft { Text: "2" }));
+        // △ 삼각형 + 번호 "2"는 Cloud에만 (글자 하이라이트에는 없음)
+        Assert.Equal(1, marks.Count(m => m.Draft is CloudDraft { Intensity: 0, Vertices.Count: 3 }));
+        Assert.Equal(1, marks.Count(m => m.Draft is TextBoxDraft { Text: "2" }));
         // 글상자는 내용이 번호 자체라 메모가 따로 없다. 나머지는 변경 설명을 메모로 갖는다.
         Assert.All(marks.Where(m => m.Draft is not TextBoxDraft), m => Assert.StartsWith("Change ", m.Draft.Comment));
 

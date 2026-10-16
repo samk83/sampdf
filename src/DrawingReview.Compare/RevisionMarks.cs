@@ -23,7 +23,7 @@ public sealed record RevisionMarkOptions
 /// 변경 영역을 리비전 도면 위의 표준 PDF 마크업으로 바꾼다 (웹 비교 화면·PDF 내려받기 공통).
 /// - 글자 변경: 바뀐 단어마다 노란 하이라이트
 /// - 그림 변경: 빨간 Revision Cloud (안에 바뀐 단어가 있으면 하이라이트도 함께)
-/// - 모든 변경: 오른쪽 위에 △ 리비전 기호(삼각형 + 번호)
+/// - Cloud에만: 오른쪽 위에 △ 리비전 기호(삼각형 + 번호) (Owner 결정: 하이라이트에는 붙이지 않음)
 /// 모두 표준 주석이라 Bluebeam·Acrobat에서 열고 수정할 수 있다.
 /// </summary>
 public static class RevisionMarks
@@ -41,21 +41,13 @@ public static class RevisionMarks
             drafts.Add(new HighlightDraft(Clamp(h.Inflate(1), pageWidth, pageHeight))
                 { Style = MarkupStyle.Highlighter, Subject = HighlightSubject, Comment = note, Author = o.Author });
 
-        // 표시 전체를 감싸는 영역: 그림 변경은 Cloud, 글자 변경은 하이라이트들
-        PageRect anchor;
-        if (change.Category == ChangeCategory.Graphic || change.TextHighlights.Count == 0)
-        {
-            anchor = Clamp(change.Bounds.Inflate(o.MarginPt), pageWidth, pageHeight);
-            drafts.Add(CloudDraft.FromRect(anchor) with
-                { Style = Stroke(o), Subject = CloudSubject, Comment = note, Author = o.Author });
-        }
-        else
-        {
-            anchor = change.TextHighlights.Aggregate((a, b) => new PageRect(Math.Min(a.X0, b.X0), Math.Min(a.Y0, b.Y0), Math.Max(a.X1, b.X1), Math.Max(a.Y1, b.Y1)));
-        }
-
+        // 글자만 바뀐 곳은 하이라이트로 끝. 그림 변경(또는 칠할 글자가 없는 변경)은 Cloud + △
+        if (change.Category == ChangeCategory.Text && change.TextHighlights.Count > 0) return drafts;
+        var cloud = Clamp(change.Bounds.Inflate(o.MarginPt), pageWidth, pageHeight);
+        drafts.Add(CloudDraft.FromRect(cloud) with
+            { Style = Stroke(o), Subject = CloudSubject, Comment = note, Author = o.Author });
         // Cloud의 볼록한 호가 영역 밖으로 약 5pt 나오므로 △는 그만큼 더 띄운다
-        drafts.AddRange(Delta(change.Category == ChangeCategory.Graphic || change.TextHighlights.Count == 0 ? anchor.Inflate(5) : anchor, o, pageWidth, pageHeight, note));
+        drafts.AddRange(Delta(cloud.Inflate(5), o, pageWidth, pageHeight, note));
         return drafts;
     }
 

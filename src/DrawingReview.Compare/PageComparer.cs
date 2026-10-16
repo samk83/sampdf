@@ -193,4 +193,34 @@ public static class PageComparer
         }
         return new RenderedImage(w, h, stride, pixels, 0, 0, zoom);
     }
+
+    /// <summary>
+    /// 지워진 그림만 담은 층 (개정 도면 좌표): 흰 바탕에 지워진 선만 색칠한다.
+    /// 화면에서 리비전 도면 위에 곱하기(multiply) 혼합으로 겹치면 흰 바탕은 사라지고 지워진 선만 흐리게 보인다.
+    /// 허용 오차는 비교와 같은 규칙(주변보다 확실히 어두운 곳만)이라 렌더링 미세 차이는 나오지 않는다.
+    /// </summary>
+    public static RenderedImage RenderRemovedLayer(PageSource oldPage, PageSource newPage, AlignmentTransform transform, double zoom,
+        CompareSettings? settings = null, (byte R, byte G, byte B)? color = null)
+    {
+        settings ??= new CompareSettings();
+        var c = color ?? (220, 40, 40);
+        using var newGray = ImageOps.ToGray(newPage.Render(zoom));
+        using var oldGray = ImageOps.ToGray(oldPage.Render(zoom));
+        using var oldWarped = ImageOps.Warp(oldGray, transform, zoom, newGray.Size());
+        using var removed = ImageOps.DarkerThanNeighborhood(oldWarped, newGray, settings.TolerancePixels, settings.ContrastDelta, settings.InkThreshold);
+        ImageOps.RemoveSpecks(removed, settings.NoisePixels);
+
+        int w = newGray.Width, h = newGray.Height, stride = w * 3;
+        var pixels = new byte[stride * h];
+        Array.Fill(pixels, (byte)255);
+        removed.GetArray(out byte[] m);
+        for (int i = 0; i < m.Length; i++)
+        {
+            if (m[i] == 0) continue;
+            pixels[i * 3] = c.R;
+            pixels[i * 3 + 1] = c.G;
+            pixels[i * 3 + 2] = c.B;
+        }
+        return new RenderedImage(w, h, stride, pixels, 0, 0, zoom);
+    }
 }

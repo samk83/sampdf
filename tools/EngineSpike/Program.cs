@@ -45,6 +45,12 @@ File.WriteAllBytes(Path.Combine(compareDir, "revision.pdf"), ComparePairs.Sheet(
     AddLine = true,
     RemoveBeam = true,
 }));
+// 그림 파일 비교 시험용: 같은 쌍을 150dpi PNG로 (스캔본 흉내)
+foreach (var name in new[] { "original", "revision" })
+{
+    using var sheet = engine.Open(Path.Combine(compareDir, name + ".pdf"));
+    File.WriteAllBytes(Path.Combine(compareDir, name + ".png"), sheet.RenderPagePng(0, 150 / 72.0, includeMarkups: false));
+}
 
 // 2) 모든 마크업 도구를 페이지마다 적용
 var roundTripPath = Path.Combine(outDir, "markup-roundtrip.pdf");
