@@ -1,0 +1,79 @@
+/* 디자인 토큰: {프로젝트 이름}
+ * 공통 규칙은 design.md 3장. 컴포넌트에서는 값을 직접 쓰지 말고 이 변수를 쓴다.
+ * 시안 확정 때 design-board 스킬이 실제 값으로 채운다. 아래는 시작 예시. */
+:root {
+  /* Color */
+  --color-primary: #2563eb;
+  --color-on-primary: #ffffff;
+  --color-accent: #0369a1;
+  --color-on-accent: #ffffff;
+  --color-background: #ffffff;
+  --color-surface: #f8fafc;
+  --color-text: #111827;
+  --color-text-muted: #4b5563;
+  --color-border: #e5e7eb;
+  --color-success: #15803d;
+  --color-warning: #b45309;
+  --color-danger: #b91c1c;
+
+  /* Typography */
+  --font-family-base: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-md: 16px;
+  --font-size-lg: 20px;
+  --font-size-xl: 28px;
+  --font-size-display: 48px;
+  --font-weight-regular: 400;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+
+  /* Spacing */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 0.08);
+
+  /* Border */
+  --border-width: 1px;
+  --border-default: var(--border-width) solid var(--color-border);
+
+  /* Motion */
+  --motion-fast: 150ms;
+  --motion-normal: 250ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Breakpoint (참고값: CSS 변수는 미디어 쿼리 안에서 못 쓰므로 같은 값을 직접 적는다) */
+  --breakpoint-sm: 480px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+
+  /* Z-index */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-modal: 1000;
+  --z-toast: 1100;
+
+  /* Touch */
+  --touch-target-min: 44px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0ms;
+    --motion-normal: 0ms;
+  }
+}

@@ -2,6 +2,12 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-16 — 하네스 적용, 디자인 시안 1회차
+
+**무엇을**: ai-company-harness 0.2.0 설치(`.claude/skills` kickoff·design-board·ship-check, `.claude/rules/design.md`, 루트 `design.md`). 프로젝트 안내 문서 `CLAUDE.md`, 정리한 기획 `docs/PLAN.md`, 결정 기록 `docs/DECISIONS.md`, 시안 기록 `design/README.md`, 1회차 지시문 `design/prompts/round1.md`. 시안 1회차 5안(A~E) × 비교 결과 화면을 캔버스로 제작 (Owner가 직접 디자인을 요청해 Claude가 만듦).
+
+**왜**: Owner 요청 — 하네스 규칙·스킬 적용, 기획 전체를 바탕으로 Bluebeam급 전문가용 디자인을 시안부터 확정하고 설계를 이어 가기.
+
 ## 2026-10-16 — 웹앱 피드백 반영: 번호·이동 옵션·구분선·표시 수정·겹쳐 보기
 
 **무엇을** (Sam 피드백)
