@@ -17,6 +17,9 @@
 | `tests/DrawingReview.Compare.Tests` | 비교 검수 테스트 (기획서 12장) | Windows·Linux |
 | `src/DrawingReview.Cad` | DWG/DXF 읽기·정규화·비교·PDF로 그리기·Cloud 내보내기 | Windows·Linux |
 | `tests/DrawingReview.Cad.Tests` | CAD 비교 검증 테스트 | Windows·Linux |
+| `src/DrawingReview.Web` | 도면 비교 웹앱 서버 (내 PC 전용, 127.0.0.1:5180) + 빌드된 화면 `wwwroot` | Windows·Linux |
+| `tests/DrawingReview.Web.Tests` | 웹 서버 API 테스트 | Windows·Linux |
+| `web/` | 웹 화면 원본 (React·TypeScript). `npm run build` → `src/DrawingReview.Web/wwwroot` | 개발할 때만 (Node.js) |
 
 ## Engine 모듈
 
@@ -122,3 +125,30 @@
 | 짝 맞추기(ID 미사용), 이동·변경·추가·삭제 분류, 치수 값·문자 비교 | `CadComparer.cs` | — | `CadComparison`, 테스트 |
 | 모델(mm) ↔ PDF 페이지(pt) 변환, CAD → 벡터 페이지 그리기 | `CadPlotter.cs` | `VectorPage` (Engine) | `CadComparison` |
 | 개정 도면 사본에 Revision Cloud 넣기 (DXF/DWG, REVISION 도면층) | `CadCloudExporter.cs` | ACadSharp, `SafeFileSaver` | `CompareViewModel.ExportCadCloudsAsync` |
+
+## Web 모듈 (서버, `src/DrawingReview.Web`)
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 서버 시작 (127.0.0.1:5180, 업로드 300MB, 브라우저 자동 열기 `--no-browser`) | `Program.cs` | — | `run-web.cmd`, `dotnet run` |
+| 올린 파일 보관 (메모리, 최근 24개, 문서별 잠금, 원본 바이트로 사본 열기) | `Services/DocumentStore.cs` | `MuPdfEngine` (그림은 PDF로) | `Endpoints` |
+| 비교 실행·결과 보관 (제목란 무시, 두 문서 잠금 순서) | `Services/CompareStore.cs` | `DocumentComparer` | `Endpoints` |
+| API: `/api/files`(올리기·정보·닫기), `/files/{id}/pages/{n}.png`, `/compare`, `/compare/{id}/pages/{i}/removed.png`, `/compare/{id}/export` | `Api/Endpoints.cs` | `PageComparer.RenderRemovedLayer`, `RevisionMarks.Apply` | 웹 화면 `api.ts` |
+| 화면으로 보내는 자료 모양 | `Api/Dtos.cs` | — | `Endpoints`, 테스트 |
+
+## 웹 화면 (`web/src`)
+
+| 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
+|---|---|---|---|
+| 탭 전환 (도면 비교 / 투명 PNG, 비교 상태 유지) | `App.tsx` | — | `main.tsx` |
+| 공통 위쪽 막대·아이콘 버튼 | `ui/AppHeader.tsx` | lucide-react | 두 화면 |
+| 서버 호출·자료 모양·파일 저장 | `api.ts` | — | 비교 화면, PNG 화면(저장) |
+| 비교 화면 (좌우 칸, 자동 비교, 함께 이동, 자동 맞춤, 요약, 경고, 내려받기) | `compare/ComparePage.tsx` | 아래 부품들 | `App` |
+| 도면 한 페이지 보기 (휠 확대, 끌어 이동, 해상도 단계 미리 받기, 겹침 층) | `compare/PageViewer.tsx` | `compare/view.ts` | `ComparePage` |
+| 보기 계산 (맞춤, 커서 기준 확대, 변경 위치로 이동, 그림 배율 단계) | `compare/view.ts` | — | `PageViewer`, `ComparePage` |
+| 표시 그리기 (하이라이트·구름·△, 선택 상자) | `compare/Marks.tsx` | `compare/geometry.ts` | `ComparePage` |
+| 구름 경로·△ 위치·설명 줄이기 (엔진 `RevisionMarks`와 같은 규칙) | `compare/geometry.ts` | — | `Marks`, `ChangeList` |
+| 파일 열기 칸 (클릭·끌어다 놓기) | `compare/DropZone.tsx` | — | 비교 화면, PNG 화면 |
+| 변경 목록 (필터, 선택, 지우기·되돌리기, 접기) | `compare/ChangeList.tsx` | `geometry.shortText` | `ComparePage` |
+| 투명 PNG 화면 (슬라이더, 배경 색 자동·찍기, 부드럽게, 여백 자르기, 선 색 맞추기, 내려받기) | `png/PngTool.tsx` | `png/removeBackground.ts`, `DropZone` | `App` |
+| 배경 지우기 계산 (브라우저 안에서만) | `png/removeBackground.ts` | — | `PngTool` |
