@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { activeTab, LEGACY_KINDS, RIBBON_TABS_FOR, useApp, type DocTab } from '../app/store';
 import { AppInfoTab } from '../apps/AppInfoTab';
+import { startToolUrls } from '../apps/toolUrl';
 import { disposeTab } from '../compare/actions';
 import { CompareTab } from '../compare/CompareTab';
 import { PngTool } from '../png/PngTool';
@@ -22,6 +23,9 @@ export function AppShell() {
   const active = useApp(activeTab);
   const cmdlineHidden = useApp((s) => s.cmdlineHidden);
   useGlobalKeys();
+
+  // 기능별 주소 /tools/<id> (설계서 11-5)
+  useEffect(() => startToolUrls(), []);
 
   // 비교 탭을 닫으면 서버에 올린 파일을 닫고 그 탭의 비교 상태를 지운다
   useEffect(() => useApp.subscribe((s, prev) => {

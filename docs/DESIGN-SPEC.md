@@ -768,11 +768,19 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 | 곳 | 내용 |
 |---|---|
-| 시작 화면 | 위: 검색 칸("Search tools") · 갈래 고르기(All / Drawing & CAD / PDF Essentials / Image & Conversion). 가운데: 기능 카드 격자(아이콘·이름·한 줄 설명·상태 꼬리표). 아래: 최근 파일·최근 비교·놓는 칸(그대로). 시안 01의 큰 카드 3개는 이 격자로 바뀜 |
+| 시작 화면 (**확정 시안 `design/screens/r2-01-home-pc/web.html`**, 2026-10-17) | 왼쪽 메뉴: Home · Open drawing · Compare · Remove Background · Settings. 위: 제목 · 검색 칸("Search tools", **Ctrl+K**) · 갈래 버튼(All / Drawing & CAD / PDF Essentials / Image & Conversion, 개수 표시) · "2 ready · 22 coming soon". 가운데: 기능 카드 격자 **한 덩어리**(넓은 화면 6열, 갈래 제목 없음). 카드 = 아이콘 + 상태(Ready 초록 / Coming soon 글자) · 이름 · 설명 2줄, Ready 카드는 파란 테두리. 아래: 최근 파일(웹: "이번 접속에서 연 파일") + 놓는 칸 나란히. 최근 비교 목록은 뺌 |
 | Ready 카드 | 누르면 그 기능을 연다 (명령 실행, 예: `CMP`) |
 | Coming soon 카드 | 누르면 **기능 안내 탭**: 이름·설명·사용 흐름(파일 고르기 → 옵션 → 실행 → 결과)·계획 단계·"Coming soon". 같은 기능은 한 탭만 |
 | 작은 작업 탭 (`job`) | 리본 없음. 왼쪽 단계 목록, 가운데 작업 칸, 오른쪽 옵션. 첫 실제 사용은 페이지 도구 단계 |
+| PC / 웹 차이 (보완 시안 원칙) | 화면은 하나. 다른 곳은 **파일 열기**(PC: 앱 열기 창 / 웹: 올리기) · **저장**(PC: 경로·폴더 / 웹: 내려받기, 30분 뒤 삭제) · **개인정보 안내**(웹만: 시작 화면 띠, 상태 표시줄 "Web · files deleted after 30 min idle") · **로그인·Free/Pro**(웹만). 시안의 Sign in 버튼·Free 플랜 칸은 로그인을 만들 때 넣는다 (그 전엔 눌러도 할 일이 없음) |
 | 리본 탭 | Home 탭: 리본 없음 · Compare: Home·Compare·Markup·Draw·View · Drawing: Home·Markup·Draw·View·Tools · PNG: Home·Tools · 기능 안내/작업 탭: 리본 없음 |
+
+### 11-5. 기능별 주소 (2026-10-17)
+
+- 모든 기능은 **한 서버·한 앱** 안에 있다 (기능마다 따로 사이트를 만들지 않음: 무료 한도는 계정당 하나라 이득이 없고 관리만 늘어남).
+- 기능마다 주소 `/tools/<기능 id>` (예: `/tools/merge-pdf`). 이 주소로 들어오면 그 기능을 바로 연다 (Ready = 명령 실행, 준비 중 = 기능 안내 탭). 등록표에 없는 id는 `/`로 바꾼다.
+- 탭을 옮기면 주소창도 바뀐다: Home = `/`, 비교 탭 = `/tools/drawing-compare`, 투명 PNG 탭 = `/tools/remove-background`. 기록은 쌓지 않는다(`replaceState`, 뒤로 가기로 탭이 바뀌지 않게). claude.ai 미리보기 빌드에서는 주소를 건드리지 않는다.
+- 코드: `web/src/apps/toolUrl.ts`, `apps/openApp.ts`. 서버는 모르는 주소에 `index.html`을 준다(`MapFallbackToFile`).
 
 ### 11-4. 개발 순서 (9-2를 대신함)
 

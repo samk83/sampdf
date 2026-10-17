@@ -184,11 +184,18 @@ def titlebar(tabs, right_note='Saved', unsaved=False):
 
 
 RIBBON_TABS = ['Home', 'Compare', 'Markup', 'Draw', 'View', 'Tools']
+# Only the ribbon tabs that fit the document tab (DESIGN-SPEC 11-3, decision 2026-10-17).
+RIBBON_BY_KIND = {
+    'compare': ['Home', 'Compare', 'Markup', 'Draw', 'View'],
+    'drawing': ['Home', 'Markup', 'Draw', 'View', 'Tools'],
+    'png': ['Home', 'Tools'],
+}
+KIND_OF_ACTIVE = {'Compare': 'compare', 'Tools': 'png'}
 
 
-def ribbon(active, groups, extra=''):
+def ribbon(active, groups, extra='', kind=None):
     tabs = []
-    for name in RIBBON_TABS:
+    for name in RIBBON_BY_KIND[kind or KIND_OF_ACTIVE.get(active, 'drawing')]:
         if name == active:
             tabs.append(f'<button role="tab" aria-selected="true" style="height: 28px; padding: 0 14px; border: none; border-radius: 6px 6px 0 0; background: {T["panel"]}; color: #ffffff; font: inherit; font-weight: 600; box-shadow: inset 0 2px 0 {T["accent"]}">{name}</button>')
         else:

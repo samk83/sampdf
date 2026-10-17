@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 import chrome  # noqa: E402
 import screens  # noqa: E402
+import screens_v2  # noqa: E402
 from sheet_svg import sheet_svg  # noqa: E402
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', 'screens')
@@ -115,9 +116,23 @@ def main():
         open(os.path.join(ROOT, fname + '.html'), 'w', encoding='utf-8').write(out)
         links.append(f'<li><a href="{fname}.html">{html.escape(title)}</a> <span>{fname}.html</span></li>')
         print(fname, len(out))
+    board = []
+    for fname, fn, targets, title, note in screens_v2.PAGES:
+        chrome.apply_skin('S1')
+        files = []
+        for tg in targets:
+            screens_v2.set_target(tg)
+            out = to_static(fn(), f'{title} · {tg.upper()}')
+            name = f'{fname}-{tg}'
+            open(os.path.join(ROOT, name + '.html'), 'w', encoding='utf-8').write(out)
+            files.append((tg, name))
+            print(name, len(out))
+        board.append((title, note, files))
+    open(os.path.join(ROOT, 'review-r2.html'), 'w', encoding='utf-8').write(review_board(board))
     for name, key in sheets.items():
         open(os.path.join(ROOT, 'assets', name + '.svg'), 'w', encoding='utf-8').write(sheet_svg(**key))
         print('assets/' + name + '.svg')
+    links.append('<li><a href="review-r2.html">Round 2 review board · PC / Web side by side (2026-10-17)</a> <span>review-r2.html</span></li>')
     index = f'''<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Confirmed screens · Sam Drawing Tools</title>
 <link rel="stylesheet" href="../tokens.css">
@@ -127,6 +142,57 @@ h1{{font-size:var(--font-size-xl)}} li{{margin:var(--space-2) 0}} a{{color:var(-
 </head><body><h1>Sam Drawing Tools — confirmed screens (S1 Slate, EN)</h1><ol>{"".join(links)}</ol></body></html>
 '''
     open(os.path.join(ROOT, 'index.html'), 'w', encoding='utf-8').write(index)
+
+
+REGEN = [('04-compare-result', '비교 결과 (리본: Home·Compare·Markup·Draw·View)'), ('07-review-line-osnap', '도면 검토 (리본: Home·Markup·Draw·View·Tools)'),
+         ('12-transparent-png', '투명 PNG (리본: Home·Tools)')]
+
+
+def review_board(board):
+    """One page that shows each round-2 screen as PC and Web side by side (scaled iframes)."""
+    sec = []
+    for title, note, files in board:
+        cells = ''.join(
+            f'<figure><figcaption>{"PC 버전" if tg == "pc" else "웹 버전"} <a href="{name}.html" target="_blank" rel="noopener">크게 보기</a></figcaption>'
+            f'<div class="shot"><iframe src="{name}.html" title="{html.escape(title)} {tg}" loading="lazy" tabindex="-1"></iframe></div></figure>'
+            for tg, name in files)
+        if len(files) == 1:
+            cells += '<figure class="none"><figcaption>PC 버전</figcaption><div class="empty">PC 버전에는 없음 (로그인 없음)</div></figure>'
+        sec.append(f'<section><h2>{html.escape(title)}</h2><p>{html.escape(note)}</p><div class="pair">{cells}</div></section>')
+    regen = ''.join(f'<li><a href="{f}.html" target="_blank" rel="noopener">{f}</a> {html.escape(n)}</li>' for f, n in REGEN)
+    return f'''<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Round 2 Mockups</title>
+<link rel="stylesheet" href="../tokens.css">
+<style>
+body{{margin:0;background:var(--color-background);color:var(--color-text);font-family:var(--font-family-base);font-size:14px;line-height:1.55}}
+main{{max-width:1480px;margin:0 auto;padding:24px 16px 64px}}
+h1{{font-size:22px;margin:0 0 6px}} h2{{font-size:16px;margin:0 0 4px}}
+.lead{{color:var(--color-text-secondary);margin:0 0 8px;max-width:900px}}
+.rules{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin:16px 0 28px;padding:0;list-style:none}}
+.rules li{{padding:10px 12px;border:1px solid var(--color-border);border-radius:4px;background:var(--color-surface);font-size:13px}}
+.rules b{{display:block}}
+section{{margin:0 0 36px}} section>p{{margin:0 0 12px;color:var(--color-text-secondary);max-width:1000px}}
+.pair{{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
+@media (max-width:900px){{.pair{{grid-template-columns:minmax(0,1fr)}}}}
+figure{{margin:0;min-width:0}} figcaption{{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:6px}}
+figcaption a,a{{color:var(--color-accent);font-weight:400}}
+.shot{{position:relative;width:100%;aspect-ratio:1440/900;overflow:hidden;border:1px solid var(--color-border);border-radius:4px;background:var(--color-chrome)}}
+.shot iframe{{position:absolute;left:0;top:0;width:1440px;height:900px;border:0;transform-origin:0 0;pointer-events:none}}
+.empty{{aspect-ratio:1440/900;display:flex;align-items:center;justify-content:center;border:1px dashed var(--color-border-strong);border-radius:4px;color:var(--color-text-muted)}}
+.mark{{display:inline-block;padding:0 5px;border-radius:2px;background:var(--color-warning);color:#1a1f26;font-size:11px;font-weight:700}}
+</style></head><body><main>
+<h1>보완 시안 · PC / 웹 같은 화면</h1>
+<p class="lead">스타일(A 배치 + 포커스 모드 + S1 Slate)은 확정 그대로 두고, PRD 변경 뒤 새로 생긴 화면만 PC와 웹 두 모습으로 그렸습니다. 노란 점선과 <span class="mark">PC only</span> <span class="mark">Web only</span> 표시가 두 버전이 다른 곳입니다.</p>
+<ul class="rules"><li><b>원칙: 화면은 하나</b>배치·버튼 이름·단축키·명령은 PC와 웹이 같음</li><li><b>① 파일 열기</b>PC: 내 PC 폴더 · 웹: 올리기(100MB)</li><li><b>② 저장</b>PC: 같은 경로·폴더에 저장 · 웹: 내려받기, 30분 뒤 삭제</li><li><b>③ 개인정보 안내</b>웹에만</li><li><b>④ 로그인·Free/Pro</b>웹에만</li></ul>
+{"".join(sec)}
+<section><h2>기존 화면 02~13 (리본만 바뀜)</h2><p>PRD 결정대로 리본은 그 탭에 맞는 탭만 보입니다. 배치는 그대로라 다시 고를 필요는 없습니다. 예:</p><ul>{regen}</ul><p><a href="index.html">전체 화면 목록</a></p></section>
+</main>
+<script>
+function fit(){{document.querySelectorAll('.shot').forEach(function(s){{var f=s.querySelector('iframe');if(f)f.style.transform='scale('+(s.clientWidth/1440)+')';}});}}
+window.addEventListener('resize',fit);fit();
+</script></body></html>
+'''
 
 
 if __name__ == '__main__':

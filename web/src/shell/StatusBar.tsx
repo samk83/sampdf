@@ -1,5 +1,6 @@
-import { Globe } from 'lucide-react';
+import { Globe, ShieldCheck } from 'lucide-react';
 import { useApp, type DocTab, type StatusToggleId } from '../app/store';
+import { TARGET } from '../app/target';
 import { useT, type MessageKey } from '../i18n';
 import { toggleAid } from '../commands/builtins';
 import { runCommand } from '../commands/runner';
@@ -46,7 +47,9 @@ export function StatusBar({ tab }: { tab: DocTab }) {
       )}
       <span className="ml-auto flex items-center gap-4">
         {extra.map((x) => <span key={x}>{x}</span>)}
-        <span title={t('status.server')}>{window.location.host}</span>
+        {TARGET === 'web'
+          ? <span className="flex items-center gap-1"><ShieldCheck className="h-3 w-3" aria-hidden />{t('status.webNote')}</span>
+          : <span title={t('status.server')}>{window.location.host}</span>}
         <span className="flex items-center gap-1" title={t('status.language')}>
           <Globe className="h-3 w-3" aria-hidden />
           {language.toUpperCase()}
