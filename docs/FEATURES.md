@@ -135,6 +135,8 @@
 | 비교 실행·결과 보관 (제목란 무시, 두 문서 잠금 순서) | `Services/CompareStore.cs` | `DocumentComparer` | `Endpoints` |
 | API: `/api/files`(올리기·정보·닫기), `/files/{id}/pages/{n}.png`, `/compare`, `/compare/{id}/pages/{i}/removed.png`, `/overlay.png`(색 구분 겹쳐 보기), `/compare/{id}/export`(번호·수정·글자 Cloud 반영) | `Api/Endpoints.cs` | `PageComparer.RenderRemovedLayer`, `RevisionMarks.Apply` | 웹 화면 `api.ts` |
 | 화면으로 보내는 자료 모양 | `Api/Dtos.cs` | — | `Endpoints`, 테스트 |
+| 웹 모드 (`Hosting__Mode=Web`: 0.0.0.0:`PORT`, 접속자 쿠키 `sdt_owner`로 파일·비교 나누기, 30분 안 쓰면 삭제, 동시 비교 2개, 업로드 100MB·전체 1.5GB(가득 차면 503), 보안 머리글, `/api/health`) | `Services/Hosting.cs`, `Program.cs` | `DocumentStore`·`CompareStore`의 owner | Docker 이미지 |
+| Docker 이미지 (웹 빌드 + 서버 + OpenCV 시스템 부품, 일반 사용자로 실행) | `Dockerfile`, `.dockerignore` | `npm run build:web` | 호스팅 (W0) |
 
 ## 웹 화면 (`web/src`)
 

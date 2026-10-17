@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { File as FileIcon, GitCompare, House, Image, Search, SearchX, Settings, Upload, Wrench, type LucideIcon } from 'lucide-react';
+import { File as FileIcon, GitCompare, House, Image, Search, SearchX, Settings, ShieldCheck, Upload, Wrench, type LucideIcon } from 'lucide-react';
 import { compareTitle, routeDrop } from '../app/dropRouting';
 import { useApp } from '../app/store';
 import { TARGET } from '../app/target';
@@ -78,6 +78,13 @@ export function HomeScreen({ active }: { active: boolean }) {
           </div>
           <span className="text-xs text-fg-faint">{t(TARGET === 'web' ? 'home.web' : 'home.local')}</span>
         </div>
+
+        {TARGET === 'web' && (
+          <p className="m-0 flex items-start gap-2 rounded-md border border-default bg-surface px-3 py-2 text-sm text-fg-secondary">
+            <ShieldCheck className="mt-0.5 h-icon w-icon flex-none text-accent" aria-hidden />
+            {t('home.privacy')}
+          </p>
+        )}
 
         <ToolLauncher />
 

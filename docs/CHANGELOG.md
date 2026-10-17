@@ -2,6 +2,18 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-17 — 개발 W0: 웹 기반 (돈이 안 드는 부분)
+
+**무엇을**: 서버에 **웹 모드**(`Hosting__Mode=Web`) 추가. PC 모드(127.0.0.1:5180)는 그대로. 웹 모드: 0.0.0.0:`PORT`(기본 8080)에서 듣고 브라우저를 안 띄움. 접속자마다 이름 없는 쿠키(`sdt_owner`, HttpOnly·SameSite=Lax·https면 Secure, 브라우저를 닫을 때까지)로 **파일·비교를 그 사람 것만** 보이게(다른 사람이면 404). **30분 안 쓰면 파일·비교 자동 삭제**(`ExpirySweeper`, 1분마다). 동시 비교 2개 제한. 사람마다 파일 24개(넘으면 그 사람 것 중 오래된 것부터 닫음), 서버 전체 200개·1.5GB(넘으면 새 파일을 503으로 거절, 남의 파일은 안 닫음), 파일 하나 100MB(웹 모드), 비교 결과 전체 200개. 비교 결과를 보고 있으면 두 파일도 지워지지 않음. 작업 중 파일이 닫히면 404(멈추지 않음). 보안 머리글(nosniff·X-Frame-Options DENY·Referrer-Policy·CSP frame-ancestors). `GET /api/health`. 내보낸 PDF의 작성자 = "Sam Drawing Tools"(서버 사용자 이름 안 나감). **Docker 이미지**(`Dockerfile`, `.dockerignore`): 웹 화면 웹 빌드 → .NET publish → 실행 이미지(OpenCV용 시스템 부품, 관리자 아닌 사용자, 빠진 부품이 있으면 빌드 실패). 웹 빌드 시작 화면에 **개인정보 안내** 한 줄(en·ko). 프로젝트 파일 `w0/hosting-cost.md`(호스팅 비용 비교), `w0/artifex-license-email.md`(MuPDF 문의 메일 초안).
+
+**왜**: Owner "W0진행". 돈이 드는 것(서버 가입·배포·로그인·결제)은 승인 전이라 하지 않음.
+
+**리뷰어 지적 반영**: 지운 파일을 기다리던 요청이 영원히 멈추고 비교 자리를 차지하던 문제(막는 문제, 닫힘 표시 + 잠금 돌려주기 + 요청 취소 전달), "메모리에만" 안내가 사실과 다름(업로드·내보내기 임시 파일 → 문구 고침), SameSite=Strict면 다른 사이트 링크로 오면 파일을 잃음(→ Lax), 서버 메모리 한도 없음(→ 바이트·개수 한도, 웹 업로드 100MB), 닫힌 파일의 비교가 500(→ 404), 비교 목록만 보면 30분 뒤 파일이 지워짐, 쿠키 1일 만료, Docker 부품 검사가 빈 목록이면 통과, PORT 숫자 검사. 반영 안 함: HSTS·전체 CSP(호스팅의 https 설정 때), 믿을 수 있는 프록시 설정(배포 때).
+
+**확인**: `dotnet test` 296개 통과(새 웹 모드 테스트 15개: 닫힌 파일 기다림이 멈추지 않음, 서버 가득 차면 거절, 닫힌 파일 비교 404, 비교 보면 파일 유지, 다른 사람 파일·페이지·비교·내보내기·닫기 404, 쿠키·보안 머리글, 가짜 쿠키 교체, 30분 지나면 삭제, 사람별 개수 제한). `npm test` 133개 통과, `npm run build:web` 통과. Docker 이미지를 실제로 띄워 시험: 처음엔 비교가 500 오류(`libatomic.so.1` 없음) → 이미지에 추가하고 빌드 때 검사하도록 고침. 그 뒤 API로 올리기 → 비교(변경 4개) → 겹쳐 보기 그림 → PDF 내보내기 성공, 다른 쿠키는 404. 헤드리스 Chromium으로 웹 화면에서 개인정보 안내 보임, Drawing Compare 열기 → 파일 두 개 고르기 → "4 changes", 콘솔 오류 0.
+
+**못 한 것**: 인터넷 서버 배포(비용, Owner 승인 필요). 로그인·Free/Pro·결제(계정 필요, 다음 단계). MuPDF 라이선스(Owner가 문의 메일 보냄). 실제 클라우드(Fly.io)의 60초 무응답 끊김 규칙에서 큰 도면 비교 시간 확인.
+
 ## 2026-10-17 — 개발 P0: 플레이그라운드 (기능 24개 자리)
 
 **무엇을**: 설계서 11장(v1.1). 기능 등록표 `apps/registry.ts`(PRD 24개, 갈래 3개 × 8, 상태 Ready/Experimental/Coming soon, 화면 종류, 여는 명령, 계획 단계). 시작 화면의 큰 카드 3개 → **기능 카드 격자**(검색 칸: 이름·설명·명령, 한국어 화면에서 영어로도 찾음 / 갈래 고르기 All·Drawing & CAD·PDF Essentials·Image & Conversion / 도구 수). Ready 카드 2개(Drawing Compare = `CMP`, Remove Background = `PNG`)는 그 기능을 열고, 준비 중 카드 22개는 **기능 안내 탭**(새 탭 종류 `app`: 설명·사용 흐름·계획 단계·Back to Home, 같은 기능은 탭 하나). 리본은 **탭 종류에 맞는 리본 탭만**(Compare: Home·Compare·Markup·Draw·View / Drawing: Home·Markup·Draw·View·Tools / PNG: Home·Tools / Home·안내 탭: 리본 없음), 그 탭에서 못 쓰는 명령의 버튼은 흐리게, Home 리본에 Command list(`?`) 추가. PC/웹 빌드 표시 `VITE_TARGET` + `npm run build:web`(→ `web-dist/`). 새 글자는 영어·한국어 함께. `Badge`에 `outline` 모양 추가. 쓰지 않게 된 `home.card.*` 글자·`RIBBON_TABS` 지움.

@@ -779,7 +779,7 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | 순서 | 단위 | 완료 기준 (C1~C7 외) |
 |---|---|---|
 | 1 | **P0 플레이그라운드**: 기능 등록표 24개, 시작 화면 런처(검색·갈래·카드), 기능 안내 탭, 탭에 맞는 리본 탭만, PC/웹 빌드 표시(`VITE_TARGET`) | 카드 24개 모두 보이고 Ready는 열리고 Coming soon은 안내 탭. 검색으로 거르기. 1440·1280 캡처 |
-| 2 | **W0 웹 기반** (한 번만): 인터넷 서버, 파일 처리 후 자동 삭제, 로그인·Free/Pro, 개인정보 안내, MuPDF 라이선스 결정 | 비용 발생 → Owner 승인 후 시작 |
+| 2 | **W0 웹 기반** (한 번만): 인터넷 서버, 파일 처리 후 자동 삭제, 로그인·Free/Pro, 개인정보 안내, MuPDF 라이선스 결정 | 비용 발생 → Owner 승인 후 시작. **2026-10-17 돈 안 드는 부분 완료**: 웹 모드(접속자별 파일 나누기·30분 삭제)·Docker 이미지·개인정보 안내. 남은 것: 배포, 로그인·Free/Pro, MuPDF 라이선스 |
 | 3~ | **기능 반복**: 기능 하나 완성 → 웹 출시 → PC 버전에 넣기. 순서: Drawing Compare → 페이지 도구(Merge·Split·Reorder·Crop & Rotate·PDF↔Image·Extract Images·Watermark) → DWG/DXF 빠른 보기 → 도면 전문(Viewer·Markup·Revision Cloud·Stamp·Measurement·Alignment·Overlay, 9-2 U5~U10 내용) → 고급 PDF(Compress·OCR·Remove Background 자동·Signature·Batch·Editor) → Redaction(자동 검증 통과 후) | 기능마다 정함 |
 
 U11(한국어)·U12(점검)는 기능마다 같이 한다(새 글자는 en·ko 함께, 출시 전 ship-check).

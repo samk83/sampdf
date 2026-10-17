@@ -7,6 +7,7 @@
 > **2026-10-16 갱신 — U2 완료** (명령 시스템, 리뷰어 지적 반영까지, 브랜치 `claude/project-thread-5mv5zs`, `docs/CHANGELOG.md` 맨 위). 다음은 **U3 비교 탭 옮기기**. Owner Windows 확인 요청: 새 화면 실행, `#keytest` 키 시험, 한글 상태로 명령 치기, Ctrl+9.
 > **2026-10-16 갱신 — U3 완료** (비교 탭 새 화면, 리뷰어 지적 반영, `docs/CHANGELOG.md` 맨 위). 다음은 **U4 투명 PNG 탭 옮기기**. Owner Windows 확인 요청: 실제 PDF 두 장으로 비교(나란히·겹쳐 보기·NEXT·REVIEWED·Delete·Ctrl+Z·Export PDF·List CSV).
 > **2026-10-17 갱신 — PRD 반영 회의 결정** (`docs/DECISIONS.md` 2026-10-17, 설계서 11장). U4 대신 **P0 플레이그라운드** 진행 → **P0 완료** (브랜치 `claude/project-thread-sg2445`, CHANGELOG 맨 위). 다음은 W0 웹 기반(서버 비용 → Owner 승인) 또는 Drawing Compare 웹 출시 준비.
+> **2026-10-17 갱신 — W0 돈 안 드는 부분 완료** (웹 모드·Docker 이미지·개인정보 안내, CHANGELOG 맨 위). Owner 답 기다림: 호스팅 비용 승인(추천 Fly.io 도쿄, 프로젝트 파일 `w0/hosting-cost.md`), MuPDF 문의 메일 보내기(`w0/artifex-license-email.md`). 승인 나면 Fly.io 배포 → Drawing Compare 웹 출시.
 > **온라인 미리보기**: https://claude.ai/artifact/NZfSGkzc8ZF8jHTogVjHWv (Owner 비공개). 개발 단위가 끝날 때마다 같은 링크로 갱신: `cd web && VITE_PREVIEW=1 npm run build:preview` → `preview-dist/`를 아티팩트로 올림(같은 URL을 `url`로). 비교는 서버가 없어 안 됨.
 > 위험 시험 R1은 Owner의 실제 CAD PDF 1~2장이 필요하다. 아래 "시작 프롬프트"와 "설계에서 정할 것"은 설계 시작 때의 기록이다.
 

@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/TestResults/
+.git/
+.vs/
+preview-dist/
+web-dist/
+validation/output/
+src/DrawingReview.Web/wwwroot/

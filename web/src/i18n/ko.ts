@@ -20,6 +20,7 @@ export const ko: Partial<Messages> = {
   'home.category.pdf': 'PDF 기본',
   'home.category.image': '이미지·변환',
   'home.web': '웹 버전',
+  'home.privacy': '올린 파일은 도구를 실행하는 데만 서버에서 처리하고 공유하지 않습니다. 처리 중 생긴 임시 사본은 바로 지우고, 열어 둔 파일은 30분 동안 쓰지 않으면 지웁니다.',
   'apps.status.ready': '사용 가능',
   'apps.status.experimental': '실험 중',
   'apps.status.soon': '준비 중',
