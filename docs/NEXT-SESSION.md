@@ -40,7 +40,7 @@ samk83/sampdf 저장소의 claude/project-thread-5mv5zs 브랜치에서 이어�
 ```
 
 ## 지금 상태 (2026-10-16)
-- **엔진(C#)**: PDF 열기·그리기(PDFium), 주석·저장(PDFsharp 6.2.4 + 자체 작성기, 증분 저장), 비교(OpenCvSharp, 글자/그림 구분), 구름·△·하이라이트를 PDF 주석으로 저장. 테스트 .NET 294개 Linux 통과. Windows 재확인 필요.
+- **엔진(C#)**: PDF 열기·그리기(PDFium), 주석·저장(PDFsharp 6.2.4 + 자체 작성기, 증분 저장), 비교(OpenCvSharp, 글자/그림 구분), 구름·△·하이라이트를 PDF 주석으로 저장. 테스트 .NET 298개 Linux 통과. Windows 재확인 필요.
 - **웹앱(첫 버전)**: ASP.NET Core 서버(127.0.0.1:5180) + React 화면. 비교(나란히·겹쳐 보기·같이 이동·표시 수정·PDF 내려받기)와 투명 PNG가 동작. Owner가 Windows에서 실행 확인(최근 피드백 반영분은 Windows 재확인 전). 화면은 **확정 전 디자인**이라 다시 맞춰야 한다.
 - **데스크톱(WPF)**: 마크업 작업 공간이 있으나 유지만 한다. 새 개발은 웹.
 - **시안 확정**: A 배치 + 포커스 모드(F11) + S1 Slate 스킨, 영어 기본. `design/screens/index.html`.

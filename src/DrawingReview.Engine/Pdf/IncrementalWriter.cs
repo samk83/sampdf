@@ -13,10 +13,26 @@ namespace DrawingReview.Engine.Pdf;
 /// </summary>
 internal static partial class IncrementalWriter
 {
+    /// <summary>
+    /// 원본이 xref 스트림을 쓰면 PDFsharp는 그 스트림 객체 번호를 표에서 빼 버려서, 새 객체가 같은 번호를 받을 수 있다.
+    /// 그러면 다시 열 때 PDFsharp가 새 객체도 xref 스트림으로 보고 버린다. 번호가 /Size 이상부터 나오도록 빈 자리를 채워 둔다.
+    /// </summary>
+    public static void ReserveObjectNumbers(PdfDocument doc, byte[] original)
+    {
+        var (_, usesXrefStream, size, _) = ReadTrailer(original);
+        if (!usesXrefStream) return;
+        PdfDictionary placeholder;
+        do
+        {
+            placeholder = new PdfDictionary(doc); // 참조하지도, 파일에 쓰지도 않는 빈 자리
+            doc.Internals.AddObject(placeholder);
+        } while (PdfInternals.GetObjectNumber(placeholder) < size - 1);
+    }
+
     public static byte[] Append(byte[] original, PdfDocument doc, IReadOnlyCollection<PdfObject> changed)
     {
         if (changed.Count == 0) return original;
-        var (prevOffset, usesXrefStream, originalSize) = ReadTrailer(original);
+        var (prevOffset, usesXrefStream, originalSize, info) = ReadTrailer(original);
 
         using var ms = new MemoryStream(original.Length + 4096);
         ms.Write(original);
@@ -32,7 +48,7 @@ internal static partial class IncrementalWriter
         }
 
         var catalog = PdfInternals.GetObjectNumber(doc.Internals.Catalog);
-        var info = doc.Info.Reference != null ? PdfInternals.GetObjectNumber(doc.Info) : 0;
+        // /Info는 원본 트레일러 값을 그대로 잇는다. doc.Info를 읽으면 PDFsharp가 없는 Info를 새로 만들어 버려(파일에 없는 객체) 쓰지 않는다.
         var size = Math.Max(originalSize, entries.Keys.Max() + 1);
         var xrefOffset = ms.Position;
 
@@ -132,8 +148,8 @@ internal static partial class IncrementalWriter
     /// <summary>PDFsharp는 /ID 바이트를 글자 하나 = 바이트 하나인 문자열로 들고 있다.</summary>
     private static string Hex(string raw) => string.Concat(raw.Select(ch => ((int)ch & 0xFF).ToString("X2")));
 
-    /// <summary>원본의 마지막 startxref 위치, xref 종류(표/스트림), 트레일러의 /Size.</summary>
-    private static (long PrevOffset, bool UsesXrefStream, int Size) ReadTrailer(byte[] pdf)
+    /// <summary>원본의 마지막 startxref 위치, xref 종류(표/스트림), 트레일러의 /Size와 /Info 객체 번호(없으면 0).</summary>
+    private static (long PrevOffset, bool UsesXrefStream, int Size, int Info) ReadTrailer(byte[] pdf)
     {
         var tailStart = Math.Max(0, pdf.Length - 2048);
         var tail = Encoding.Latin1.GetString(pdf, tailStart, pdf.Length - tailStart);
@@ -153,11 +169,19 @@ internal static partial class IncrementalWriter
         // xref 표면 "xref" 키워드로 시작하고, 아니면 "n g obj << /Type /XRef … >>" 스트림이다
         var head = Encoding.Latin1.GetString(pdf, (int)offset, Math.Min(4096, pdf.Length - (int)offset));
         var usesStream = !head.TrimStart().StartsWith("xref", StringComparison.Ordinal);
-        var size = 0;
-        var region = usesStream ? head : Encoding.Latin1.GetString(pdf, (int)offset, Math.Min(pdf.Length - (int)offset, 1 << 20));
-        var sizeMatch = usesStream ? SizeKey().Match(region) : (region.IndexOf("trailer", StringComparison.Ordinal) is var t and >= 0 ? SizeKey().Match(region, t) : Match.Empty);
-        if (sizeMatch.Success) size = int.Parse(sizeMatch.Groups[1].Value, CultureInfo.InvariantCulture);
-        return (offset, usesStream, size);
+        string region;
+        if (usesStream) region = head;
+        else
+        {
+            // 표 뒤의 "trailer" 사전: 표가 아무리 커도 바이트로 찾아 그 부분만 읽는다
+            var t = pdf.AsSpan((int)offset).IndexOf("trailer"u8);
+            if (t < 0) throw new InvalidDataException("The PDF xref table has no trailer.");
+            var start = (int)offset + t;
+            region = Encoding.Latin1.GetString(pdf, start, Math.Min(4096, pdf.Length - start));
+        }
+        var size = SizeKey().Match(region) is { Success: true } sm ? int.Parse(sm.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
+        var info = InfoKey().Match(region) is { Success: true } im ? int.Parse(im.Groups[1].Value, CultureInfo.InvariantCulture) : 0;
+        return (offset, usesStream, size, info);
     }
 
     private static string Inv(FormattableString s) => s.ToString(CultureInfo.InvariantCulture);
@@ -167,4 +191,7 @@ internal static partial class IncrementalWriter
 
     [GeneratedRegex(@"/Size\s+(\d+)")]
     private static partial Regex SizeKey();
+
+    [GeneratedRegex(@"/Info\s+(\d+)\s+\d+\s+R")]
+    private static partial Regex InfoKey();
 }

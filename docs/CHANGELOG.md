@@ -10,7 +10,9 @@
 
 **확인**: Linux .NET 테스트 **294개 통과**(엔진 125·App.Core 94·비교 31·CAD 29·웹 15; 새 엔진 테스트 6개 포함: 증분 저장이 원본 바이트 보존, 편집·그리기·저장 반복, 암호 문서 편집 후 같은 암호로 열림, PNG·JPEG 96dpi, 세로 글자, ID 유지·잠금). 미리보기 그림으로 구름·지시선·한글 글상자·화살표·타원·펜·하이라이트 모양 확인. 속도(EngineSpike, Linux): plan-set 화면 맞춤 그리기 23ms, dense-vector 218ms(MuPDF 때 약 300ms). **Windows 실행은 Owner 확인 필요** (pdfium.dll은 `runtimes/win-x64`에서 자동 복사됨).
 
-**못 한 것 / 참고**: Acrobat·Bluebeam에서 새 외형 표시 확인은 Owner. 소유자 암호만 걸린(사용자 암호 없는) PDF는 편집 후 저장하면 암호가 풀린 채 저장된다(열 때 암호를 몰라 다시 걸 수 없음). `w0/artifex-license-email.md`는 더 이상 필요 없음.
+**리뷰어 지적 반영**: 소유자 암호만 걸린 PDF도 저장할 때 다시 잠근다(사용자 암호 없음·임의 소유자 암호, 권한은 기본값). 증분 저장 실패 시 바뀐 객체를 잊지 않음. 트레일러 /Info를 원본에서 이어 씀(PDFsharp가 없는 Info를 만들어 붙이던 문제). xref 스트림 원본에서 새 객체 번호가 옛 xref 스트림 번호와 겹치지 않게 예약. 큰 xref 표도 /Size를 찾음. 암호를 안 푼 문서 저장(사본 복사) 가능. `PdfiumView` 종료자. Windows에서 linux-x64 publish 시에도 PDFium Linux 바이너리 포함. 테스트 4개 추가(xref 스트림 원본·줄바꿈 없는 원본·/Info 없는 원본·소유자 암호 문서) → **.NET 298개 통과**.
+
+**못 한 것 / 참고**: Acrobat·Bluebeam에서 새 외형 표시 확인은 Owner. `w0/artifex-license-email.md`는 더 이상 필요 없음.
 
 ## 2026-10-17 오픈소스 공개 준비 (→ 같은 날 철회, 위 항목)
 - `LICENSE` 추가 (GNU AGPL-3.0-or-later, MuPDF 조건에 맞춤).

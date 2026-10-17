@@ -284,8 +284,12 @@ internal sealed class PdfiumView : IDisposable
         public void Dispose() => FPDF_ClosePage(handle);
     }
 
+    /// <summary>Dispose를 잊어도 네이티브 문서와 고정한 바이트 배열이 영원히 남지 않도록 한다.</summary>
+    ~PdfiumView() => Dispose();
+
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         lock (PdfiumLibrary.Sync)
         {
             if (_doc != IntPtr.Zero) { FPDF_CloseDocument(_doc); _doc = IntPtr.Zero; }

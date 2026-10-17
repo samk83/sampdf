@@ -18,8 +18,8 @@
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
   </ItemGroup>
 
-  <!-- Windows가 아닌 곳(개발·검증용 Linux)에서 쓰는 네이티브 라이브러리 -->
-  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+  <!-- Linux에서 쓰는 네이티브 라이브러리: Linux에서 빌드하거나(개발·검증·Docker), Windows에서 linux-x64로 publish할 때 -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows')) or $(RuntimeIdentifier.StartsWith('linux'))">
     <PackageReference Include="bblanchon.PDFium.Linux" Version="157.0.8100" />
     <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
   </ItemGroup>

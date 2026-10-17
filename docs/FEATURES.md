@@ -135,7 +135,7 @@
 | 기능 | 담당 파일 | 사용하는 공통 기능 | 주요 호출 위치 |
 |---|---|---|---|
 | 서버 시작 (127.0.0.1:5180, 업로드 300MB, 브라우저 자동 열기 `--no-browser`) | `Program.cs` | — | `run-web.cmd`, `dotnet run` |
-| 올린 파일 보관 (메모리, 최근 24개, 문서별 잠금, 원본 바이트로 사본 열기) | `Services/DocumentStore.cs` | `MuPdfEngine` (그림은 PDF로) | `Endpoints` |
+| 올린 파일 보관 (메모리, 최근 24개, 문서별 잠금, 원본 바이트로 사본 열기) | `Services/DocumentStore.cs` | `PdfiumEngine` (그림은 PDF로) | `Endpoints` |
 | 비교 실행·결과 보관 (제목란 무시, 두 문서 잠금 순서) | `Services/CompareStore.cs` | `DocumentComparer` | `Endpoints` |
 | API: `/api/files`(올리기·정보·닫기), `/files/{id}/pages/{n}.png`, `/compare`, `/compare/{id}/pages/{i}/removed.png`, `/overlay.png`(색 구분 겹쳐 보기), `/compare/{id}/export`(번호·수정·글자 Cloud 반영) | `Api/Endpoints.cs` | `PageComparer.RenderRemovedLayer`, `RevisionMarks.Apply` | 웹 화면 `api.ts` |
 | 화면으로 보내는 자료 모양 | `Api/Dtos.cs` | — | `Endpoints`, 테스트 |

@@ -67,10 +67,16 @@ internal sealed class PdfiumDocument : IPdfDocument
             {
                 // 암호를 푼 바이트로 바꿔 둔다 (PDFium 사본): 이후 편집은 이 바이트에 증분으로 덧붙이고, 저장할 때 다시 암호를 건다.
                 // PDFsharp는 사용자 암호만으로는 편집을 거부하므로(소유자 암호 요구) 평문으로 만든 뒤 연다.
-                _bytes = ReadView.SaveDecryptedCopy();
-                ReopenView();
+                // 모두 성공했을 때만 _bytes·_view·_model을 바꾼다 (중간에 실패하면 원본 바이트 그대로 둔다).
+                var plain = ReadView.SaveDecryptedCopy();
+                var model = OpenModel(plain);
+                ReopenView(plain);
+                _model = model;
             }
-            _model = OpenModel(_bytes);
+            else
+            {
+                _model = OpenModel(_bytes);
+            }
             _editProblem = null;
         }
         catch (Exception ex)
@@ -81,16 +87,22 @@ internal sealed class PdfiumDocument : IPdfDocument
         }
     }
 
-    private static PdfDocument OpenModel(byte[] bytes) => PdfReader.Open(new MemoryStream(bytes), PdfDocumentOpenMode.Modify);
-
-    /// <summary>_bytes로 보기를 다시 연다 (암호를 푼 바이트면 암호 없이 열린다).</summary>
-    private void ReopenView()
+    private static PdfDocument OpenModel(byte[] bytes)
     {
-        var fresh = PdfiumView.Open(_bytes, null, out var needsPassword);
-        if (needsPassword) fresh = PdfiumView.Open(_bytes, _password, out _);
+        var model = PdfReader.Open(new MemoryStream(bytes), PdfDocumentOpenMode.Modify);
+        IncrementalWriter.ReserveObjectNumbers(model, bytes);
+        return model;
+    }
+
+    /// <summary>새 바이트로 보기를 다시 열고, 성공하면 그 바이트를 현재 바이트로 삼는다 (암호를 푼 바이트면 암호 없이 열린다).</summary>
+    private void ReopenView(byte[] bytes)
+    {
+        var fresh = PdfiumView.Open(bytes, null, out var needsPassword);
+        if (needsPassword) fresh = PdfiumView.Open(bytes, _password, out _);
         if (fresh == null) throw new InvalidDataException("The edited PDF could not be reopened.");
         _view?.Dispose();
         _view = fresh;
+        _bytes = bytes;
     }
 
     // ---- 보기 ----
@@ -108,11 +120,20 @@ internal sealed class PdfiumDocument : IPdfDocument
     private void Sync()
     {
         if (!_dirty || _model == null) return;
-        var changed = ChangeTracker.For(_model).Take();
+        var tracker = ChangeTracker.For(_model);
+        var changed = tracker.Take();
         if (changed.Count > 0)
         {
-            _bytes = IncrementalWriter.Append(_bytes, _model, changed);
-            ReopenView();
+            try
+            {
+                ReopenView(IncrementalWriter.Append(_bytes, _model, changed));
+            }
+            catch
+            {
+                // 덧붙이기나 다시 열기에 실패하면 바뀐 객체를 잊지 않도록 되돌려 둔다 (다음 Sync에서 다시 시도)
+                foreach (var obj in changed) tracker.Touch(obj);
+                throw;
+            }
         }
         _dirty = false;
     }
@@ -282,9 +303,13 @@ internal sealed class PdfiumDocument : IPdfDocument
     {
         if (_model == null)
         {
-            // 편집할 수 없는 문서는 읽은 바이트를 그대로 복사한다
+            // 편집할 수 없는 문서는 읽은 바이트를 그대로 복사한다 (암호를 아직 안 푼 문서는 열어서 확인할 수 없으니 길이만 본다)
             var bytes = _bytes;
-            SafeFileSaver.Save(path, temp => File.WriteAllBytes(temp, bytes), temp => Verify(temp, PageCount, null));
+            SafeFileSaver.Save(path, temp => File.WriteAllBytes(temp, bytes), temp =>
+            {
+                if (_needsPassword) { if (new FileInfo(temp).Length != bytes.Length) throw new IOException("Save verification failed: the copy is incomplete."); }
+                else Verify(temp, PageCount, null);
+            });
             return;
         }
         Sync();
@@ -308,7 +333,7 @@ internal sealed class PdfiumDocument : IPdfDocument
     private void WriteBytes(string temp, bool flatten)
     {
         var bytes = _bytes;
-        var reencrypt = _isEncrypted && _password != null;
+        var reencrypt = _isEncrypted;
         if (!flatten && !reencrypt)
         {
             File.WriteAllBytes(temp, bytes);
@@ -318,10 +343,12 @@ internal sealed class PdfiumDocument : IPdfDocument
         if (flatten) Flattener.Flatten(copy);
         if (reencrypt)
         {
-            // 암호가 있던 문서는 입력한 암호로 다시 잠근다 (AES-256)
+            // 암호가 있던 문서는 다시 잠근다 (AES-256). 열 때 쓴 암호가 사용자·소유자 암호가 된다.
+            // 소유자 암호만 있던 문서(암호 없이 열림)는 그 암호를 알 수 없으므로 사용자 암호 없음 + 임의 소유자 암호로 잠근다
+            // (권한 설정은 PDFsharp 기본값이 된다).
             copy.SecurityHandler.SetEncryptionToV5();
-            copy.SecuritySettings.UserPassword = _password!;
-            copy.SecuritySettings.OwnerPassword = _password!;
+            copy.SecuritySettings.UserPassword = _password ?? "";
+            copy.SecuritySettings.OwnerPassword = _password ?? Guid.NewGuid().ToString("N");
         }
         using var fs = File.Create(temp);
         copy.Save(fs, closeStream: false);

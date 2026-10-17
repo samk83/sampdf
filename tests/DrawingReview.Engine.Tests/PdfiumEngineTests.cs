@@ -139,3 +139,125 @@ public class PdfiumEngineTests(PlanSetFixture fixture) : IClassFixture<PlanSetFi
         Assert.True(reopened.GetMarkups(Pages.FloorPlan).Single(m => m.Id == id).IsLocked);
     }
 }
+
+/// <summary>증분 저장이 xref 스트림(PDF 1.5) 원본과 끝에 줄바꿈이 없는 원본에서도 동작하는지.</summary>
+public class IncrementalWriterTests
+{
+    private static readonly PageRect Box = new(100, 100, 300, 200);
+
+    /// <summary>xref 스트림(압축 없음, /W [1 4 2])을 쓰는 가장 작은 한 장짜리 PDF를 손으로 만든다.</summary>
+    private static byte[] XrefStreamPdf(bool trailingNewline)
+    {
+        var objects = new[]
+        {
+            "<< /Type /Catalog /Pages 2 0 R >>",
+            "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+            "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 500 400] /Contents 4 0 R >>",
+            "<< /Length 23 >>\nstream\n0 0 1 RG 10 10 m 490 390 l S\nendstream",
+            "<< /Title (xref stream sample) >>",
+        };
+        var ms = new MemoryStream();
+        void W(string s) => ms.Write(System.Text.Encoding.ASCII.GetBytes(s));
+        W("%PDF-1.5\n%âãÏÓ\n".Replace("âãÏÓ", "")); // 헤더 (이진 표시 줄은 생략)
+        var offsets = new List<long>();
+        for (var i = 0; i < objects.Length; i++)
+        {
+            offsets.Add(ms.Position);
+            W($"{i + 1} 0 obj\n{objects[i]}\nendobj\n");
+        }
+        var xrefNumber = objects.Length + 1;
+        var xrefOffset = ms.Position;
+        var rows = new MemoryStream();
+        void Row(int type, long offset, int gen)
+        {
+            rows.WriteByte((byte)type);
+            rows.WriteByte((byte)(offset >> 24)); rows.WriteByte((byte)(offset >> 16)); rows.WriteByte((byte)(offset >> 8)); rows.WriteByte((byte)offset);
+            rows.WriteByte((byte)(gen >> 8)); rows.WriteByte((byte)gen);
+        }
+        Row(0, 0, 65535);
+        foreach (var o in offsets) Row(1, o, 0);
+        Row(1, xrefOffset, 0);
+        W($"{xrefNumber} 0 obj\n<< /Type /XRef /Size {xrefNumber + 1} /W [1 4 2] /Root 1 0 R /Info 5 0 R /Length {rows.Length} >>\nstream\n");
+        rows.Position = 0; rows.CopyTo(ms);
+        W("\nendstream\nendobj\n");
+        W($"startxref\n{xrefOffset}\n%%EOF");
+        if (trailingNewline) W("\n");
+        return ms.ToArray();
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Xref_stream_original_gets_an_xref_stream_update_that_keeps_info_and_markups(bool trailingNewline)
+    {
+        var original = XrefStreamPdf(trailingNewline);
+        using var dir = new TempDir();
+        var path = dir.File("xs.pdf");
+        File.WriteAllBytes(path, original);
+
+        using (var doc = PdfEngine.Open(path))
+        {
+            Assert.Equal(1, doc.PageCount);
+            doc.AddMarkup(0, new RectangleDraft(Box));
+            doc.SaveTo(path);
+        }
+        var saved = File.ReadAllBytes(path);
+        Assert.True(saved.AsSpan(0, original.Length).SequenceEqual(original));
+        var tail = System.Text.Encoding.Latin1.GetString(saved, original.Length, saved.Length - original.Length);
+        Assert.Contains("/Type /XRef", tail);                 // 같은 종류(xref 스트림)로 덧붙였다
+        Assert.DoesNotContain("\ntrailer", tail);
+        Assert.Contains("/Info 5 0 R", tail);                 // 원본 트레일러의 /Info를 잇는다
+        Assert.Matches(@"/Prev \d+", tail);
+
+        using var reopened = PdfEngine.Open(path);
+        Assert.Contains(reopened.GetMarkups(0), m => m.Kind == MarkupKind.Rectangle);
+        // 두 번째 증분도 쌓인다
+        reopened.AddMarkup(0, new EllipseDraft(Box));
+        var second = dir.File("xs2.pdf");
+        reopened.SaveTo(second);
+        using var third = PdfEngine.Open(second);
+        Assert.Equal(2, third.GetMarkups(0).Count);
+    }
+
+    [Fact]
+    public void Table_original_without_info_does_not_invent_an_info_object()
+    {
+        using var dir = new TempDir();
+        using var doc = new PdfSharp.Pdf.PdfDocument();
+        var page = PdfSketch.NewPage(doc, 400, 300);
+        var bytes = PdfTools.ToBytes(doc);
+        var path = dir.File("plain.pdf");
+        File.WriteAllBytes(path, bytes);
+        using (var opened = PdfEngine.Open(path))
+        {
+            opened.AddMarkup(0, new RectangleDraft(Box));
+            opened.SaveTo(path);
+        }
+        var saved = File.ReadAllBytes(path);
+        var tail = System.Text.Encoding.Latin1.GetString(saved, bytes.Length, saved.Length - bytes.Length);
+        var originalHasInfo = System.Text.Encoding.Latin1.GetString(bytes).Contains("/Info ");
+        Assert.Equal(originalHasInfo, tail.Contains("/Info "));
+        using var reopened = PdfEngine.Open(path);
+        Assert.Single(reopened.GetMarkups(0));
+    }
+
+    [Fact]
+    public void Owner_password_only_document_stays_encrypted_after_save()
+    {
+        using var dir = new TempDir();
+        var fixture = new PlanSetFixture();
+        var path = dir.File("owner.pdf");
+        PdfTools.SaveEncrypted(fixture.PlanSet, path, ownerPassword: "owner", userPassword: "");
+        using (var doc = PdfEngine.Open(path))
+        {
+            Assert.False(doc.Security.NeedsPassword);
+            Assert.True(doc.Security.IsEncrypted);
+            doc.AddMarkup(Pages.FloorPlan, new RectangleDraft(Box));
+            doc.SaveTo(path);
+        }
+        using var reopened = PdfEngine.Open(path);
+        Assert.True(reopened.Security.IsEncrypted, "the saved file must still be encrypted");
+        Assert.False(reopened.Security.NeedsPassword);
+        Assert.Contains(reopened.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
+    }
+}

@@ -2,7 +2,7 @@
 
 Drawing Difference Checker 기획서 v1.0의 "PDF 비교 엔진부터 검증" 단계 결과다. 화면 없이 숫자로 판정했다.
 
-- 엔진: `src/DrawingReview.Compare` (C#, OpenCvSharp4 4.13 / OpenCV 4.13, MuPDF.NET 렌더링)
+- 엔진: `src/DrawingReview.Compare` (C#, OpenCvSharp4 4.13 / OpenCV 4.13, PDFium 렌더링; 처음 검증 때는 MuPDF.NET)
 - 시험 도면: `tests/DrawingReview.TestData/ComparePairs.cs`가 만드는 가상 도면 쌍 (A3)
 - 테스트: `tests/DrawingReview.Compare.Tests/CompareAcceptanceTests.cs` — **18개 모두 통과** (Linux)
 - 실제 Revit·AutoCAD 출력 도면으로는 아직 시험하지 않았다.
@@ -45,7 +45,7 @@ Drawing Difference Checker 기획서 v1.0의 "PDF 비교 엔진부터 검증" �
 | 흑백 판정 방식은 옅은 회색 점선이 반 픽셀 움직일 때 가짜 변경을 수십 개 만든다 | 밝기 차이(주변 최소값 비교) 방식으로 바꿈 |
 | 작은 글씨(12pt)의 숫자 하나 변경은 픽셀 차이가 12개 정도라 Low가 된다 | PDF 글자 비교로 보강 → High |
 | 회전된 개정본은 페이지가 틀에 맞게 더 축소된다 (0.95배 + 1° → 실제 0.927배) | 엔진은 실제 값을 정확히 찾음 (테스트 기대값 수정) |
-| MuPDF.NET `Shape.DrawCircle`은 앞에 마무리(Finish)한 도형이 있으면 원을 그리지 않는다 | 시험 도면은 `DrawOval` 사용. 앱 코드에서는 이 함수를 쓰지 않는다 |
+| (MuPDF 시절) `Shape.DrawCircle`은 앞에 마무리(Finish)한 도형이 있으면 원을 그리지 않았다 | 시험 도면 생성기는 지금 PDFsharp(`PdfSketch`)로 그린다 |
 | ORB 특징점 매칭은 A3 기준 약 1~1.5초 걸린다 | 같은 크기이고 이미 겹치면 생략. 대형 도면은 MVP에서 진행 표시·취소 제공 |
 
 ## 남은 위험
