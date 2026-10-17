@@ -27,8 +27,12 @@ public static class Endpoints
         // 서버가 살아 있는지 (배포한 곳의 상태 검사용). 파일 내용은 알려 주지 않는다.
         api.MapGet("/health", (HostingOptions hosting) => Results.Ok(new { status = "ok", mode = hosting.Mode.ToString().ToLowerInvariant() }));
 
-        api.MapPost("/files", async (HttpRequest request, DocumentStore store) =>
+        // 이번 달 사용량 (웹 모드 한도). 화면이 "이번 달 무료 사용량 끝"을 미리 알 수 있게.
+        api.MapGet("/usage", (UsageMeter usage) => Results.Ok(usage.Status()));
+
+        api.MapPost("/files", async (HttpRequest request, DocumentStore store, UsageMeter usage) =>
         {
+            if (usage.IsOverLimit) return LimitReached(usage);
             if (!request.HasFormContentType) return Results.BadRequest(Error("Send the file as multipart form data."));
             var form = await request.ReadFormAsync();
             var file = form.Files.GetFile("file");
@@ -67,8 +71,9 @@ public static class Endpoints
             finally { d.Gate.Release(); }
         });
 
-        api.MapPost("/compare", async (CompareRequest req, HttpContext http, DocumentStore docs, CompareStore compares, CancellationToken cancel) =>
+        api.MapPost("/compare", async (CompareRequest req, HttpContext http, DocumentStore docs, CompareStore compares, UsageMeter usage, CancellationToken cancel) =>
         {
+            if (usage.IsOverLimit) return LimitReached(usage);
             var owner = Owners.Of(http);
             if (docs.Get(req.OriginalId, owner) is not { } original || docs.Get(req.RevisionId, owner) is not { } revision)
                 return Results.NotFound(Error("Open both files again."));
@@ -114,8 +119,9 @@ public static class Endpoints
         });
 
         // 표시가 들어간 리비전 PDF. 원본 파일은 그대로 두고, 같은 바이트로 연 사본에 표시를 넣는다.
-        api.MapPost("/compare/{id}/export", async (string id, ExportRequest req, HttpContext http, CompareStore compares, DocumentStore docs, HostingOptions hosting) =>
+        api.MapPost("/compare/{id}/export", async (string id, ExportRequest req, HttpContext http, CompareStore compares, DocumentStore docs, HostingOptions hosting, UsageMeter usage) =>
         {
+            if (usage.IsOverLimit) return LimitReached(usage);
             if (compares.Get(id, Owners.Of(http)) is not { } s) return Results.NotFound(Error("The comparison is no longer available. Compare again."));
             if (compares.Revision(s) is not { } revision) return Results.NotFound(Error(FilesGone));
             var excluded = new HashSet<string>(req.Excluded ?? []);
@@ -156,6 +162,9 @@ public static class Endpoints
     }
 
     public static object Error(string message) => new { error = message };
+
+    /// <summary>월 사용량 한도에 닿음 → 429 (원인과 다시 되는 날짜를 알려 줌).</summary>
+    private static IResult LimitReached(UsageMeter usage) => Results.Json(Error(usage.LimitMessage()), statusCode: StatusCodes.Status429TooManyRequests);
 
     private const string FilesGone = "The compared files are no longer open. Open them and compare again.";
 }

@@ -141,6 +141,7 @@
 | 화면으로 보내는 자료 모양 | `Api/Dtos.cs` | — | `Endpoints`, 테스트 |
 | 웹 모드 (`Hosting__Mode=Web`: 0.0.0.0:`PORT`, 접속자 쿠키 `sdt_owner`로 파일·비교 나누기, 30분 안 쓰면 삭제, 동시 비교 2개, 업로드 100MB·전체 1.5GB(가득 차면 503), 보안 머리글, `/api/health`) | `Services/Hosting.cs`, `Program.cs` | `DocumentStore`·`CompareStore`의 owner | Docker 이미지 |
 | Docker 이미지 (웹 빌드 + 서버 + OpenCV 시스템 부품, 일반 사용자로 실행) | `Dockerfile`, `.dockerignore` | `npm run build:web` | 호스팅 (W0) |
+| 월 사용량 한도 (웹 모드: 요청 처리 중인 시간을 달마다 세고, `Hosting__MonthlyLimitHours`(기본 20시간) 넘으면 올리기·비교·내려받기 429, 1.2배면 /api 전체 429, `Hosting__UsageFile`에 저장·못 읽으면 막음, `/api/usage`) | `Services/UsageMeter.cs`, `Program.cs`, `Api/Endpoints.cs` | `HostingOptions` | 무료 호스팅 운영 |
 
 ## 웹 화면 (`web/src`)
 

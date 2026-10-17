@@ -4,7 +4,8 @@ namespace DrawingReview.Web.Services;
 public enum HostingMode { Pc, Web }
 
 /// <summary>
-/// 실행 방식 설정. appsettings 또는 환경 변수 `Hosting__Mode=Web`, `Hosting__IdleMinutes=30`, `Hosting__MaxConcurrentCompares=2`.
+/// 실행 방식 설정. appsettings 또는 환경 변수 `Hosting__Mode=Web`, `Hosting__IdleMinutes=30`, `Hosting__MaxConcurrentCompares=2`,
+/// `Hosting__MonthlyLimitHours=20`, `Hosting__UsageFile=/data/usage.json`.
 /// 웹 모드에서는 사용자마다 파일을 나누고, 오래 안 쓴 파일은 지우고, 동시에 도는 비교 수를 제한한다.
 /// </summary>
 public sealed class HostingOptions
@@ -22,6 +23,15 @@ public sealed class HostingOptions
 
     /// <summary>웹 모드: 서버 전체에 열어 둘 파일 크기 합 (MB). 넘으면 새 파일을 잠시 받지 않는다.</summary>
     public int MaxTotalMb { get; set; } = 1536;
+
+    /// <summary>
+    /// 웹 모드: 한 달에 서버가 바쁘게 일해도 되는 시간 (시간). 넘으면 새 파일 올리기와 비교를 막는다 (UsageMeter). 0 = 제한 없음.
+    /// 기본 20시간 = Cloud Run 무료 분량(2 vCPU·4 GB로 약 25시간)의 80%. 남는 20%는 화면 파일·서버 켜는 시간 몫.
+    /// </summary>
+    public double MonthlyLimitHours { get; set; } = 20;
+
+    /// <summary>웹 모드: 사용량을 저장할 파일 (예: /data/usage.json). 비우면 서버가 다시 켜질 때마다 0부터 센다.</summary>
+    public string? UsageFile { get; set; }
 
     public bool IsWeb => Mode == HostingMode.Web;
     public TimeSpan IdleExpiry => TimeSpan.FromMinutes(Math.Max(1, IdleMinutes));

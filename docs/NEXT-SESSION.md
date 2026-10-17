@@ -9,6 +9,7 @@
 > **2026-10-17 갱신 — PRD 반영 회의 결정** (`docs/DECISIONS.md` 2026-10-17, 설계서 11장). U4 대신 **P0 플레이그라운드** 진행 → **P0 완료** (브랜치 `claude/project-thread-sg2445`, CHANGELOG 맨 위). 다음은 W0 웹 기반(서버 비용 → Owner 승인) 또는 Drawing Compare 웹 출시 준비.
 > **2026-10-17 갱신 — 엔진 교체 완료**: MuPDF.NET(AGPL) → PDFium + PDFsharp 6.2.4 + 자체 주석 작성기 (CHANGELOG 맨 위, DECISIONS). 저장소 비공개 유지, 오픈소스 공개 철회. Windows 확인 완료(Owner: 테스트 통과·웹 동작). 남은 확인: Acrobat/Bluebeam으로 `validation/output/markup-roundtrip.pdf` 열어 보기. 다음은 호스팅 승인 후 웹 출시.
 > **2026-10-17 갱신 — W0 돈 안 드는 부분 완료** (웹 모드·Docker 이미지·개인정보 안내, CHANGELOG 맨 위). Owner 답 기다림: 호스팅 비용 승인(추천 Fly.io 도쿄, 프로젝트 파일 `w0/hosting-cost.md`) (MuPDF 문의 메일은 엔진 교체로 불필요). 승인 나면 Fly.io 배포 → Drawing Compare 웹 출시.
+> **2026-10-17 갱신 — 월 사용량 한도 완료** (CHANGELOG 맨 위, 브랜치 `claude/project-thread-xyshvf`). 호스팅 추천을 **Google Cloud Run 토론토**(무료 분량 안에서 $0)로 바꿈, 비교표 `w0/hosting-cost.md`. 배포는 **시안 재점검 후 Owner "배포해"를 기다림**. 배포 때 할 것: 최대 서버 1대, Cloud Storage 버킷을 `/data`에 연결 + `Hosting__UsageFile=/data/usage.json`, Kestrel HTTP/2(h2c)로 32MB 업로드 제한 풀기, 예산 $5 알림 + 넘으면 서버 끄기.
 > **온라인 미리보기**: https://claude.ai/artifact/NZfSGkzc8ZF8jHTogVjHWv (Owner 비공개). 개발 단위가 끝날 때마다 같은 링크로 갱신: `cd web && VITE_PREVIEW=1 npm run build:preview` → `preview-dist/`를 아티팩트로 올림(같은 URL을 `url`로). 비교는 서버가 없어 안 됨.
 > 위험 시험 R1은 Owner의 실제 CAD PDF 1~2장이 필요하다. 아래 "시작 프롬프트"와 "설계에서 정할 것"은 설계 시작 때의 기록이다.
 
