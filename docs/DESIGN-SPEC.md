@@ -3,7 +3,7 @@
 > 3단계 "설계" 결과 문서. 확정 시안(`design/screens/`, `design/brand.md`, `design/tokens.css`)을 실제로 만들 수 있게
 > 화면 구조·부품·데이터·명령·서버 연결·개발 순서를 정한다. Owner 승인 후 4단계 개발로 넘어간다.
 >
-> 상태: **v1.0 승인됨 (2026-10-16, Owner "설계승인").** 🟡 항목은 추천안대로 확정되었고 `docs/DECISIONS.md`에 옮겼다. 바꿀 때는 회의 후 이 문서와 DECISIONS를 함께 고친다. 🟡 표시는 Owner 답이 없어 Claude 추천안으로 적은 것 (부록 A~C).
+> 상태: **v1.0 승인됨 (2026-10-16, Owner "설계승인").** **v1.1 (2026-10-17): PRD 반영 회의 결과 11장 추가, 2-1 리본 규칙·9장 순서 변경.** 🟡 항목은 추천안대로 확정되었고 `docs/DECISIONS.md`에 옮겼다. 바꿀 때는 회의 후 이 문서와 DECISIONS를 함께 고친다. 🟡 표시는 Owner 답이 없어 Claude 추천안으로 적은 것 (부록 A~C).
 > 근거 브리핑: 프로젝트 파일 `design-phase/설계-브리핑.md`
 
 ## 결정 표시 읽는 법
@@ -93,7 +93,7 @@
 - `●` = 저장 안 된 변경 있음. 닫을 때 저장 여부를 묻는다.
 - 같은 파일을 두 번 열면 새 탭 대신 이미 열린 탭으로 간다.
 - 탭 전환은 즉시(애니메이션 없음, brand.md). 탭을 바꿔도 각 탭의 확대·선택·명령 기록은 그대로 남는다.
-- 리본 탭 6개(Home·Compare·Markup·Draw·View·Tools)는 **어느 문서 탭에서나 보이고**, 그 탭에서 쓸 수 없는 버튼은 흐리게 (예: Drawing 탭에서 Compare 리본의 Swap).
+- ~~리본 탭 6개는 어느 문서 탭에서나 보이고~~ → **2026-10-17 변경: 그 탭에 맞는 리본 탭만 보인다** (11-3 표). 보이는 리본 탭 안에서 지금 쓸 수 없는 버튼은 계속 흐리게.
 - 포커스 모드(F11)는 탭이 아니라 **지금 탭의 보기 상태**. Drawing·Compare 탭에서만 켜진다 (Home·PNG에서는 F11이 아무것도 안 함 + 명령창 안내).
 
 ### 2-2. 영역 배치 (brand.md 화면 뼈대 그대로)
@@ -715,6 +715,10 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 
 ---
 
+> **2026-10-17 변경**: 9-2의 U4~U12는 11-4의 "기능 반복" 안에서 기능 단위로 다시 나눈다. 다음 단위는 **P0 플레이그라운드** → **W0 웹 기반** → 첫 기능 반복(Drawing Compare 웹 출시).
+
+---
+
 ## 10. 위험 시험 계획
 
 | # | 위험 | 시험 방법 | 통과 기준 | 실패하면 | 언제 · 누가 |
@@ -728,6 +732,57 @@ design.md 6장 목록을 이 앱에 맞게 고른 것. 모든 부품은 Hover·F
 | **R7** | 브라우저가 가져가는 키 (F11·F1·F3·F7·Ctrl+0) | Chrome·Edge(Windows)에서 각 키를 눌러 앱이 받는지 확인 | 받으면 그대로, 못 받으면 2-5 규칙대로 다른 키 | 2-5의 대체 키 사용 | U1 · Claude(Linux 크롬) + Owner(Windows) |
 
 **Owner에게 필요한 것**: 실제 CAD에서 뽑은 PDF 1~2장 (회사·현장 정보 없는 것, 선이 많은 도면 1장 + 레이어가 있는 도면 1장이면 좋음). 프로젝트 파일에 올려 주면 된다.
+
+---
+
+## 11. PRD 반영: 플레이그라운드와 기능 반복 (v1.1, 2026-10-17)
+
+근거: 프로젝트 파일 `meeting/2026-10-16-prd-meeting.md` (24개 기능별 기술 조사, 결정 1~10). 결정은 `docs/DECISIONS.md` 2026-10-17 줄.
+
+### 11-1. 기능 24개 (PRD 4장)
+
+| 갈래 | 기능 |
+|---|---|
+| Drawing & CAD | 01 Drawing Compare · 02 PDF Overlay · 03 PDF Markup · 04 Revision Cloud · 05 Measurement · 06 Drawing Alignment · 07 Drawing Stamp · 08 DWG/DXF Preview(보기 전용: 모델·페이퍼 공간) |
+| PDF Essentials | 09 PDF Viewer · 10 PDF Editor · 11 Merge · 12 Split · 13 Reorder Pages · 14 Crop & Rotate · 15 Compress · 16 Watermark |
+| Image & Conversion | 17 Remove Background · 18 PDF to Image · 19 Image to PDF · 20 OCR · 21 Extract Images · 22 Signature · 23 Redaction · 24 Batch Tools |
+
+상태 3가지: **Ready**(동작) · **Experimental**(동작하지만 검증 중) · **Coming soon**(자리만). 지금 Ready = 01 Drawing Compare, 17 Remove Background(흰 배경, 옛 화면).
+
+### 11-2. 기능 등록표 (`web/src/apps/registry.ts`)
+
+| 칸 | 뜻 |
+|---|---|
+| `id`, `number` | `drawing-compare`, 1 |
+| `category` | `drawing` · `pdf` · `image` |
+| `icon` | Lucide 아이콘 |
+| `status` | `ready` · `experimental` · `soon` |
+| `screen` | `document`(리본·명령창이 있는 문서 탭) · `job`(작은 작업 탭) |
+| `command` | Ready 기능을 여는 명령 (명령 등록표에 있어야 함) |
+| `stage` | 계획 단계 (1 = 1단계, 2 = 페이지 도구 …, 11-4) |
+| 글자 | `app.<id>.name`, `app.<id>.desc` (en.ts) |
+
+시작 화면 카드·검색·`?` 목록이 이 표를 읽는다. 새 기능 = 이 표에 한 줄 + 그 기능 폴더.
+
+### 11-3. 화면
+
+| 곳 | 내용 |
+|---|---|
+| 시작 화면 | 위: 검색 칸("Search tools") · 갈래 고르기(All / Drawing & CAD / PDF Essentials / Image & Conversion). 가운데: 기능 카드 격자(아이콘·이름·한 줄 설명·상태 꼬리표). 아래: 최근 파일·최근 비교·놓는 칸(그대로). 시안 01의 큰 카드 3개는 이 격자로 바뀜 |
+| Ready 카드 | 누르면 그 기능을 연다 (명령 실행, 예: `CMP`) |
+| Coming soon 카드 | 누르면 **기능 안내 탭**: 이름·설명·사용 흐름(파일 고르기 → 옵션 → 실행 → 결과)·계획 단계·"Coming soon". 같은 기능은 한 탭만 |
+| 작은 작업 탭 (`job`) | 리본 없음. 왼쪽 단계 목록, 가운데 작업 칸, 오른쪽 옵션. 첫 실제 사용은 페이지 도구 단계 |
+| 리본 탭 | Home 탭: 리본 없음 · Compare: Home·Compare·Markup·Draw·View · Drawing: Home·Markup·Draw·View·Tools · PNG: Home·Tools · 기능 안내/작업 탭: 리본 없음 |
+
+### 11-4. 개발 순서 (9-2를 대신함)
+
+| 순서 | 단위 | 완료 기준 (C1~C7 외) |
+|---|---|---|
+| 1 | **P0 플레이그라운드**: 기능 등록표 24개, 시작 화면 런처(검색·갈래·카드), 기능 안내 탭, 탭에 맞는 리본 탭만, PC/웹 빌드 표시(`VITE_TARGET`) | 카드 24개 모두 보이고 Ready는 열리고 Coming soon은 안내 탭. 검색으로 거르기. 1440·1280 캡처 |
+| 2 | **W0 웹 기반** (한 번만): 인터넷 서버, 파일 처리 후 자동 삭제, 로그인·Free/Pro, 개인정보 안내, MuPDF 라이선스 결정 | 비용 발생 → Owner 승인 후 시작 |
+| 3~ | **기능 반복**: 기능 하나 완성 → 웹 출시 → PC 버전에 넣기. 순서: Drawing Compare → 페이지 도구(Merge·Split·Reorder·Crop & Rotate·PDF↔Image·Extract Images·Watermark) → DWG/DXF 빠른 보기 → 도면 전문(Viewer·Markup·Revision Cloud·Stamp·Measurement·Alignment·Overlay, 9-2 U5~U10 내용) → 고급 PDF(Compress·OCR·Remove Background 자동·Signature·Batch·Editor) → Redaction(자동 검증 통과 후) | 기능마다 정함 |
+
+U11(한국어)·U12(점검)는 기능마다 같이 한다(새 글자는 en·ko 함께, 출시 전 ship-check).
 
 ---
 
