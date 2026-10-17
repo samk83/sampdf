@@ -1,0 +1,44 @@
+# 오라클 클라우드 Always Free ARM 서버(VM.Standard.A1.Flex, 2 OCPU · 12 GB)에서 웹 버전을 돌리는 설정.
+# 서버에서: cd ~/sampdf/deploy/oracle && sudo docker compose up -d --build   (자세한 순서는 README.md)
+#
+# app   = Sam Drawing Tools (저장소 맨 위 Dockerfile, 서버가 ARM이라 arm64로 만들어진다)
+# caddy = 앞단. HTTPS 인증서를 자동으로 받고, 비밀번호(basic auth)로 나만 들어오게 막는다.
+services:
+  app:
+    build:
+      context: ../..
+    image: sam-drawing-tools:latest
+    restart: unless-stopped
+    environment:
+      Hosting__Mode: Web
+      # 오라클은 무료 한도가 시간 단위가 아니라 "항상 켜둠"이라 사용 시간 제한을 끈다 (Cloud Run용 기능).
+      Hosting__MonthlyLimitHours: "0"
+      # 12 GB 서버에 맞춘 값: 열어 둘 파일 합 4 GB, 동시 비교 2건.
+      Hosting__MaxTotalMb: "4096"
+      Hosting__MaxConcurrentCompares: "2"
+    # 서버 메모리 12 GB 중 10 GB까지만 쓰게 한다 (나머지는 리눅스·Caddy 몫).
+    mem_limit: 10g
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      # .env 파일에서 읽는다 (README 3장 5번에서 setup.sh가 만들어 줌)
+      SITE_ADDRESS: ${SITE_ADDRESS}
+      LOGIN_USER: ${LOGIN_USER}
+      LOGIN_HASH: ${LOGIN_HASH}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

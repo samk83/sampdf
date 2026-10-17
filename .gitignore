@@ -5,3 +5,6 @@ obj/
 TestResults/
 preview-dist/
 web-dist/
+
+# 오라클 배포: 서버에서 만드는 비밀번호 해시 파일
+deploy/oracle/.env

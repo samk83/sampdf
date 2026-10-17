@@ -12,9 +12,11 @@
     <ProjectReference Include="..\DrawingReview.Compare\DrawingReview.Compare.csproj" />
   </ItemGroup>
 
-  <!-- Windows가 아닌 곳(개발·검증용 Linux)에서 실행할 때 쓰는 OpenCV 본체. Windows용은 Compare 프로젝트에 있다. -->
+  <!-- Windows가 아닌 곳(개발·검증용 Linux)에서 실행할 때 쓰는 OpenCV 본체. Windows용은 Compare 프로젝트에 있다.
+       -r linux-arm64(오라클 ARM 서버)로 publish할 때는 arm64용을 쓴다. -->
   <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
-    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
+    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" Condition="'$(RuntimeIdentifier)' != 'linux-arm64'" />
+    <PackageReference Include="OpenCvSharp4.runtime.linux-arm64" Version="4.13.0.20260627" Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" />
   </ItemGroup>
 
   <ItemGroup>

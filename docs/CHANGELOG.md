@@ -2,6 +2,16 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-17 — 오라클 클라우드 ARM 서버용 빌드와 배포 설정
+
+**무엇을**: Docker 이미지를 **x64·arm64 둘 다** 만들게 바꿈. `-r linux-arm64`로 publish할 때 OpenCV는 `OpenCvSharp4.runtime.linux-arm64`(같은 버전 4.13.0.20260627)를 쓰고, PDFium은 기존 `bblanchon.PDFium.Linux`에 들어 있는 arm64용을 씀 (Engine·Web csproj). 실행 이미지를 Ubuntu 22.04 → **24.04(noble)**로 (arm64 OpenCV가 FFmpeg 6·libtiff6 등 24.04 시스템 부품에 맞춰져 있음; arm64일 때 그 부품을 더 설치). 빌드 단계는 빌드하는 컴퓨터 CPU로 돌고 결과만 대상 CPU용(`--platform=$BUILDPLATFORM`, `TARGETARCH`). `NODE_BASE` 인자 추가. `deploy/oracle/`: docker-compose(앱 + Caddy HTTPS·비밀번호 잠금, 사용 시간 한도 끔, 메모리 10 GB, 파일 합 4 GB), Caddyfile, 서버 설치 스크립트 `setup.sh`, 배포 계획 `README.md`(토론토, 2 OCPU·12 GB, 회수 위험 대책).
+
+**왜**: Owner가 호스팅을 오라클 Always Free(ARM)로 결정. 기존 이미지는 x64 전용이었음.
+
+**확인**: arm64 이미지 빌드·실행(QEMU) 후 PDF·PNG 샘플로 올리기 → 페이지 그림 → 비교 → 겹친 그림 → 표시 PDF 내보내기 통과, 변경 수가 x64와 같음(PDF 4, PNG 5). x64 이미지(24.04)도 같은 시험 통과. compose + Caddy 비밀번호 401/200 확인(로컬 http). .NET 테스트 **311개 통과**.
+
+**못 한 것 / 참고**: 진짜 오라클 서버에서 실행·속도·HTTPS 인증서 발급은 배포 후 확인. 가입·카드·배포는 Owner 승인 대기.
+
 ## 2026-10-17 — 웹 모드 월 사용량 한도 (무료 분량 안 넘기기)
 
 **무엇을**: 웹 모드에 `UsageMeter`(`src/DrawingReview.Web/Services/UsageMeter.cs`) 추가. 요청이 하나라도 처리 중인 시간(= Cloud Run "요청 처리 중에만 과금"의 과금 시간)을 이번 달(UTC) 단위로 센다. 한도(`Hosting__MonthlyLimitHours`, 기본 **20시간** = Cloud Run 무료 분량 약 25시간의 80%)에 닿으면 **새 파일 올리기(`POST /api/files`)와 비교(`POST /api/compare`)를 429로 막고** "이번 달 무료 사용량 끝, ○월 1일에 다시 됨" 안내. 이미 연 파일 보기·내려받기는 계속(파일은 30분 안 쓰면 지워짐). 매달 1일 0시(UTC)에 0으로. `Hosting__UsageFile`(예: `/data/usage.json`)을 주면 1분마다·꺼질 때 저장해 다시 켜져도 이어서 센다(없으면 경고 로그). `GET /api/usage`(사용 시간·한도·막힘·다시 되는 날). PC 모드는 영향 없음. `0`이면 제한 없음.

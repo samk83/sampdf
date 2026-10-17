@@ -8,3 +8,4 @@ preview-dist/
 web-dist/
 validation/output/
 src/DrawingReview.Web/wwwroot/
+deploy/

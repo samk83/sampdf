@@ -18,10 +18,12 @@
     <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
   </ItemGroup>
 
-  <!-- Linux에서 쓰는 네이티브 라이브러리: Linux에서 빌드하거나(개발·검증·Docker), Windows에서 linux-x64로 publish할 때 -->
+  <!-- Linux에서 쓰는 네이티브 라이브러리: Linux에서 빌드하거나(개발·검증·Docker), Windows에서 linux-x64로 publish할 때.
+       PDFium.Linux에는 x64·arm64가 다 들어 있다. OpenCV는 CPU마다 패키지가 따로라서 -r linux-arm64(오라클 ARM 서버)일 때만 arm64용을 쓴다. -->
   <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows')) or $(RuntimeIdentifier.StartsWith('linux'))">
     <PackageReference Include="bblanchon.PDFium.Linux" Version="157.0.8100" />
-    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
+    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" Condition="'$(RuntimeIdentifier)' != 'linux-arm64'" />
+    <PackageReference Include="OpenCvSharp4.runtime.linux-arm64" Version="4.13.0.20260627" Condition="'$(RuntimeIdentifier)' == 'linux-arm64'" />
   </ItemGroup>
 
   <ItemGroup>
