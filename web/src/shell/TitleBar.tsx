@@ -4,10 +4,10 @@ import { useT, type MessageKey } from '../i18n';
 import { IconButton } from '../ui/IconButton';
 import { runCommand } from '../commands/runner';
 
-/** 탭에 보이는 이름: 정한 이름이 없으면 종류별 기본 이름. */
+/** 탭에 보이는 이름: 정한 이름이 없으면 기능 이름(기능 안내 탭) 또는 종류별 기본 이름. */
 export function useTabTitle() {
   const t = useT();
-  return (tab: DocTab) => tab.title ?? t(`tabs.${tab.kind}` as MessageKey);
+  return (tab: DocTab) => tab.title ?? (tab.appId ? t(`app.${tab.appId}.name` as MessageKey) : t(`tabs.${tab.kind}` as MessageKey));
 }
 
 /** 제목줄: 앱 이름 · 문서 탭 · 되돌리기·다시 하기 · 포커스 모드 (설계서 2-2). */

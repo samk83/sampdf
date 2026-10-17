@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import type { Ask } from '../commands/registry';
 
-/** 문서 탭 종류 (설계서 2-1). Drawing 탭은 U5·U6에서 열 수 있게 된다. */
-export type TabKind = 'home' | 'drawing' | 'compare' | 'png';
+/**
+ * 문서 탭 종류 (설계서 2-1). Drawing 탭은 U5·U6에서 열 수 있게 된다.
+ * app = 아직 준비 중인 기능의 안내 탭 (설계서 11-3). 기능이 동작하면 그 기능의 탭 종류로 바뀐다.
+ */
+export type TabKind = 'home' | 'drawing' | 'compare' | 'png' | 'app';
 export type RibbonTabId = 'home' | 'compare' | 'markup' | 'draw' | 'view' | 'tools';
 export type StatusToggleId = 'grid' | 'snap' | 'ortho' | 'osnap' | 'darkView';
 
@@ -18,6 +21,8 @@ export type DocTab = {
   ribbonCollapsed: boolean;
   /** 시작 화면에서 끌어다 놓아 열 때 넘겨받은 파일 (탭이 처음 그려질 때 한 번 쓴다). */
   files?: File[];
+  /** app 탭: 어떤 기능의 안내인지 (apps/registry.ts의 id). */
+  appId?: string;
 };
 
 export const HOME_TAB_ID = 'home';
@@ -26,7 +31,19 @@ export const HOME_TAB_ID = 'home';
 /** 아직 옛 디자인 화면을 담은 탭 종류 (U3·U4에서 새 틀로 옮기면 비운다). */
 export const LEGACY_KINDS: TabKind[] = ['png'];
 
-export const FIRST_RIBBON: Record<TabKind, RibbonTabId> = { home: 'home', drawing: 'markup', compare: 'compare', png: 'tools' };
+export const FIRST_RIBBON: Record<TabKind, RibbonTabId> = { home: 'home', drawing: 'markup', compare: 'compare', png: 'tools', app: 'home' };
+
+/**
+ * 탭 종류마다 보이는 리본 탭 (설계서 11-3, 2026-10-17 결정: 그 탭에 맞는 리본 탭만).
+ * 빈 목록 = 리본 없음 (Home 탭, 기능 안내 탭).
+ */
+export const RIBBON_TABS_FOR: Record<TabKind, RibbonTabId[]> = {
+  home: [],
+  compare: ['home', 'compare', 'markup', 'draw', 'view'],
+  drawing: ['home', 'markup', 'draw', 'view', 'tools'],
+  png: ['home', 'tools'],
+  app: [],
+};
 
 /** 명령창 기록 한 줄. kind: info(흐림) · cmd(친 명령) · error(빨강) · ok(초록). */
 export type HistoryLine = { text: string; kind: 'info' | 'cmd' | 'error' | 'ok' };
@@ -65,6 +82,8 @@ export type AppState = {
   setCmd: (patch: Partial<CmdState>) => void;
   setUi: (patch: Partial<Pick<AppState, 'panelsHidden' | 'cmdlineHidden' | 'historyExpanded' | 'helpOpen'>>) => void;
   openTab: (kind: Exclude<TabKind, 'home'>, options?: { title?: string; files?: File[] }) => string;
+  /** 기능 안내 탭을 연다. 같은 기능의 탭이 이미 있으면 그 탭으로 간다. */
+  openApp: (appId: string) => string;
   closeTab: (id: string) => void;
   activate: (id: string) => void;
   /** 리본 탭을 누름: 다른 탭이면 그 탭을 펼쳐 보이고, 지금 탭을 다시 누르면 접고 펼친다. */
@@ -115,6 +134,18 @@ export const useApp = create<AppState>()((set, get) => ({
     return id;
   },
 
+  openApp: (appId) => {
+    const open = get().tabs.find((t) => t.kind === 'app' && t.appId === appId);
+    if (open) {
+      set({ activeId: open.id });
+      return open.id;
+    }
+    const id = `app-${nextId++}`;
+    const tab: DocTab = { id, kind: 'app', appId, dirty: false, ribbonTab: FIRST_RIBBON.app, ribbonCollapsed: false };
+    set((s) => ({ tabs: [...s.tabs, tab], activeId: id }));
+    return id;
+  },
+
   closeTab: (id) => {
     if (id === HOME_TAB_ID) return; // Home 탭은 닫을 수 없다
     const { tabs, activeId } = get();
@@ -133,7 +164,7 @@ export const useApp = create<AppState>()((set, get) => ({
   setRibbonTab: (id, ribbonTab) =>
     set((s) => ({
       tabs: s.tabs.map((t) =>
-        t.id !== id ? t : { ...t, ribbonTab, ribbonCollapsed: t.ribbonTab === ribbonTab ? !t.ribbonCollapsed : false }),
+        t.id !== id || !RIBBON_TABS_FOR[t.kind].includes(ribbonTab) ? t : { ...t, ribbonTab, ribbonCollapsed: t.ribbonTab === ribbonTab ? !t.ribbonCollapsed : false }),
     })),
 
   setDirty: (id, dirty) => set((s) => ({ tabs: s.tabs.map((t) => (t.id === id ? { ...t, dirty } : t)) })),

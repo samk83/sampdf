@@ -4,11 +4,15 @@ import { RibbonButton } from '../ui/RibbonButton';
 import { runCommand } from '../commands/runner';
 import { compareRibbonState } from '../compare/commands';
 import { useCompare } from '../compare/state';
-import { RIBBON, RIBBON_TABS } from './ribbonLayout';
+import { RIBBON_TABS_FOR } from '../app/store';
+import { RIBBON } from './ribbonLayout';
+import { COMMANDS } from '../commands/registry';
+import { findCommand } from '../commands/lookup';
 
 /**
  * 리본 탭 줄 + 리본 (설계서 2-4). 버튼 = 명령: 누르면 명령창에 그 명령을 쳐 준 것과 같다 (6-1).
  * 지금 리본 탭을 다시 누르면 리본을 접고 펼친다 (접히면 탭 줄만).
+ * 탭 종류에 맞는 리본 탭만 보인다 (설계서 11-3).
  */
 export function Ribbon({ tab }: { tab: DocTab }) {
   const t = useT();
@@ -16,11 +20,16 @@ export function Ribbon({ tab }: { tab: DocTab }) {
   // 비교 탭: 눌린 상태(SBS·OV·SYNC)와 지금 못 쓰는 버튼. 비교 상태가 바뀌면 다시 그린다.
   useCompare((x) => x.tabs[tab.id]);
   const { pressed, disabled } = compareRibbonState();
+  // 이 탭 종류에서 못 쓰는 명령의 버튼은 흐리게 (예: PNG 탭 Home 리본의 Save)
+  const notHere = (command: string) => {
+    const def = findCommand(COMMANDS, command.split(' ')[0]);
+    return !!def?.where && !def.where.includes(tab.kind);
+  };
 
   return (
     <div className="flex-none">
       <div role="tablist" aria-label={t('ribbon.label')} className="flex h-ribbon-tabs items-end gap-0.5 px-2.5">
-        {RIBBON_TABS.map((id) => {
+        {RIBBON_TABS_FOR[tab.kind].map((id) => {
           const active = id === tab.ribbonTab;
           return (
             <button key={id} type="button" role="tab" aria-selected={active} aria-expanded={active ? !tab.ribbonCollapsed : undefined} onClick={() => setRibbonTab(tab.id, id)}
@@ -46,7 +55,7 @@ export function Ribbon({ tab }: { tab: DocTab }) {
                   (b.phase ? ` (${t('soon.phase2')})` : '');
                 return (
                   <RibbonButton key={b.id} icon={b.icon} label={label} tooltip={tooltip}
-                    tag={b.phase ? t('soon.phase2') : undefined} pressed={pressed.has(b.command) || undefined} disabled={disabled.has(b.command)}
+                    tag={b.phase ? t('soon.phase2') : undefined} pressed={pressed.has(b.command) || undefined} disabled={disabled.has(b.command) || notHere(b.command)}
                     onClick={() => void runCommand(b.command)} />
                 );
               })}

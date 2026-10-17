@@ -19,7 +19,7 @@ export function StatusBar({ tab }: { tab: DocTab }) {
   const onToggle = (id: StatusToggleId) =>
     id === 'osnap' ? toggleAid('osnap') : void runCommand(id === 'darkView' ? 'DARKVIEW' : id.toUpperCase(), { quiet: id !== 'darkView' });
   const cmp = useCompare((x) => (tab.kind === 'compare' ? x.tabs[tab.id] : undefined));
-  let left = tab.kind === 'compare' ? t('status.compare') : tab.kind === 'png' ? t('status.png') : t('status.ready');
+  let left = tab.kind === 'compare' ? t('status.compare') : tab.kind === 'png' ? t('status.png') : tab.kind === 'app' ? t('status.app') : t('status.ready');
   // 비교 탭: 지금 페이지의 변경 수 · 페이지 · 동기 이동 · 확대 비율 (시안 04)
   const extra: string[] = [];
   if (cmp?.comparing) left = `${left} · ${t('status.comparing')}`;

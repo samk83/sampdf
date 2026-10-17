@@ -47,7 +47,7 @@ export type CommandDef = {
   run?: (ctx: CommandContext) => void | Promise<void>;
 };
 
-export const ALL_TABS: TabKind[] = ['home', 'drawing', 'compare', 'png'];
+export const ALL_TABS: TabKind[] = ['home', 'drawing', 'compare', 'png', 'app'];
 const DOC: TabKind[] = ['drawing', 'compare'];
 const CMP: TabKind[] = ['compare'];
 const PNG: TabKind[] = ['png'];

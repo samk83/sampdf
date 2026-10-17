@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { File as FileIcon, GitCompare, House, Image, Settings, Upload, Wrench, type LucideIcon } from 'lucide-react';
+import { File as FileIcon, GitCompare, House, Image, Search, SearchX, Settings, Upload, Wrench, type LucideIcon } from 'lucide-react';
 import { compareTitle, routeDrop } from '../app/dropRouting';
 import { useApp } from '../app/store';
-import { useT } from '../i18n';
+import { TARGET } from '../app/target';
+import { APPS, CATEGORIES, appDescKey, appNameKey, searchApps, type AppCategory, type AppDef } from '../apps/registry';
+import { translate, useT, type MessageKey } from '../i18n';
 import { runCommand } from '../commands/runner';
+import { Badge } from '../ui/Badge';
+import { EmptyState } from '../ui/EmptyState';
 import { useNotYet } from './notYet';
 
 /**
- * 시작 화면 (확정 시안 01). 최근 파일·비교 목록은 U5에서 채운다.
- * `px-[30px]`·`h-[136px]` 같은 대괄호 크기는 시안 값 그대로 (간격 토큰 4·8·12…에 없는 값).
+ * 시작 화면 (확정 시안 01 + 설계서 11-3 기능 카드). 큰 카드 3개 자리에 기능 24개 카드(검색·갈래)를 둔다.
+ * 최근 파일·비교 목록은 U5에서 채운다.
+ * `px-[30px]` 같은 대괄호 크기는 시안 값 그대로 (간격 토큰 4·8·12…에 없는 값).
  */
 export function HomeScreen({ active }: { active: boolean }) {
   const t = useT();
@@ -71,16 +76,12 @@ export function HomeScreen({ active }: { active: boolean }) {
             <h1 className="m-0 text-xl font-bold leading-tight">{t('home.title')}</h1>
             <span className="text-fg-muted">{t('home.subtitle')}</span>
           </div>
-          <span className="text-xs text-fg-faint">{t('home.local')}</span>
+          <span className="text-xs text-fg-faint">{t(TARGET === 'web' ? 'home.web' : 'home.local')}</span>
         </div>
 
-        <div className="grid grid-cols-3 gap-[14px]">
-          <ActionCard primary icon={GitCompare} command="CMP" title={t('home.card.compare.title')} desc={t('home.card.compare.desc')} onClick={() => void runCommand('CMP')} />
-          <ActionCard icon={FileIcon} command="OPEN" title={t('home.card.open.title')} desc={t('home.card.open.desc')} onClick={() => void runCommand('OPEN')} />
-          <ActionCard icon={Image} command="PNG" title={t('home.card.png.title')} desc={t('home.card.png.desc')} onClick={() => void runCommand('PNG')} />
-        </div>
+        <ToolLauncher />
 
-        <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-[18px]">
+        <div className="grid flex-none grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] gap-[18px]">
           <section aria-label={t('home.recentFiles')} className="flex flex-col gap-2.5">
             <h2 className="m-0 text-sm font-semibold">{t('home.recentFiles')}</h2>
             <EmptyBox>{t('home.recentFiles.empty')}</EmptyBox>
@@ -114,22 +115,91 @@ function NavItem({ icon: Icon, label, current, tag, onClick }: { icon: LucideIco
   );
 }
 
-function ActionCard({ icon: Icon, command, title, desc, primary, onClick }: {
-  icon: LucideIcon; command: string; title: string; desc: string; primary?: boolean; onClick: () => void;
-}) {
+type Filter = AppCategory | 'all';
+
+/** 기능 카드 묶음: 검색 칸 + 갈래 고르기 + 카드 격자 (설계서 11-3). */
+function ToolLauncher() {
+  const t = useT();
+  const language = useApp((s) => s.language);
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const inCategory = filter === 'all' ? APPS : APPS.filter((a) => a.category === filter);
+  // 지금 언어와 영어 이름·설명 둘 다로 찾는다 (한국어 화면에서 "merge"로도 찾게)
+  const found = searchApps(inCategory, query, (app) => [appNameKey(app), appDescKey(app)].flatMap((k) => [translate(language, k), translate('en', k)]));
+  const grouped = filter === 'all' && !query.trim();
+
   return (
-    <button type="button" onClick={onClick}
-      className={`flex h-[136px] flex-col justify-between rounded-lg border px-[18px] py-4 text-left transition-colors duration-fast ${
-        primary ? 'border-accent bg-gradient-to-br from-primary to-primary-deep text-on-primary hover:brightness-110' : 'border-default bg-surface text-fg hover:border-strong hover:bg-pressed'}`}>
-      <span className="flex w-full justify-between">
-        <span className={`flex h-[38px] w-[38px] items-center justify-center rounded-md ${primary ? 'bg-primary-deep' : 'bg-pressed'}`}>
-          <Icon className={`h-icon-ribbon w-icon-ribbon ${primary ? '' : 'text-accent'}`} strokeWidth={1.9} aria-hidden />
-        </span>
-        <span className={`flex h-5 items-center rounded-sm border px-[7px] font-mono text-2xs ${primary ? 'border-on-primary' : 'border-strong'}`}>{command}</span>
+    <section aria-label={t('home.tools')} className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="flex h-control w-full max-w-[280px] items-center gap-2 rounded-sm border border-strong bg-sunken px-2.5 focus-within:border-accent">
+          <Search className="h-icon w-icon flex-none text-fg-faint" aria-hidden />
+          <input type="search" value={query} placeholder={t('home.search')} aria-label={t('home.search')} aria-describedby="home-search-hint"
+            onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Escape') { if (query) setQuery(''); else e.currentTarget.blur(); } }}
+            className="min-w-0 flex-1 bg-transparent text-sm text-fg outline-none placeholder:text-fg-faint" />
+        </label>
+        <span id="home-search-hint" className="sr-only">{t('home.searchHint')}</span>
+        <div role="group" aria-label={t('home.category')} className="flex flex-wrap gap-1">
+          {(['all', ...CATEGORIES] as Filter[]).map((c) => (
+            <button key={c} type="button" aria-pressed={filter === c} onClick={() => setFilter(c)}
+              className={`h-control rounded-sm px-3 text-sm transition-colors duration-fast ${
+                filter === c ? 'bg-pressed font-semibold text-fg' : 'text-fg-muted hover:bg-pressed hover:text-fg'}`}>
+              {t(`home.category.${c}` as MessageKey)}
+            </button>
+          ))}
+        </div>
+        <span aria-live="polite" className="ml-auto text-xs text-fg-faint">{t('apps.count', { n: found.length })}</span>
+      </div>
+
+      {found.length === 0 ? (
+        <div className="rounded-md border border-default bg-surface">
+          <EmptyState icon={SearchX}>{t('home.searchEmpty', { q: query.trim() })}</EmptyState>
+        </div>
+      ) : grouped ? (
+        CATEGORIES.map((c) => (
+          <div key={c} className="flex flex-col gap-2">
+            <h2 className="m-0 text-sm font-semibold text-fg-secondary">{t(`home.category.${c}` as MessageKey)}</h2>
+            <ToolGrid apps={found.filter((a) => a.category === c)} />
+          </div>
+        ))
+      ) : (
+        <ToolGrid apps={found} />
+      )}
+    </section>
+  );
+}
+
+function ToolGrid({ apps }: { apps: AppDef[] }) {
+  return (
+    <ul className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(232px,1fr))] gap-2.5 p-0">
+      {apps.map((app) => <li key={app.id} className="flex"><ToolCard app={app} /></li>)}
+    </ul>
+  );
+}
+
+/** 기능 카드 하나. Ready면 그 기능의 명령을 부르고, 준비 중이면 기능 안내 탭을 연다. */
+function ToolCard({ app }: { app: AppDef }) {
+  const t = useT();
+  const openApp = useApp((s) => s.openApp);
+  const Icon = app.icon;
+  const name = t(appNameKey(app));
+  const ready = app.status !== 'soon' && !!app.command;
+  const open = () => (ready ? void runCommand(app.command!) : openApp(app.id));
+  return (
+    <button type="button" onClick={open} title={ready ? t('apps.openHint', { name }) : t('apps.soonHint', { name })}
+      className={`flex min-h-[92px] w-full items-start gap-3 rounded-md border px-3.5 py-3 text-left transition-colors duration-fast ${
+        ready ? 'border-default bg-surface hover:border-accent hover:bg-pressed' : 'border-default bg-surface hover:border-strong hover:bg-pressed'}`}>
+      <span className={`flex h-9 w-9 flex-none items-center justify-center rounded-md ${ready ? 'bg-accent-subtle' : 'bg-pressed'}`}>
+        <Icon className={`h-icon-ribbon w-icon-ribbon ${ready ? 'text-accent' : 'text-fg-muted'}`} strokeWidth={1.9} aria-hidden />
       </span>
-      <span className="flex flex-col gap-1">
-        <span className="text-lg font-bold">{title}</span>
-        <span className={`text-xs leading-[1.45] ${primary ? 'opacity-90' : 'text-fg-muted'}`}>{desc}</span>
+      <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <span className="flex items-center justify-between gap-2">
+          <span className={`truncate font-semibold ${ready ? 'text-fg' : 'text-fg-secondary'}`}>{name}</span>
+          <span className="flex flex-none items-center gap-1">
+            {ready && app.command && <Badge tone="outline">{app.command}</Badge>}
+            <Badge tone={app.status === 'ready' ? 'success' : 'neutral'}>{t(`apps.status.${app.status}` as MessageKey)}</Badge>
+          </span>
+        </span>
+        <span className="line-clamp-2 text-xs leading-[1.45] text-fg-muted">{t(appDescKey(app))}</span>
       </span>
     </button>
   );

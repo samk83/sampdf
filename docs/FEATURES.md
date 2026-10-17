@@ -160,7 +160,11 @@
 | 명령 자동완성 목록 (시안 04: 이름·별칭·설명·단축키, 최대 8줄) | `shell/Autocomplete.tsx` | `commands/lookup` | `CommandLine` |
 | 명령 목록 창 (`?`·F1: 갈래별, 이 탭에서 못 씀·나중·Phase 2 표시, 거르기 칸, 누르면 실행) | `shell/CommandListDialog.tsx` | `ui/Dialog`, `commands/registry` | `AppShell` |
 | 상태 표시줄 (상태, GRID·SNAP·ORTHO·OSNAP·DARK VIEW, 비교 탭: 페이지의 변경 수·못 연 파일·Sync pan·페이지·확대 비율, 서버 주소, 언어) | `shell/StatusBar.tsx` | `ui/StatusToggle` | `AppShell` |
-| 시작 화면 (왼쪽 메뉴, 큰 카드 3개, 최근 목록 자리, 창 어디나 끌어다 놓기) | `shell/HomeScreen.tsx` | `app/dropRouting` | `AppShell` |
+| 시작 화면 (왼쪽 메뉴, **기능 카드 24개: 검색·갈래 고르기**, 최근 목록 자리, 창 어디나 끌어다 놓기). Ready 카드 = 그 기능 명령, 준비 중 카드 = 기능 안내 탭 | `shell/HomeScreen.tsx` | `apps/registry`, `app/dropRouting`, `commands/runner` | `AppShell` |
+| 기능 등록표 (24개: 갈래·상태·화면 종류·명령·계획 단계) + 도구 찾기 | `apps/registry.ts` | `i18n` (`app.<id>.name/desc`) | 시작 화면, 기능 안내 탭 |
+| 기능 안내 탭 (준비 중 기능: 설명·사용 흐름·계획, 같은 기능은 탭 하나) | `apps/AppInfoTab.tsx` | `apps/registry`, `app/store` (`openApp`) | `AppShell` (탭 종류 `app`) |
+| 탭 종류별 리본 탭 (`RIBBON_TABS_FOR`), 그 탭에서 못 쓰는 명령의 리본 버튼은 흐리게 | `app/store.ts`, `shell/Ribbon.tsx` | `commands/registry` (`where`) | 공통 틀 |
+| PC/웹 빌드 표시 (`VITE_TARGET`, `npm run build:web` → `web-dist/`) | `app/target.ts`, `web/.env.web` | — | 시작 화면 (Runs on this PC only / Web version) |
 | 명령이 없는 버튼(시작 화면 Tool sets) → 명령창에 "나중에" 안내. 명령이 있는 버튼은 모두 `runCommand` | `shell/notYet.ts` | `app/store` (기록) | 시작 화면 |
 | 새 기본 부품 (토큰만 사용): 아이콘 버튼, 리본 버튼("Phase 2" 꼬리표), 상태 토글, 대화상자(Esc 닫기, Tab이 상자 안에서만, 닫으면 커서 원위치) | `ui/IconButton.tsx`, `ui/RibbonButton.tsx`, `ui/StatusToggle.tsx`, `ui/Dialog.tsx` | lucide-react | 공통 틀 |
 | PDF에 넣는 마크업 색 (tokens.css와 같은지 테스트) | `doc/palette.ts` | — | (U7부터) 저장 |

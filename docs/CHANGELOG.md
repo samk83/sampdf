@@ -2,6 +2,18 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-17 — 개발 P0: 플레이그라운드 (기능 24개 자리)
+
+**무엇을**: 설계서 11장(v1.1). 기능 등록표 `apps/registry.ts`(PRD 24개, 갈래 3개 × 8, 상태 Ready/Experimental/Coming soon, 화면 종류, 여는 명령, 계획 단계). 시작 화면의 큰 카드 3개 → **기능 카드 격자**(검색 칸: 이름·설명·명령, 한국어 화면에서 영어로도 찾음 / 갈래 고르기 All·Drawing & CAD·PDF Essentials·Image & Conversion / 도구 수). Ready 카드 2개(Drawing Compare = `CMP`, Remove Background = `PNG`)는 그 기능을 열고, 준비 중 카드 22개는 **기능 안내 탭**(새 탭 종류 `app`: 설명·사용 흐름·계획 단계·Back to Home, 같은 기능은 탭 하나). 리본은 **탭 종류에 맞는 리본 탭만**(Compare: Home·Compare·Markup·Draw·View / Drawing: Home·Markup·Draw·View·Tools / PNG: Home·Tools / Home·안내 탭: 리본 없음), 그 탭에서 못 쓰는 명령의 버튼은 흐리게, Home 리본에 Command list(`?`) 추가. PC/웹 빌드 표시 `VITE_TARGET` + `npm run build:web`(→ `web-dist/`). 새 글자는 영어·한국어 함께. `Badge`에 `outline` 모양 추가. 쓰지 않게 된 `home.card.*` 글자·`RIBBON_TABS` 지움.
+
+**왜**: Owner 회의 결정 "추천대로가" (PRD 반영 A안, 플레이그라운드 → 기능 반복, 리본은 맞는 탭만). 결정 기록 `docs/DECISIONS.md` 2026-10-17.
+
+**리뷰어 지적 반영**: 카드에 상태 꼬리표가 늘 보이게(Ready에도), 갈래·상태·계획 단계 글자 키 검사 테스트, 도구 수 화면 읽기 프로그램에 알림(`aria-live`), 검색 안내를 `aria-describedby`로, 빈 검색 칸에서 Esc = 칸 빠져나오기, 갈래 묶음 이름, 검색 칸 좁은 창 대응, 준비 중 카드 테두리 대비, PNG 탭 Home 리본의 못 쓰는 버튼 흐리게, 그 탭에 없는 리본 탭으로 바뀌지 않게, Home 리본에 `?`. 반영 안 함: 명령창 "다른 탭에서 못 씀" 안내의 탭 이름(종류 이름 "Tool" 그대로, 다른 탭과 같은 방식), `?` 목록에 기능 넣기(나중, DECISIONS).
+
+**확인**: `npm test` 133개 통과(새로: 등록표 24개·갈래별 8개·Ready는 등록된 명령·글자 키 영/한, 도구 찾기, 안내 탭 하나만, 탭별 리본). `npm run build`(타입 검사)·`npm run build:web` 통과. 헤드리스 Chromium 1440×900·1280×800에서 9가지 × 2 = 18개 조작 통과(카드 24개, `merge` 검색 1개, Esc로 지우기, PDF 갈래 8개, Merge PDF → 안내 탭·리본 없음, 다시 눌러도 탭 하나, Drawing Compare → 리본 탭 5개, Remove Background → 리본 탭 2개, 검색 칸 밖 타자 → 명령창), 콘솔 오류 0. 별도 리뷰어 점검: 막는 문제 없음.
+
+**못 한 것**: Windows 실행 확인(Owner). 웹 버전은 표시만 다르고 아직 인터넷 서버가 없음(W0). 작은 작업 탭(`job`) 화면 틀은 첫 페이지 도구 때 만든다(지금은 안내 탭만).
+
 ## 2026-10-16 — 개발 U3: 비교 탭을 새 화면으로
 
 **무엇을**: 설계서 9-2 U3. 옛 밝은 비교 화면(`ComparePage`·`ChangeList`·`SettingsMenu`)을 지우고 새 틀 안의 비교 탭(`compare/CompareTab.tsx`)으로 다시 만듦. 비교 상태를 탭마다 보관소(`compare/state.ts`)로 옮기고, 하는 일은 `compare/actions.ts`로 모음. 화면: 왼쪽 Pages(페이지 그림 + 변경 수 배지, Bookmarks·Layers는 "나중"), 원본/리비전 칸 머리 줄(이름·페이지·크기·× 닫기), 빈 칸 = 파일 놓는 칸(시안 02, 두 파일 한 번에 놓기), 비교 중 창(시안 03, 지난 초·Cancel·Esc), 아래 변경 표(시안 04, 새 `ui/Table`, All/Text/Graphic 거르기, 체크 = 내보내기 넣기), 오른쪽 패널(Compare settings / 결과 요약 / Change / Overlay, 시안 02·04·05), 겹쳐 보기(색 구분·투명도·구름 보이기·미세 조정), 떠 있는 페이지·확대 막대, 못 여는 파일 카드와 비교 실패 카드(Try again), 차이 없음 화면, 경고 알림(시안 11). 비교 명령(설계서 6-6): SWAP·SBS·OVERLAY·SYNC·NEXT·PREV·REVIEWED·EXCLUDE·EXPORT·EXPORTCSV(새, CSV 목록)·NUDGE·NUMBERING + 비교 탭의 OPEN·ZOOM·PAGE·UNDO·REDO. 되돌리기는 표시 수정·빼기·검토됨(탭마다 200번, 끌기 한 번 = 한 번). 단축키 Ctrl+Z·Ctrl+Y·PgUp·PgDn·Ctrl+O·Ctrl+E, Delete = 고른 변경 빼기. 리본은 펼친 채 열리고 SBS·OV·SYNC 눌림, 결과 전 Next 등은 흐림. 상태 표시줄에 페이지 변경 수·Sync pan·페이지·확대 비율. 탭 이름 `Compare · 원본 ↔ 리비전`. `PageViewer`·`view`는 `viewer/`로, `numbering`·`geometry`는 `doc/`로 옮김(U6 도면 탭과 같이 씀). 새 부품 `ui/Button`·`Toggle`·`Badge`·`EmptyState`·`Toast`·`Table`. 서버는 안 바꿈(비교 취소만 요청 끊기로).

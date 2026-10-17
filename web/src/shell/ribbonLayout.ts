@@ -20,8 +20,6 @@ export type RibbonButtonDef = {
 };
 export type RibbonGroupDef = { id: string; buttons: RibbonButtonDef[] };
 
-export const RIBBON_TABS: RibbonTabId[] = ['home', 'compare', 'markup', 'draw', 'view', 'tools'];
-
 const select: RibbonGroupDef = {
   id: 'select',
   buttons: [
@@ -51,6 +49,7 @@ export const RIBBON: Record<RibbonTabId, RibbonGroupDef[]> = {
     { id: 'tools', buttons: [
       { id: 'transparentPng', icon: Image, command: 'PNG' },
       { id: 'settings', icon: Settings, command: 'OP' },
+      { id: 'commandList', icon: ListTree, command: '?', hint: 'F1' },
     ] },
   ],
   compare: [

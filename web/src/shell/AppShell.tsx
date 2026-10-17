@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { activeTab, LEGACY_KINDS, useApp, type DocTab } from '../app/store';
+import { activeTab, LEGACY_KINDS, RIBBON_TABS_FOR, useApp, type DocTab } from '../app/store';
+import { AppInfoTab } from '../apps/AppInfoTab';
 import { disposeTab } from '../compare/actions';
 import { CompareTab } from '../compare/CompareTab';
 import { PngTool } from '../png/PngTool';
@@ -48,7 +49,7 @@ export function AppShell() {
   return (
     <div className="flex h-full flex-col bg-background font-sans text-md text-fg">
       <TitleBar />
-      {active.kind !== 'home' && <Ribbon tab={active} />}
+      {RIBBON_TABS_FOR[active.kind].length > 0 && <Ribbon tab={active} />}
       <div className="relative min-h-0 flex-1">
         {tabs.map((tab) => (
           <div key={tab.id} role="tabpanel" hidden={tab.id !== active.id} className="absolute inset-0">
@@ -73,5 +74,7 @@ function TabContent({ tab, active }: { tab: DocTab; active: boolean }) {
       return <div className="legacy h-full"><PngTool initialFile={tab.files?.[0]} /></div>;
     case 'drawing':
       return null; // U6
+    case 'app':
+      return <AppInfoTab appId={tab.appId ?? ''} />;
   }
 }
