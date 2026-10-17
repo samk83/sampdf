@@ -82,7 +82,12 @@ export function HomeScreen({ active }: { active: boolean }) {
         {TARGET === 'web' && (
           <p className="m-0 flex items-start gap-2 rounded-md border border-default bg-surface px-3 py-2 text-sm text-fg-secondary">
             <ShieldCheck className="mt-0.5 h-icon w-icon flex-none text-accent" aria-hidden />
-            {t('home.privacy')}
+            <span>
+              {t('home.privacy')}{' '}
+              <a href="https://github.com/samk83/sampdf" target="_blank" rel="noreferrer" className="text-accent underline">
+                {t('home.source')}
+              </a>
+            </span>
           </p>
         )}
 
