@@ -75,3 +75,7 @@ docs/                          설계·검증·기능 문서
 7. **PDF 비교 시험 파일**: `samples/compare/original.pdf`(원본)와 `revision.pdf`(리비전). 그림 비교용 `original.png`, `revision.png`도 있다. Compare → Compare Drawings…에서 차례로 고른다.
 8. **CAD 비교 해 보기** (선택): 메뉴 Compare → Compare CAD Drawings (DWG/DXF)… 에서 이전·개정 DWG(또는 DXF)를 차례로 고른다.
    변경 목록에 설명이 보이면 정상. 변경을 수락(Accept)한 뒤 "Export clouds to DXF/DWG…"로 사본을 만들고 AutoCAD에서 REVISION 도면층을 확인한다.
+
+## License
+
+GNU AGPL-3.0-or-later. See [LICENSE](LICENSE). Uses MuPDF (AGPL), OpenCvSharp (Apache-2.0) and ACadSharp (MIT).
