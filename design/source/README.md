@@ -6,8 +6,9 @@
 |---|---|
 | `chrome.py` | 공통 부품(제목줄·리본·패널·명령창·상태 표시줄·대화상자)과 스킨 값(Revu / S1 / S2). S1 값이 `design/tokens.css`의 근거 |
 | `screens.py` | 화면 12개 조립 (`SCREENS`). `python3 screens.py FCompare S1`은 캔버스용 `.dc.html`을 `./out/`에 만든다 |
+| `screens_v2.py` | 보완 시안(2026-10-17) 화면 6개를 PC/웹 두 모습으로 (`r2-*-pc.html`, `r2-*-web.html`). 아이콘은 `web/node_modules/lucide-react`에서 읽으므로 먼저 `cd web && npm ci` |
 | `sheet_svg.py` | 예시 도면 S-101을 SVG로 그림 (캔버스의 "Sheet" 부품과 같은 그림) |
-| `export_static.py` | `design/screens/*.html`(브라우저에서 바로 열림, `../tokens.css` 사용)과 `screens/assets/*.svg`를 만든다 |
+| `export_static.py` | 보드 `review-r2.html`도 만든다. `design/screens/*.html`(브라우저에서 바로 열림, `../tokens.css` 사용)과 `screens/assets/*.svg`를 만든다 |
 
 다시 만들기 (저장소 맨 위에서):
 ```bash

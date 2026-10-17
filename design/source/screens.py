@@ -495,6 +495,10 @@ def FStart():
 def FOpen():
     """Open drawing dialog (DESIGN-SPEC 3-2): the app's own file browser, served by the local engine."""
     under = start_body([('Command: <span style="color:#fff">OPEN</span>', 'cmd'), ('OPEN  Choose a file in the dialog', '')])
+    return page('Final · Open drawing', root(under + open_dialog()))
+
+
+def open_dialog():
     places = [('Recent folders', 'clock', False), ('Desktop', 'monitor', False), ('Documents', 'file', False), ('Downloads', 'download', False),
               ('Projects', 'folder', True), ('C:', 'hdd', False), ('D:', 'hdd', False)]
     placeh = ''.join(
@@ -540,7 +544,7 @@ def FOpen():
 <div style="height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 10px; border: 1px solid {T["field"]}; border-radius: 2px; font-size: 12.5px; color: {T["text2"]}">PDF and images{icon("chevdown", 14)}</div></div></div>'''
     footer = (f'<span style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: {T["faint"]}">{icon("info", 14)}Files are read from this PC only. Dragging files into the window also works.</span>'
               f'<span style="margin-left: auto"></span>{btn("Cancel", h=34)}{btn("Open", "primary", "folder", 34)}')
-    return page('Final · Open drawing', root(under + dim_overlay() + dialog("Open drawing", body_html, footer, 1000, 90)))
+    return dim_overlay() + dialog("Open drawing", body_html, footer, 1000, 90)
 
 
 def review_under():

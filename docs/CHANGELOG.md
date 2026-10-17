@@ -2,6 +2,16 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
+## 2026-10-17 — 보완 시안 (PC/웹 같은 화면, Owner 확인 대기)
+
+**무엇을**: PRD 변경 뒤 시안 없이 만들어졌거나 시안이 없던 화면을 **PC 버전과 웹 버전 두 모습**으로 그림 (`design/screens/r2-*.html`, 생성 스크립트 `design/source/screens_v2.py`). 시작 화면 v2(24개 기능 카드·검색·갈래), 기능 안내 탭(Coming soon), 작은 작업 탭(Merge PDF 옵션·결과), 파일 열기(PC 열기 창 / 웹 올리기), 로그인·Free/Pro(웹만). 두 버전이 다른 곳은 노란 점선과 `PC only`/`Web only` 표시. 나란히 보는 보드 `design/screens/review-r2.html` (비공개 링크 https://claude.ai/artifact/8mXBKdCtrLrwNZ2HRtR9Bc). 기존 02~12는 "그 탭에 맞는 리본 탭만"(설계서 11-3)을 반영해 다시 생성 (리본 탭 줄만 바뀜, `chrome.RIBBON_BY_KIND`).
+
+**왜**: Owner가 배포 전에 시안을 다시 보고, 웹과 PC 화면을 최대한 같게 가져가고 싶다고 함. 스타일(A + 포커스 모드 + S1 Slate)은 확정 그대로, 원칙은 "화면은 하나, 다른 곳은 파일 열기·저장·개인정보 안내·로그인 4곳만".
+
+**확인**: 헤드리스 Chromium으로 새 화면 11장 캡처해 확인(글자 잘림·창 위치 고침). 보드는 1440·400px 폭에서 가로 스크롤 없음. Windows 브라우저 확인은 아직.
+
+**남은 것**: Owner가 고르거나 고칠 곳을 말하면 확정 → `design/README.md` 확정 기록, 설계서 11-3 갱신, 앱 시작 화면을 확정 시안에 맞춤. 배포 검토는 그 뒤.
+
 ## 2026-10-17 — 엔진 교체: MuPDF.NET → PDFium + PDFsharp (오픈소스 공개 철회)
 
 **무엇을**: PDF 엔진을 **PDFium**(크롬의 PDF 엔진, BSD, `bblanchon.PDFium.*` 바이너리 + 자체 P/Invoke `Pdfium/PdfiumNative.cs`)과 **PDFsharp 6.2.4**(MIT, PDF 객체 편집)로 바꾸고, 주석 작성·외형(/AP)·평탄화·벡터 PDF·그림→PDF를 **직접 구현**(`src/DrawingReview.Engine/Pdf/*`). `MuPdf/*`와 `MuPdfUtf8Fix` 삭제. 저장은 **증분 저장**(원본 바이트 뒤에 바뀐 객체만 덧붙임, xref 표/스트림 모두 지원) — PDFsharp가 Save를 한 번만 허용하는 제약을 피하고 원본 구조(전자서명 포함)를 보존. 암호 문서는 PDFium으로 암호를 푼 사본을 편집하고 저장할 때 같은 암호(AES-256)를 다시 건다. 한글 글상자는 Adobe-Korea1 CID 글꼴 참조(비포함), 영문은 Helvetica. 세로로 쓴 글자(회전 페이지)도 단어로 읽음. 그림(PNG·JPG·TIFF·BMP)은 OpenCvSharp로 디코딩해 PDF로(JPEG는 원본 그대로 넣음, DPI는 파일 값·없으면 96). 가상 도면 생성기(TestData)도 PDFsharp로 다시 씀. `LICENSE`를 All rights reserved로, 웹 첫 화면의 소스 코드 링크 제거, `docs/THIRD_PARTY.md` 갱신. Docker 이미지에 `fonts-nanum`(비포함 한글 글꼴 대체).
