@@ -1,6 +1,6 @@
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.Engine.Vector;
 
 namespace DrawingReview.Engine.Tests;
@@ -9,7 +9,7 @@ namespace DrawingReview.Engine.Tests;
 public class VectorPdfTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("vec-").FullName;
-    private readonly MuPdfEngine _engine = new();
+    private readonly PdfiumEngine _engine = new();
 
     public void Dispose() => Directory.Delete(_dir, true);
 

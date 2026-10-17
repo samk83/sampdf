@@ -2,7 +2,7 @@ using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App.Core.Tests;
 
@@ -13,7 +13,7 @@ public class SettingsTests
     {
         using var dir = new TempDir();
         var store = new SettingsStore(dir.File("cfg/settings.json"));
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         vm.ToolDefaults.Author = "Sam Kim";
         vm.ToolDefaults.SetStyle(ToolKind.Cloud, MarkupStyle.Default with { StrokeColor = RgbColor.Blue, LineWidth = 3 });
         vm.Properties.RecentColors.Add(RgbColor.Blue);
@@ -21,7 +21,7 @@ public class SettingsTests
         vm.IsReviewListVisible = false;
         store.Save(vm.CaptureSettings());
 
-        var vm2 = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm2 = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         vm2.ApplySettings(store.Load());
         Assert.Equal("Sam Kim", vm2.ToolDefaults.Author);
         Assert.Equal(RgbColor.Blue, vm2.ToolDefaults.Get(ToolKind.Cloud).Style.StrokeColor);
@@ -45,7 +45,7 @@ public class SettingsTests
     public async Task Opened_files_go_to_recent_list()
     {
         using var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var a = dir.WritePlanSet("a.pdf");
         var b = dir.WritePlanSet("b.pdf");
         await vm.OpenPathAsync(a);

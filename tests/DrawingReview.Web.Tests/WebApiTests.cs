@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using DrawingReview.Web.Api;
 using Microsoft.AspNetCore.Hosting;
@@ -72,7 +72,7 @@ public class WebApiTests(WebApiTests.App factory) : IClassFixture<WebApiTests.Ap
         Assert.Equal("application/pdf", export.Content.Headers.ContentType!.MediaType);
         Assert.Contains("S-101 rev1 (compared).pdf", export.Content.Headers.ContentDisposition!.ToString());
 
-        using var marked = new MuPdfEngine().Open(await export.Content.ReadAsByteArrayAsync());
+        using var marked = new PdfiumEngine().Open(await export.Content.ReadAsByteArrayAsync());
         var marks = marked.GetMarkups(0);
         Assert.Equal(2, marks.Count(m => m.Draft is CloudDraft { Intensity: > 0 }));      // 그림 변경 2개
         Assert.Equal(2, marks.Count(m => m.Draft is TextBoxDraft { Text: "B" }));          // Cloud마다 △B
@@ -96,7 +96,7 @@ public class WebApiTests(WebApiTests.App factory) : IClassFixture<WebApiTests.Ap
         edits[changes[0].Id] = edits[changes[0].Id] with { Cloud = new RectDto(50, 50, 150, 120), Delta = new PointDto(170, 40) };
         var export = await client.PostAsJsonAsync($"/api/compare/{result.Id}/export", new ExportRequest("1", null, CloudTextChanges: true, Edits: edits));
         Assert.True(export.IsSuccessStatusCode, await export.Content.ReadAsStringAsync());
-        using var marked = new MuPdfEngine().Open(await export.Content.ReadAsByteArrayAsync());
+        using var marked = new PdfiumEngine().Open(await export.Content.ReadAsByteArrayAsync());
         var marks = marked.GetMarkups(0);
         Assert.Equal(4, marks.Count(m => m.Draft is CloudDraft { Intensity: > 0 }));       // 글자 변경도 Cloud
         Assert.Equal(["1", "2", "3", "4"], marks.Select(m => m.Draft).OfType<TextBoxDraft>().Select(t => t.Text).Order());
@@ -107,7 +107,7 @@ public class WebApiTests(WebApiTests.App factory) : IClassFixture<WebApiTests.Ap
     public async Task Png_files_compare_too()
     {
         var client = factory.CreateClient();
-        var engine = new MuPdfEngine();
+        var engine = new PdfiumEngine();
         byte[] Png(R? r) { using var d = engine.Open(ComparePairs.Sheet(r)); return d.RenderPagePng(0, 150 / 72.0, includeMarkups: false); }
         var a = await Upload(client, Png(null), "old.png");
         var b = await Upload(client, Png(new R { AddLine = true }), "new.png");

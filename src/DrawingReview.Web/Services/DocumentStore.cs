@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using DrawingReview.Engine.Documents;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.Web.Services;
 
@@ -16,7 +16,7 @@ public sealed class StoredDocument : IDisposable
     public required IPdfDocument Document { get; init; }
     public DateTimeOffset LastUsed { get; set; } = DateTimeOffset.UtcNow;
 
-    /// <summary>MuPDF 문서는 여러 스레드에서 동시에 쓸 수 없으므로 이 잠금 안에서만 다룬다. 잡을 때는 EnterAsync.</summary>
+    /// <summary>PDF 엔진 문서는 여러 스레드에서 동시에 쓸 수 없으므로 이 잠금 안에서만 다룬다. 잡을 때는 EnterAsync.</summary>
     public SemaphoreSlim Gate { get; } = new(1, 1);
 
     /// <summary>보관소에서 빠져 문서가 닫혔다. 잠금을 기다리던 요청은 이것을 보고 "없는 파일"로 끝낸다.</summary>
@@ -60,11 +60,11 @@ public sealed class ServerFullException() : Exception("The server is busy right 
 
 /// <summary>
 /// 올린 파일 보관소 (메모리, 데이터베이스 없음). 주인마다 최근 파일 몇 개만 둔다.
-/// 업로드·내보내기 중 ASP.NET·MuPDF가 임시 파일을 잠깐 쓸 수 있지만 처리가 끝나면 지운다.
+/// 업로드·내보내기 중 ASP.NET·PDF 엔진이 임시 파일을 잠깐 쓸 수 있지만 처리가 끝나면 지운다.
 /// 원본 파일은 바뀌지 않는다: 바이트를 복사해 두고, 내려받기용 PDF는 그 복사본으로 새로 만든다.
 /// 웹 모드에서는 ExpirySweeper가 오래 안 쓴 파일을 지운다.
 /// </summary>
-public sealed class DocumentStore(MuPdfEngine engine, TimeProvider time) : IDisposable
+public sealed class DocumentStore(PdfiumEngine engine, TimeProvider time) : IDisposable
 {
     /// <summary>주인 한 명이 동시에 열어 둘 수 있는 파일 수.</summary>
     public const int MaxDocuments = 24;
@@ -76,7 +76,7 @@ public sealed class DocumentStore(MuPdfEngine engine, TimeProvider time) : IDisp
     private readonly ConcurrentDictionary<string, StoredDocument> _docs = new();
 
     public static bool IsSupported(string fileName) =>
-        Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase) || MuPdfEngine.IsImageFile(fileName);
+        Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase) || PdfiumEngine.IsImageFile(fileName);
 
     /// <summary>파일을 연다. PDF가 아니면 그림으로 열어 PDF로 바꾼다. 암호가 걸린 PDF는 거부한다.</summary>
     public StoredDocument Add(string fileName, byte[] bytes, string owner = Owners.Local)
@@ -84,7 +84,7 @@ public sealed class DocumentStore(MuPdfEngine engine, TimeProvider time) : IDisp
         if (!IsSupported(fileName)) throw new NotSupportedException("Only PDF, PNG, JPG, TIFF and BMP files are supported.");
         Trim(owner, incoming: 1);
         if (_docs.Count >= MaxTotalDocuments || Interlocked.Read(ref _totalBytes) + bytes.Length > MaxTotalBytes) throw new ServerFullException();
-        var isImage = MuPdfEngine.IsImageFile(fileName);
+        var isImage = PdfiumEngine.IsImageFile(fileName);
         var doc = Open(bytes, fileName, isImage);
         if (doc.Security.NeedsPassword)
         {

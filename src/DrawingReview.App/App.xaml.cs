@@ -3,7 +3,7 @@ using System.Windows.Threading;
 using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.App.Services;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App;
 
@@ -16,7 +16,7 @@ public partial class App : Application
 
         MainWindow? window = null;
         var dialogs = new WpfDialogService(() => window);
-        var vm = new MainViewModel(new MuPdfEngine(), dialogs);
+        var vm = new MainViewModel(new PdfiumEngine(), dialogs);
         var settings = new SettingsStore(System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DrawingReview", "settings.json"));
         vm.ApplySettings(settings.Load());

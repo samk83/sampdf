@@ -2,7 +2,7 @@
 
 Bluebeam Revu에 익숙한 흐름으로 쓰는 **Windows용 PDF 도면 검토 프로그램**. 개인 실험·사용 전용이며 외부 배포는 하지 않는다. Takeoff(물량 산출)는 범위에서 제외한다.
 
-- 기술: C# / .NET 8, MuPDF.NET(PDF 엔진). 화면은 **웹앱**(React, 내 PC에서만 실행)과 기존 WPF 데스크톱 프로그램
+- 기술: C# / .NET 8, PDFium + PDFsharp(PDF 엔진, 자체 주석 작성기). 화면은 **웹앱**(React, 내 PC에서만 실행)과 기존 WPF 데스크톱 프로그램
 - **지금 주로 쓰는 것: 도면 비교 웹앱** — 원본과 리비전 PDF(또는 PNG·JPG·TIFF)를 열면 바뀐 글자는 하이라이트, 바뀐 그림은 구름 + △ 리비전 번호로 표시하고 PDF로 내려받는다. 투명 PNG 만들기(흰 배경 지우기) 포함.
 - 진행 상황: 0단계 엔진 검증, 1단계 화면 뼈대, 2단계 P0 대부분, **도면 비교 MVP(PDF)** 구현, **DWG/DXF 비교**(치수 포함, 비교 창 연결, DXF/DWG Cloud 내보내기) 구현. Windows 실행 확인 대기. 화면 시안: https://claude.ai/artifact/NRj4xhpQiv7qZ8ynkrACbw
 - 0단계 결과 → 결과는 [docs/engine-validation.md](docs/engine-validation.md)
@@ -11,7 +11,7 @@ Bluebeam Revu에 익숙한 흐름으로 쓰는 **Windows용 PDF 도면 검토 �
 ## 폴더 구조
 
 ```
-src/DrawingReview.Engine/      PDF 엔진 경계 + MuPDF 구현 (화면 없음)
+src/DrawingReview.Engine/      PDF 엔진 경계 + PDFium·PDFsharp 구현 (화면 없음)
 src/DrawingReview.App.Core/    화면 상태·로직 (WPF 비의존, 테스트 가능)
 src/DrawingReview.App/         WPF 프로그램 (Windows 전용)
 src/DrawingReview.Compare/     도면 비교 엔진 (OpenCV)
@@ -78,4 +78,4 @@ docs/                          설계·검증·기능 문서
 
 ## License
 
-GNU AGPL-3.0-or-later. See [LICENSE](LICENSE). Uses MuPDF (AGPL), OpenCvSharp (Apache-2.0) and ACadSharp (MIT).
+Proprietary — all rights reserved. See [LICENSE](LICENSE). Third-party components (PDFium BSD-3, PDFsharp 6.2 MIT, OpenCvSharp Apache-2.0, ACadSharp MIT, …) are listed in [docs/THIRD_PARTY.md](docs/THIRD_PARTY.md).

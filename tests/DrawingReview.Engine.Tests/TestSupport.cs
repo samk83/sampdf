@@ -1,6 +1,6 @@
 using DrawingReview.Engine.Documents;
 using DrawingReview.Engine.Geometry;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 
 namespace DrawingReview.Engine.Tests;
@@ -28,7 +28,7 @@ public sealed class TempDir : IDisposable
 
 public static class TestHelpers
 {
-    public static readonly MuPdfEngine PdfEngine = new();
+    public static readonly PdfiumEngine PdfEngine = new();
 
     /// <summary>저장 후 다시 열기: 실제 파일 왕복을 거친 문서를 돌려준다.</summary>
     public static IPdfDocument SaveAndReopen(IPdfDocument doc, TempDir dir, string name = "roundtrip.pdf")

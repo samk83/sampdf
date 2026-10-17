@@ -1,17 +1,31 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <!-- OpenCvSharp 분석기가 더 새 컴파일러를 요구한다는 경고. 분석기만 건너뛰며 기능에는 영향 없음 -->
+    <NoWarn>$(NoWarn);CS9057</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MuPDF.NET" Version="3.28.2.4" />
+    <!-- PDF 그리기·글자·검색: PDFium (BSD-3). bblanchon 빌드의 네이티브 라이브러리만 쓰고 호출은 직접 선언한다 (Pdfium/PdfiumNative.cs) -->
+    <PackageReference Include="bblanchon.PDFium.Win32" Version="157.0.8100" />
+    <!-- PDF 구조 읽기·쓰기(주석·저장·평탄화): PDFsharp 6.2.x (MIT). 6.5 이상은 AGPL로 바뀌었으므로 올리지 않는다 -->
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
+    <!-- 그림 파일(PNG·JPG·TIFF·BMP) 읽기 → PDF 변환 -->
+    <PackageReference Include="OpenCvSharp4" Version="4.13.0.20260627" />
+    <PackageReference Include="OpenCvSharp4.runtime.win" Version="4.13.0.20260627" />
+  </ItemGroup>
+
+  <!-- Windows가 아닌 곳(개발·검증용 Linux)에서 쓰는 네이티브 라이브러리 -->
+  <ItemGroup Condition="!$([MSBuild]::IsOSPlatform('Windows'))">
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="157.0.8100" />
+    <PackageReference Include="OpenCvSharp4.official.runtime.linux-x64" Version="4.13.0.20260627" />
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 한글 보정(MuPdfUtf8Fix) 상태를 테스트에서 확인한다 -->
+    <!-- 테스트에서 내부 부품(주석 쓰기·읽기 등)을 직접 검사한다 -->
     <InternalsVisibleTo Include="DrawingReview.Engine.Tests" />
   </ItemGroup>
 

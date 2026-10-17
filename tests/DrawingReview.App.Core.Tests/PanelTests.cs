@@ -4,7 +4,7 @@ using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App.Core.Tests;
 
@@ -13,7 +13,7 @@ public class PanelTests
     private static async Task<(MainViewModel Vm, DocumentViewModel Doc, TempDir Dir)> OpenAsync()
     {
         var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var doc = (await vm.OpenPathAsync(dir.WritePlanSet()))!;
         doc.Viewport.SetView(new Viewing.ViewSize(1200, 800));
         return (vm, doc, dir);
@@ -101,13 +101,13 @@ public class PanelTests
     public void Saved_tools_round_trip_through_settings()
     {
         using var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         vm.SavedTools.AddSetCommand.Execute(null);
         vm.SavedTools.SelectedSet!.Tools.Add(new SavedTool("Mine", ToolKind.Rectangle, MarkupStyle.Default with { LineWidth = 4 }, "S",
             Template: MarkupDraftData.From(new RectangleDraft(new PageRect(0, 0, 10, 10)))));
         var store = new SettingsStore(dir.File("s.json"));
         store.Save(vm.CaptureSettings());
-        var vm2 = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm2 = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         vm2.ApplySettings(store.Load());
         var mine = vm2.SavedTools.Sets.Last().Tools.Single();
         Assert.Equal(4, mine.Style.LineWidth);

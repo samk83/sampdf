@@ -1,6 +1,6 @@
 using DrawingReview.Compare;
 using DrawingReview.Compare.Model;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Xunit.Abstractions;
 using R = DrawingReview.TestData.ComparePairs.Revision;
@@ -10,7 +10,7 @@ namespace DrawingReview.Compare.Tests;
 /// <summary>그림 파일 비교, 지워진 선 층, 문서 전체(여러 페이지) 비교.</summary>
 public class DocumentAndImageCompareTests(ITestOutputHelper output) : IDisposable
 {
-    private static readonly MuPdfEngine Engine = new();
+    private static readonly PdfiumEngine Engine = new();
     private readonly string _dir = Directory.CreateTempSubdirectory("doccmp-").FullName;
 
     public void Dispose() => Directory.Delete(_dir, true);
@@ -24,21 +24,12 @@ public class DocumentAndImageCompareTests(ITestOutputHelper output) : IDisposabl
         return path;
     }
 
-    private static byte[] Pages(params byte[][] sheets)
-    {
-        using var doc = new MuPDF.NET.Document();
-        foreach (var s in sheets)
-        {
-            using var src = new MuPDF.NET.Document(stream: s, fileType: "pdf");
-            doc.InsertPdf(src);
-        }
-        return doc.Write();
-    }
+    private static byte[] Pages(params byte[][] sheets) => PdfTools.Merge(sheets);
 
     [Fact]
     public void Png_images_open_as_pdf_and_compare()
     {
-        Assert.True(MuPdfEngine.IsImageFile("a.PNG"));
+        Assert.True(PdfiumEngine.IsImageFile("a.PNG"));
         using var oldDoc = Engine.Open(Png("old.png"));
         using var newDoc = Engine.Open(Png("new.png", new R { AddLine = true, Note = "VERIFY CLEARANCE AT COLUMN" }));
         Assert.Equal(1, newDoc.PageCount);

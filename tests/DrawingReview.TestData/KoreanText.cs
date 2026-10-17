@@ -1,6 +1,7 @@
+using System.Globalization;
 using System.Text;
-using DrawingReview.Engine.MuPdf;
-using MuPDF.NET;
+using DrawingReview.Engine.Pdf;
+using PdfSharp.Pdf;
 
 namespace DrawingReview.TestData;
 
@@ -11,24 +12,13 @@ public static class KoreanText
 {
     /// <param name="x">회전 전 페이지 기준 왼쪽에서의 거리(pt).</param>
     /// <param name="baselineY">회전 전 페이지 기준 위에서 글자 기준선까지 거리(pt).</param>
-    public static void Insert(Document doc, int pageIndex, float x, float baselineY, string text, float fontSize)
+    public static void Insert(PdfDocument doc, int pageIndex, double x, double baselineY, string text, double fontSize)
     {
-        var page = doc[pageIndex];
-        int font = KoreanCidFont.GetOrCreate(doc);
-        KoreanCidFont.AddToPageResources(doc, page.Xref, font, "KR1");
-
-        var mediaHeight = page.MediaBox.Height;
-        var content = FormattableString.Invariant(
-            $"q BT /KR1 {fontSize} Tf 1 0 0 1 {x} {mediaHeight - baselineY} Tm <{KoreanCidFont.Hex(text)}> Tj ET Q");
-
-        int stream = doc.GetNewXref();
-        doc.UpdateObject(stream, "<<>>");
-        doc.UpdateStream(stream, Encoding.ASCII.GetBytes(content));
-
-        var (kind, value) = doc.XrefGetKey(page.Xref, "Contents");
-        var newContents = kind == "array"
-            ? value.TrimEnd().TrimEnd(']') + $" {stream} 0 R]"
-            : $"[{value} {stream} 0 R]";
-        doc.XrefSetKey(page.Xref, "Contents", newContents);
+        var page = doc.Pages[pageIndex];
+        KoreanCidFont.AddToPageResources(doc, page, KoreanCidFont.GetOrCreate(doc), "KR1");
+        var mediaHeight = page.Height.Point;
+        var content = string.Format(CultureInfo.InvariantCulture,
+            "q BT /KR1 {0:0.###} Tf 0 g 1 0 0 1 {1:0.###} {2:0.###} Tm <{3}> Tj ET Q\n", fontSize, x, mediaHeight - baselineY, KoreanCidFont.Hex(text));
+        page.Contents.AppendContent().CreateStream(Encoding.ASCII.GetBytes(content));
     }
 }

@@ -1,14 +1,14 @@
 # Stage 0 validation run
 
-- Engine: MuPDF.NET (MuPDF.NET 3.28.2.4)
-- Runtime: .NET 8.0.31, Ubuntu 24.04.5 LTS
-- Run at: 2026-10-12 07:45 +00:00
+- Engine: PDFium + PDFsharp (PDFsharp 6.2.4.0)
+- Runtime: .NET 8.0.32, Ubuntu 22.04.5 LTS
+- Run at: 2026-10-17 04:28 +00:00
 
 ## Files
 
-- `samples/virtual/plan-set.pdf` — 9.0 KB
-- `samples/virtual/dense-vector.pdf` — 167.9 KB
-- `validation/output/markup-roundtrip.pdf` — 66.3 KB
+- `samples/virtual/plan-set.pdf` — 13.4 KB
+- `samples/virtual/dense-vector.pdf` — 196.6 KB
+- `validation/output/markup-roundtrip.pdf` — 53.0 KB
 
 ## Markups after save → reopen
 
@@ -74,5 +74,5 @@
 
 | File | Open | Fit-to-screen render (1600px) | 400% tile render |
 |---|---|---|---|
-| plan-set.pdf | 0 ms | 41 ms | 38 ms |
-| dense-vector.pdf | 0 ms | 307 ms | 181 ms |
+| plan-set.pdf | 1 ms | 23 ms | 21 ms |
+| dense-vector.pdf | 0 ms | 218 ms | 68 ms |

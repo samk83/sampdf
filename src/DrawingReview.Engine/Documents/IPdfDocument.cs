@@ -5,7 +5,7 @@ namespace DrawingReview.Engine.Documents;
 
 /// <summary>
 /// PDF 엔진 교체 경계. UI와 검토 기능은 이 인터페이스만 사용하고,
-/// MuPDF 같은 특정 엔진의 타입은 이 경계 밖으로 나오지 않는다.
+/// PDFium·PDFsharp 같은 특정 엔진의 타입은 이 경계 밖으로 나오지 않는다.
 /// </summary>
 public interface IPdfEngine
 {
@@ -77,7 +77,8 @@ public interface IPdfDocument : IDisposable
     void ExportFlattened(string path);
 }
 
-public sealed record DocumentSecurityInfo(bool IsEncrypted, bool NeedsPassword, bool HasSignatures)
+/// <param name="EditProblem">보기는 되지만 편집(마크업·저장)은 할 수 없을 때 그 이유. null이면 편집 가능.</param>
+public sealed record DocumentSecurityInfo(bool IsEncrypted, bool NeedsPassword, bool HasSignatures, string? EditProblem = null)
 {
     /// <summary>사용자에게 보여줄 경고 문장 목록.</summary>
     public IReadOnlyList<string> Warnings()
@@ -86,6 +87,7 @@ public sealed record DocumentSecurityInfo(bool IsEncrypted, bool NeedsPassword, 
         if (NeedsPassword) list.Add("This PDF is password protected.");
         else if (IsEncrypted) list.Add("This PDF is encrypted; saving may remove or change its restrictions.");
         if (HasSignatures) list.Add("This PDF contains digital signatures; saving changes can invalidate them.");
+        if (EditProblem != null) list.Add("This PDF could not be parsed for editing; markups and saving are unavailable.");
         return list;
     }
 }

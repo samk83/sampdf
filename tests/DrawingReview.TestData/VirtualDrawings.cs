@@ -1,4 +1,5 @@
-using MuPDF.NET;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 
 namespace DrawingReview.TestData;
 
@@ -30,136 +31,135 @@ public static class VirtualDrawings
 
     public static byte[] CreatePlanSet()
     {
-        using var doc = new Document();
+        using var doc = new PdfDocument();
 
-        doc.NewPage(width: ArchDWidth, height: ArchDHeight);
+        PdfSketch.NewPage(doc, ArchDWidth, ArchDHeight);
         DrawFloorPlan(doc, PlanSetPages.FloorPlan, ArchDWidth, ArchDHeight, "A-101", "FIRST FLOOR PLAN / 1층 평면도");
 
-        doc.NewPage(width: ArchDHeight, height: ArchDWidth);
+        PdfSketch.NewPage(doc, ArchDHeight, ArchDWidth);
         DrawFloorPlan(doc, PlanSetPages.Rotated90, ArchDHeight, ArchDWidth, "A-102", "ROOF FRAMING PLAN / 지붕 구조 평면도");
-        doc[PlanSetPages.Rotated90].SetRotation(90);
+        doc.Pages[PlanSetPages.Rotated90].Rotate = 90;
 
-        doc.NewPage(width: A3Width, height: A3Height);
+        PdfSketch.NewPage(doc, A3Width, A3Height);
         DrawFloorPlan(doc, PlanSetPages.CroppedA3, A3Width, A3Height, "S-301", "SECTION DETAIL / 단면 상세");
-        doc[PlanSetPages.CroppedA3].SetCropBox(new Rect(60, 40, A3Width - 30, A3Height - 50));
+        // 왼쪽 위 기준 (60, 40) ~ (A3W-30, A3H-50) → PDF 좌표(왼쪽 아래 원점)
+        doc.Pages[PlanSetPages.CroppedA3].CropBox = new PdfRectangle(new XPoint(60, 50), new XPoint(A3Width - 30, A3Height - 40));
 
-        doc.NewPage(width: A4Width, height: A4Height);
+        PdfSketch.NewPage(doc, A4Width, A4Height);
         DrawSpecSheet(doc, PlanSetPages.KoreanSpec);
 
-        doc.NewPage(width: A3Width, height: A3Height);
+        PdfSketch.NewPage(doc, A3Width, A3Height);
         DrawFloorPlan(doc, PlanSetPages.Rotated180, A3Width, A3Height, "M-201", "MECHANICAL PLAN / 기계 평면도");
-        doc[PlanSetPages.Rotated180].SetRotation(180);
+        doc.Pages[PlanSetPages.Rotated180].Rotate = 180;
 
-        doc.NewPage(width: A3Height, height: A3Width);
+        PdfSketch.NewPage(doc, A3Height, A3Width);
         DrawFloorPlan(doc, PlanSetPages.Rotated270, A3Height, A3Width, "E-401", "ELECTRICAL PLAN / 전기 평면도");
-        doc[PlanSetPages.Rotated270].SetRotation(270);
+        doc.Pages[PlanSetPages.Rotated270].Rotate = 270;
 
         AddPreexistingItems(doc);
-        doc.SetToc(new List<Toc>
-        {
-            new() { Level = 1, Title = "Architectural", Page = 1 },
-            new() { Level = 2, Title = "A-101 First Floor Plan", Page = 1 },
-            new() { Level = 2, Title = "A-102 Roof Framing Plan", Page = 2 },
-            new() { Level = 1, Title = "Structural", Page = 3 },
-            new() { Level = 2, Title = "S-301 Section Detail", Page = 3 },
-            new() { Level = 1, Title = "General Notes / 일반 사항", Page = 4 },
-        });
-        return doc.Write(garbage: true, deflate: true);
+
+        var arch = doc.Outlines.Add("Architectural", doc.Pages[0], true);
+        arch.Outlines.Add("A-101 First Floor Plan", doc.Pages[0]);
+        arch.Outlines.Add("A-102 Roof Framing Plan", doc.Pages[1]);
+        var structural = doc.Outlines.Add("Structural", doc.Pages[2], true);
+        structural.Outlines.Add("S-301 Section Detail", doc.Pages[2]);
+        doc.Outlines.Add("General Notes / 일반 사항", doc.Pages[3]);
+        return PdfTools.ToBytes(doc);
     }
 
     /// <summary>성능 측정용: 선이 매우 많은 대형 도면 1장.</summary>
     public static byte[] CreateDenseVectorSheet(int gridDivisions = 160)
     {
-        using var doc = new Document();
+        using var doc = new PdfDocument();
         const float w = 42 * 72, h = 30 * 72; // ARCH E1 가로
-        doc.NewPage(width: w, height: h);
-        var page = doc[0];
-        var shape = page.NewShape();
+        var page = PdfSketch.NewPage(doc, w, h);
+        var shape = new PdfSketch(doc, page);
         var rnd = new Random(42);
         // 격자 + 셀마다 대각선 해치: (n+1)*2 + n*n*2 개 선
         for (int i = 0; i <= gridDivisions; i++)
         {
             float x = 50 + i * (w - 100) / gridDivisions, y = 50 + i * (h - 100) / gridDivisions;
-            shape.DrawLine(new Point(x, 50), new Point(x, h - 50));
-            shape.DrawLine(new Point(50, y), new Point(w - 50, y));
+            shape.DrawLine(x, 50, x, h - 50);
+            shape.DrawLine(50, y, w - 50, y);
         }
-        shape.Finish(color: [0, 0, 0], width: 0.3f);
+        shape.Finish([0, 0, 0], 0.3);
         float cw = (w - 100) / gridDivisions, ch = (h - 100) / gridDivisions;
         for (int i = 0; i < gridDivisions; i++)
             for (int j = 0; j < gridDivisions; j++)
             {
                 float x = 50 + i * cw, y = 50 + j * ch;
-                shape.DrawLine(new Point(x, y), new Point(x + cw, y + ch));
-                if (rnd.Next(3) == 0) shape.DrawLine(new Point(x + cw, y), new Point(x, y + ch));
+                shape.DrawLine(x, y, x + cw, y + ch);
+                if (rnd.Next(3) == 0) shape.DrawLine(x + cw, y, x, y + ch);
             }
-        shape.Finish(color: [0.2f, 0.2f, 0.6f], width: 0.15f);
-        shape.InsertText(new Point(80, h - 70), "DENSE VECTOR TEST SHEET", fontSize: 36);
+        shape.Finish([0.2, 0.2, 0.6], 0.15);
+        shape.InsertText(80, h - 70, "DENSE VECTOR TEST SHEET", 36);
         shape.Commit();
-        return doc.Write(garbage: true, deflate: true);
+        return PdfTools.ToBytes(doc);
     }
 
-    private static void DrawFloorPlan(Document doc, int pageIndex, float w, float h, string sheet, string title)
+    private static void DrawFloorPlan(PdfDocument doc, int pageIndex, float w, float h, string sheet, string title)
     {
-        var page = doc[pageIndex];
-        var s = page.NewShape();
+        var page = doc.Pages[pageIndex];
+        var s = new PdfSketch(doc, page);
         float m = Math.Min(w, h) * 0.03f;
 
         // 테두리
-        s.DrawRect(new Rect(m, m, w - m, h - m));
-        s.Finish(color: [0, 0, 0], width: 2, closePath: true);
+        s.DrawRect(m, m, w - m, h - m);
+        s.Finish([0, 0, 0], 2);
 
         // 그리드 (A~F, 1~8) — 점선
         float left = m * 3, top = m * 3, right = w - m * 3, bottom = h - m * 7;
         for (int i = 0; i < 8; i++)
         {
             float x = left + i * (right - left) / 7;
-            s.DrawLine(new Point(x, top), new Point(x, bottom));
+            s.DrawLine(x, top, x, bottom);
         }
         for (int j = 0; j < 6; j++)
         {
             float y = top + j * (bottom - top) / 5;
-            s.DrawLine(new Point(left, y), new Point(right, y));
+            s.DrawLine(left, y, right, y);
         }
-        s.Finish(color: [0.5f, 0.5f, 0.5f], width: 0.5f, dashes: "[6 3] 0");
+        s.Finish([0.5, 0.5, 0.5], 0.5, dashes: "[6 3] 0");
 
         // 그리드 버블
         float r = m * 0.6f;
         for (int i = 0; i < 8; i++)
         {
             float x = left + i * (right - left) / 7;
-            s.DrawCircle(new Point(x, top - r * 1.5f), r);
+            s.DrawCircle(x, top - r * 1.5f, r);
         }
-        s.Finish(color: [0, 0, 0], width: 1);
+        s.Finish([0, 0, 0], 1);
         for (int i = 0; i < 8; i++)
         {
             float x = left + i * (right - left) / 7;
-            s.InsertText(new Point(x - r * 0.35f, top - r * 1.2f), (i + 1).ToString(), fontSize: r);
+            s.InsertText(x - r * 0.35f, top - r * 1.2f, (i + 1).ToString(), r);
         }
 
         // 벽체 (두꺼운 선)
-        s.DrawRect(new Rect(left + 20, top + 20, right - 20, bottom - 20));
-        s.DrawLine(new Point((left + right) / 2, top + 20), new Point((left + right) / 2, bottom - 20));
-        s.DrawLine(new Point(left + 20, (top + bottom) / 2), new Point((left + right) / 2, (top + bottom) / 2));
-        s.Finish(color: [0, 0, 0], width: 4, closePath: true);
+        s.DrawRect(left + 20, top + 20, right - 20, bottom - 20);
+        s.DrawLine((left + right) / 2, top + 20, (left + right) / 2, bottom - 20);
+        s.DrawLine(left + 20, (top + bottom) / 2, (left + right) / 2, (top + bottom) / 2);
+        s.Finish([0, 0, 0], 4);
 
         // 트러스·보 표기 (검색 테스트용 영문 키워드)
-        s.InsertText(new Point(left + 40, top + 60), "NEW TRUSS T-1 @ 600 O.C.", fontSize: m * 0.5f);
-        s.InsertText(new Point(left + 40, top + 60 + m), "EXISTING BEAM W12x26", fontSize: m * 0.5f);
+        s.InsertText(left + 40, top + 60, "NEW TRUSS T-1 @ 600 O.C.", m * 0.5f);
+        s.InsertText(left + 40, top + 60 + m, "EXISTING BEAM W12x26", m * 0.5f);
 
-        // 제목란 (오른쪽 아래)
-        var tb = new Rect(w - m - Math.Min(w * 0.3f, 900), h - m * 6, w - m, h - m);
-        s.DrawRect(tb);
-        s.DrawLine(new Point(tb.X0, tb.Y0 + tb.Height / 2), new Point(tb.X1, tb.Y0 + tb.Height / 2));
-        s.Finish(color: [0, 0, 0], width: 1.5f, closePath: true);
-        s.InsertText(new Point(tb.X0 + 10, tb.Y0 + tb.Height * 0.35f), "PROJECT: SAMPLE OFFICE BUILDING", fontSize: m * 0.45f);
-        s.InsertText(new Point(tb.X0 + 10, tb.Y0 + tb.Height * 0.85f), $"SHEET {sheet}", fontSize: m * 0.6f);
+        // 제목란 (오른쁜 아래)
+        double tbX0 = w - m - Math.Min(w * 0.3f, 900), tbY0 = h - m * 6, tbX1 = w - m, tbY1 = h - m;
+        double tbW = tbX1 - tbX0, tbH = tbY1 - tbY0;
+        s.DrawRect(tbX0, tbY0, tbX1, tbY1);
+        s.DrawLine(tbX0, tbY0 + tbH / 2, tbX1, tbY0 + tbH / 2);
+        s.Finish([0, 0, 0], 1.5);
+        s.InsertText(tbX0 + 10, tbY0 + tbH * 0.35, "PROJECT: SAMPLE OFFICE BUILDING", m * 0.45f);
+        s.InsertText(tbX0 + 10, tbY0 + tbH * 0.85, $"SHEET {sheet}", m * 0.6f);
         s.Commit();
 
         // 한글 제목은 CJK 글꼴 참조(비포함)로 넣는다: 파일 크기를 작게 유지한다.
-        KoreanText.Insert(doc, pageIndex, tb.X0 + tb.Width * 0.45f, tb.Y0 + tb.Height * 0.85f, title, m * 0.4f);
+        KoreanText.Insert(doc, pageIndex, tbX0 + tbW * 0.45, tbY0 + tbH * 0.85, title, m * 0.4f);
     }
 
-    private static void DrawSpecSheet(Document doc, int pageIndex)
+    private static void DrawSpecSheet(PdfDocument doc, int pageIndex)
     {
         KoreanText.Insert(doc, pageIndex, 50, 70, "GENERAL NOTES / 일반 사항", 18);
         string[] lines =
@@ -174,28 +174,61 @@ public static class VirtualDrawings
             KoreanText.Insert(doc, pageIndex, 50, 120 + i * 24, lines[i], 11);
     }
 
-    private static void AddPreexistingItems(Document doc)
+    private static void AddPreexistingItems(PdfDocument doc)
     {
-        // 다른 프로그램이 남긴 메모 주석이 있다고 가정. 이 앱이 저장해도 지워지면 안 된다.
-        var plan = doc[PlanSetPages.FloorPlan];
-        var note = plan.AddTextAnnot(new Point(300, 300), "Existing reviewer note — keep me.");
-        note.SetInfo(info: new AnnotInfo { Content = "Existing reviewer note — keep me.", Title = "Other Reviewer", Subject = "Existing Note" });
-        note.Update();
+        // 다른 프로그램이 남긴 메모 주석(+ 말풍선 창)이 있다고 가정. 이 앱이 저장해도 지워지면 안 된다.
+        var plan = doc.Pages[PlanSetPages.FloorPlan];
+        var note = Annot(doc, plan, "/Text", 300, ArchDHeight - 320, 320, ArchDHeight - 300);
+        note.Elements.SetString("/Contents", "Existing reviewer note — keep me.");
+        note.Elements.SetString("/T", "Other Reviewer");
+        note.Elements.SetString("/Subj", "Existing Note");
+        note.Elements.SetName("/Name", "/Note");
+        var popup = Annot(doc, plan, "/Popup", 320, ArchDHeight - 420, 500, ArchDHeight - 300);
+        popup.Elements.SetReference("/Parent", note);
+        popup.Elements.SetBoolean("/Open", false);
+        note.Elements.SetReference("/Popup", popup);
 
-        plan.InsertLink(new LinkInfo
-        {
-            Kind = LinkType.LINK_URI,
-            From = new Rect(100, ArchDHeight - 140, 400, ArchDHeight - 110),
-            Uri = "https://example.com/project-spec",
-        });
+        var uri = Annot(doc, plan, "/Link", 100, 110, 400, 140);
+        var action = new PdfDictionary(doc);
+        action.Elements.SetName("/S", "/URI");
+        action.Elements.SetString("/URI", "https://example.com/project-spec");
+        uri.Elements["/A"] = action;
+        uri.Elements["/Border"] = Numbers(doc, 0, 0, 0);
 
-        var spec = doc[PlanSetPages.KoreanSpec];
-        spec.InsertLink(new LinkInfo
-        {
-            Kind = LinkType.LINK_GOTO,
-            From = new Rect(50, 195, 400, 215),
-            Page = PlanSetPages.FloorPlan,
-            To = new Point(0, 0),
-        });
+        var spec = doc.Pages[PlanSetPages.KoreanSpec];
+        var goTo = Annot(doc, spec, "/Link", 50, A4Height - 215, 400, A4Height - 195);
+        var dest = new PdfArray(doc);
+        dest.Elements.Add(plan.Reference!);
+        dest.Elements.Add(new PdfName("/XYZ"));
+        dest.Elements.Add(new PdfInteger(0));
+        dest.Elements.Add(new PdfReal(ArchDHeight));
+        dest.Elements.Add(new PdfInteger(0));
+        var goToAction = new PdfDictionary(doc);
+        goToAction.Elements.SetName("/S", "/GoTo");
+        goToAction.Elements["/D"] = dest;
+        goTo.Elements["/A"] = goToAction;
+        goTo.Elements["/Border"] = Numbers(doc, 0, 0, 0);
+    }
+
+    /// <summary>주석 사전을 만들어 페이지 /Annots에 넣는다. 사각형은 PDF 좌표(왼쪽 아래 원점).</summary>
+    private static PdfDictionary Annot(PdfDocument doc, PdfPage page, string subtype, double x0, double y0, double x1, double y1)
+    {
+        var annot = new PdfDictionary(doc);
+        annot.Elements.SetName("/Type", "/Annot");
+        annot.Elements.SetName("/Subtype", subtype);
+        annot.Elements["/Rect"] = Numbers(doc, x0, y0, x1, y1);
+        annot.Elements.SetInteger("/F", 4);
+        annot.Elements.SetReference("/P", page);
+        doc.Internals.AddObject(annot);
+        if (!page.Elements.ContainsKey("/Annots")) page.Elements["/Annots"] = new PdfArray(doc);
+        ((PdfArray)page.Elements["/Annots"]!).Elements.Add(annot.Reference!);
+        return annot;
+    }
+
+    private static PdfArray Numbers(PdfDocument doc, params double[] values)
+    {
+        var array = new PdfArray(doc);
+        foreach (var v in values) array.Elements.Add(new PdfReal(v));
+        return array;
     }
 }

@@ -1,7 +1,7 @@
 using DrawingReview.Compare;
 using DrawingReview.Compare.Model;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Xunit.Abstractions;
 using R = DrawingReview.TestData.ComparePairs.Revision;
@@ -11,7 +11,7 @@ namespace DrawingReview.Compare.Tests;
 /// <summary>글자 변경 → 하이라이트, 그림 변경 → Cloud + △ 리비전 번호.</summary>
 public class RevisionMarksTests(ITestOutputHelper output)
 {
-    private static readonly MuPdfEngine Engine = new();
+    private static readonly PdfiumEngine Engine = new();
 
     private CompareResult Run(R revision)
     {
@@ -95,7 +95,7 @@ public class RevisionSamplePairTests(ITestOutputHelper output)
     [Fact] // samples/compare 쌍과 같은 개정: 글자 2곳(하이라이트), 그림 2곳(Cloud)
     public void Sample_pair_has_two_text_and_two_graphic_changes()
     {
-        var engine = new MuPdfEngine();
+        var engine = new PdfiumEngine();
         using var oldDoc = engine.Open(ComparePairs.Sheet());
         using var newDoc = engine.Open(ComparePairs.Sheet(new R { Note = "VERIFY CLEARANCE AT COLUMN", Dimension = "3500", AddLine = true, RemoveBeam = true }));
         var result = PageComparer.Compare(PageSource.From(oldDoc, 0), PageSource.From(newDoc, 0));

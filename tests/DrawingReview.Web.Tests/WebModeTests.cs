@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using DrawingReview.Web.Api;
 using DrawingReview.Web.Services;
@@ -94,7 +94,7 @@ public class WebModeTests(WebModeTests.WebApp factory) : IClassFixture<WebModeTe
     public void Idle_files_are_removed_and_used_files_stay()
     {
         var time = new FakeTime(new DateTimeOffset(2026, 10, 17, 0, 0, 0, TimeSpan.Zero));
-        using var store = new DocumentStore(new MuPdfEngine(), time);
+        using var store = new DocumentStore(new PdfiumEngine(), time);
         var old = store.Add("old.pdf", ComparePairs.Sheet(), "u1");
         var used = store.Add("used.pdf", ComparePairs.Sheet(), "u1");
         time.Now += TimeSpan.FromMinutes(20);
@@ -108,7 +108,7 @@ public class WebModeTests(WebModeTests.WebApp factory) : IClassFixture<WebModeTe
     [Fact]
     public void Each_owner_has_their_own_file_limit()
     {
-        using var store = new DocumentStore(new MuPdfEngine(), TimeProvider.System);
+        using var store = new DocumentStore(new PdfiumEngine(), TimeProvider.System);
         var bytes = ComparePairs.Sheet();
         var mine = store.Add("mine.pdf", bytes, "u1");
         for (int i = 0; i < DocumentStore.MaxDocuments + 2; i++) store.Add($"x{i}.pdf", bytes, "u2");
@@ -119,7 +119,7 @@ public class WebModeTests(WebModeTests.WebApp factory) : IClassFixture<WebModeTe
     [Fact]
     public async Task A_request_waiting_for_a_closed_file_ends_instead_of_hanging()
     {
-        using var store = new DocumentStore(new MuPdfEngine(), TimeProvider.System);
+        using var store = new DocumentStore(new PdfiumEngine(), TimeProvider.System);
         var doc = store.Add("a.pdf", ComparePairs.Sheet(), "u1");
         Assert.True(await doc.EnterAsync());                 // 다른 요청이 쓰는 중
         var waiting = doc.EnterAsync();                        // 지우기 전부터 기다리던 요청
@@ -137,7 +137,7 @@ public class WebModeTests(WebModeTests.WebApp factory) : IClassFixture<WebModeTe
     public void A_full_server_refuses_new_files_instead_of_closing_other_peoples_files()
     {
         var bytes = ComparePairs.Sheet();
-        using var store = new DocumentStore(new MuPdfEngine(), TimeProvider.System) { MaxTotalBytes = bytes.Length * 2L };
+        using var store = new DocumentStore(new PdfiumEngine(), TimeProvider.System) { MaxTotalBytes = bytes.Length * 2L };
         var mine = store.Add("a.pdf", bytes, "u1");
         store.Add("b.pdf", bytes, "u2");
         Assert.Throws<ServerFullException>(() => store.Add("c.pdf", bytes, "u3"));
@@ -162,7 +162,7 @@ public class WebModeTests(WebModeTests.WebApp factory) : IClassFixture<WebModeTe
     public async Task Looking_at_a_comparison_keeps_its_files()
     {
         var time = new FakeTime(DateTimeOffset.UtcNow);
-        using var docs = new DocumentStore(new MuPdfEngine(), time);
+        using var docs = new DocumentStore(new PdfiumEngine(), time);
         var compares = new CompareStore(docs, new HostingOptions { Mode = HostingMode.Web }, time);
         var a = docs.Add("a.pdf", ComparePairs.Sheet(), "u1");
         var b = docs.Add("b.pdf", ComparePairs.Sheet(new ComparePairs.Revision { AddLine = true }), "u1");

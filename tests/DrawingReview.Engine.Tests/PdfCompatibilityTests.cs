@@ -1,7 +1,7 @@
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
 using DrawingReview.TestData;
-using MuPDF.NET;
+using PdfSharp.Pdf;
 using static DrawingReview.Engine.Tests.TestHelpers;
 using Pages = DrawingReview.TestData.VirtualDrawings.PlanSetPages;
 
@@ -23,11 +23,12 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
         return path;
     }
 
-    private static string RawAnnot(Document raw, string subtype)
+    /// <summary>PDF 원본 사전을 문자열("/Key value" 형태)로 읽어 표준 키가 있는지 확인한다.</summary>
+    private static string RawAnnot(PdfDocument raw, string subtype)
     {
-        foreach (var x in raw.GetPageAnnotXrefs(Pages.FloorPlan))
+        foreach (var annot in PdfTools.Annotations(raw, Pages.FloorPlan))
         {
-            var obj = raw.XrefObject(x.xref);
+            var obj = PdfTools.Describe(annot);
             if (obj.Contains($"/Subtype /{subtype}")) return obj;
         }
         throw new Xunit.Sdk.XunitException($"No /{subtype} annotation found");
@@ -40,10 +41,10 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
         var path = SaveWith(dir,
             new TextBoxDraft(Box, "TEXT"), CloudDraft.FromRect(Box), new InkDraft([[new(1, 1), new(50, 50)]]),
             new LineDraft(new(1, 1), new(90, 90), true), new HighlightDraft(Box), new EllipseDraft(Box));
-        using var raw = new Document(path);
-        foreach (var x in raw.GetPageAnnotXrefs(Pages.FloorPlan))
+        using var raw = PdfTools.Open(path);
+        foreach (var annot in PdfTools.Annotations(raw, Pages.FloorPlan))
         {
-            var obj = raw.XrefObject(x.xref);
+            var obj = PdfTools.Describe(annot);
             if (obj.Contains("/Subtype /Link") || obj.Contains("/Subtype /Text") || obj.Contains("/Subtype /Popup")) continue; // 기존 항목·말풍선 창
             Assert.Contains("/AP", obj);
         }
@@ -53,7 +54,7 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     public void Cloud_is_a_polygon_with_cloudy_border_effect()
     {
         using var dir = new TempDir();
-        using var raw = new Document(SaveWith(dir, CloudDraft.FromRect(Box)));
+        using var raw = PdfTools.Open(SaveWith(dir, CloudDraft.FromRect(Box)));
         var obj = RawAnnot(raw, "Polygon");
         Assert.Contains("/BE", obj);
         Assert.Matches(@"/S\s*/C", obj);
@@ -63,7 +64,7 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     public void Callout_uses_standard_freetext_callout_keys()
     {
         using var dir = new TempDir();
-        using var raw = new Document(SaveWith(dir, new CalloutDraft(Box, "CHECK", new PagePoint(300, 500))));
+        using var raw = PdfTools.Open(SaveWith(dir, new CalloutDraft(Box, "CHECK", new PagePoint(300, 500))));
         var obj = RawAnnot(raw, "FreeText");
         Assert.Contains("/IT /FreeTextCallout", obj);
         Assert.Contains("/CL", obj);
@@ -73,7 +74,7 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     public void Plain_text_box_has_no_callout_line()
     {
         using var dir = new TempDir();
-        using var raw = new Document(SaveWith(dir, new TextBoxDraft(Box, "TEXT")));
+        using var raw = PdfTools.Open(SaveWith(dir, new TextBoxDraft(Box, "TEXT")));
         var obj = RawAnnot(raw, "FreeText");
         Assert.DoesNotContain("/CL", obj);
         Assert.DoesNotContain("/FreeTextCallout", obj);
@@ -83,7 +84,7 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     public void Area_highlight_is_translucent_multiply_square()
     {
         using var dir = new TempDir();
-        using var raw = new Document(SaveWith(dir, new HighlightDraft(Box) { Style = MarkupStyle.Highlighter }));
+        using var raw = PdfTools.Open(SaveWith(dir, new HighlightDraft(Box) { Style = MarkupStyle.Highlighter }));
         var obj = RawAnnot(raw, "Square");
         Assert.Contains("/DRKind /Highlight", obj);
         Assert.Matches(@"/CA 0?\.4", obj);
@@ -94,7 +95,7 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     public void Arrow_has_closed_arrow_line_ending()
     {
         using var dir = new TempDir();
-        using var raw = new Document(SaveWith(dir, new LineDraft(new(10, 10), new(200, 200), ArrowAtEnd: true)));
+        using var raw = PdfTools.Open(SaveWith(dir, new LineDraft(new(10, 10), new(200, 200), ArrowAtEnd: true)));
         Assert.Contains("/ClosedArrow", RawAnnot(raw, "Line"));
     }
 
@@ -104,12 +105,13 @@ public class PdfCompatibilityTests(PlanSetFixture fixture) : IClassFixture<PlanS
     {
         using var dir = new TempDir();
         var path = SaveWith(dir, new RectangleDraft(Box));
-        using var raw = new Document(path);
+        using var raw = PdfTools.Open(path);
 
-        var floorLinks = raw[Pages.FloorPlan].GetLinks();
-        Assert.Contains(floorLinks, l => l.Uri == "https://example.com/project-spec");
-        var specLinks = raw[Pages.KoreanSpec].GetLinks();
-        Assert.Contains(specLinks, l => l.Kind == LinkType.LINK_GOTO && l.Page == Pages.FloorPlan);
+        var floorLinks = PdfTools.Annotations(raw, Pages.FloorPlan).Select(PdfTools.Describe).Where(a => a.Contains("/Subtype /Link"));
+        Assert.Contains(floorLinks, l => l.Contains("/URI (https://example.com/project-spec)"));
+        var specLinks = PdfTools.Annotations(raw, Pages.KoreanSpec).Select(PdfTools.Describe).Where(a => a.Contains("/Subtype /Link"));
+        var floorPageRef = $"{raw.Pages[Pages.FloorPlan].Reference!.ObjectNumber} 0 R";
+        Assert.Contains(specLinks, l => l.Contains("/S /GoTo") && l.Contains(floorPageRef));
 
         using var doc = PdfEngine.Open(path);
         var note = Assert.Single(doc.GetMarkups(Pages.FloorPlan), m => m.PdfSubtype == "Text");

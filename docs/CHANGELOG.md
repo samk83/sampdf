@@ -2,7 +2,17 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
-## 2026-10-17 오픈소스 공개 준비
+## 2026-10-17 — 엔진 교체: MuPDF.NET → PDFium + PDFsharp (오픈소스 공개 철회)
+
+**무엇을**: PDF 엔진을 **PDFium**(크롬의 PDF 엔진, BSD, `bblanchon.PDFium.*` 바이너리 + 자체 P/Invoke `Pdfium/PdfiumNative.cs`)과 **PDFsharp 6.2.4**(MIT, PDF 객체 편집)로 바꾸고, 주석 작성·외형(/AP)·평탄화·벡터 PDF·그림→PDF를 **직접 구현**(`src/DrawingReview.Engine/Pdf/*`). `MuPdf/*`와 `MuPdfUtf8Fix` 삭제. 저장은 **증분 저장**(원본 바이트 뒤에 바뀐 객체만 덧붙임, xref 표/스트림 모두 지원) — PDFsharp가 Save를 한 번만 허용하는 제약을 피하고 원본 구조(전자서명 포함)를 보존. 암호 문서는 PDFium으로 암호를 푼 사본을 편집하고 저장할 때 같은 암호(AES-256)를 다시 건다. 한글 글상자는 Adobe-Korea1 CID 글꼴 참조(비포함), 영문은 Helvetica. 세로로 쓴 글자(회전 페이지)도 단어로 읽음. 그림(PNG·JPG·TIFF·BMP)은 OpenCvSharp로 디코딩해 PDF로(JPEG는 원본 그대로 넣음, DPI는 파일 값·없으면 96). 가상 도면 생성기(TestData)도 PDFsharp로 다시 씀. `LICENSE`를 All rights reserved로, 웹 첫 화면의 소스 코드 링크 제거, `docs/THIRD_PARTY.md` 갱신. Docker 이미지에 `fonts-nanum`(비포함 한글 글꼴 대체).
+
+**왜**: Owner가 처음에는 오픈소스 공개로 결정했으나, AGPL 없이 직접 만들 수 있는지 확인한 뒤 **코드 비공개 + 무료 부품**으로 방향을 바꿈 (`docs/DECISIONS.md`). PDFsharp는 6.5부터 AGPL이라 **6.2.4에 고정**.
+
+**확인**: Linux .NET 테스트 **294개 통과**(엔진 125·App.Core 94·비교 31·CAD 29·웹 15; 새 엔진 테스트 6개 포함: 증분 저장이 원본 바이트 보존, 편집·그리기·저장 반복, 암호 문서 편집 후 같은 암호로 열림, PNG·JPEG 96dpi, 세로 글자, ID 유지·잠금). 미리보기 그림으로 구름·지시선·한글 글상자·화살표·타원·펜·하이라이트 모양 확인. 속도(EngineSpike, Linux): plan-set 화면 맞춤 그리기 23ms, dense-vector 218ms(MuPDF 때 약 300ms). **Windows 실행은 Owner 확인 필요** (pdfium.dll은 `runtimes/win-x64`에서 자동 복사됨).
+
+**못 한 것 / 참고**: Acrobat·Bluebeam에서 새 외형 표시 확인은 Owner. 소유자 암호만 걸린(사용자 암호 없는) PDF는 편집 후 저장하면 암호가 풀린 채 저장된다(열 때 암호를 몰라 다시 걸 수 없음). `w0/artifex-license-email.md`는 더 이상 필요 없음.
+
+## 2026-10-17 오픈소스 공개 준비 (→ 같은 날 철회, 위 항목)
 - `LICENSE` 추가 (GNU AGPL-3.0-or-later, MuPDF 조건에 맞춤).
 - 웹 버전 첫 화면 개인정보 안내 옆에 소스 코드 링크 (AGPL 13조: 웹으로 쓰는 사람에게 소스 제공).
 - 저장소 이력 점검: 키·암호·인증서 파일 없음.

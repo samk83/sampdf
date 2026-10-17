@@ -7,7 +7,8 @@
 > **2026-10-16 갱신 — U2 완료** (명령 시스템, 리뷰어 지적 반영까지, 브랜치 `claude/project-thread-5mv5zs`, `docs/CHANGELOG.md` 맨 위). 다음은 **U3 비교 탭 옮기기**. Owner Windows 확인 요청: 새 화면 실행, `#keytest` 키 시험, 한글 상태로 명령 치기, Ctrl+9.
 > **2026-10-16 갱신 — U3 완료** (비교 탭 새 화면, 리뷰어 지적 반영, `docs/CHANGELOG.md` 맨 위). 다음은 **U4 투명 PNG 탭 옮기기**. Owner Windows 확인 요청: 실제 PDF 두 장으로 비교(나란히·겹쳐 보기·NEXT·REVIEWED·Delete·Ctrl+Z·Export PDF·List CSV).
 > **2026-10-17 갱신 — PRD 반영 회의 결정** (`docs/DECISIONS.md` 2026-10-17, 설계서 11장). U4 대신 **P0 플레이그라운드** 진행 → **P0 완료** (브랜치 `claude/project-thread-sg2445`, CHANGELOG 맨 위). 다음은 W0 웹 기반(서버 비용 → Owner 승인) 또는 Drawing Compare 웹 출시 준비.
-> **2026-10-17 갱신 — W0 돈 안 드는 부분 완료** (웹 모드·Docker 이미지·개인정보 안내, CHANGELOG 맨 위). Owner 답 기다림: 호스팅 비용 승인(추천 Fly.io 도쿄, 프로젝트 파일 `w0/hosting-cost.md`), MuPDF 문의 메일 보내기(`w0/artifex-license-email.md`). 승인 나면 Fly.io 배포 → Drawing Compare 웹 출시.
+> **2026-10-17 갱신 — 엔진 교체 완료**: MuPDF.NET(AGPL) → PDFium + PDFsharp 6.2.4 + 자체 주석 작성기 (CHANGELOG 맨 위, DECISIONS). 저장소 비공개 유지, 오픈소스 공개 철회. Owner 할 일: **Windows에서 `dotnet test`와 `run-web.cmd` 실행 확인**, Acrobat/Bluebeam으로 `validation/output/markup-roundtrip.pdf` 열어 보기. 다음은 호스팅 승인 후 웹 출시.
+> **2026-10-17 갱신 — W0 돈 안 드는 부분 완료** (웹 모드·Docker 이미지·개인정보 안내, CHANGELOG 맨 위). Owner 답 기다림: 호스팅 비용 승인(추천 Fly.io 도쿄, 프로젝트 파일 `w0/hosting-cost.md`) (MuPDF 문의 메일은 엔진 교체로 불필요). 승인 나면 Fly.io 배포 → Drawing Compare 웹 출시.
 > **온라인 미리보기**: https://claude.ai/artifact/NZfSGkzc8ZF8jHTogVjHWv (Owner 비공개). 개발 단위가 끝날 때마다 같은 링크로 갱신: `cd web && VITE_PREVIEW=1 npm run build:preview` → `preview-dist/`를 아티팩트로 올림(같은 URL을 `url`로). 비교는 서버가 없어 안 됨.
 > 위험 시험 R1은 Owner의 실제 CAD PDF 1~2장이 필요하다. 아래 "시작 프롬프트"와 "설계에서 정할 것"은 설계 시작 때의 기록이다.
 
@@ -39,7 +40,7 @@ samk83/sampdf 저장소의 claude/project-thread-5mv5zs 브랜치에서 이어�
 ```
 
 ## 지금 상태 (2026-10-16)
-- **엔진(C#)**: PDF 열기·그리기(MuPDF.NET), 비교(OpenCvSharp, 글자/그림 구분), 구름·△·하이라이트를 PDF 주석으로 저장. Windows 한글 깨짐 수정 완료. 테스트 .NET 287개 Linux 통과.
+- **엔진(C#)**: PDF 열기·그리기(PDFium), 주석·저장(PDFsharp 6.2.4 + 자체 작성기, 증분 저장), 비교(OpenCvSharp, 글자/그림 구분), 구름·△·하이라이트를 PDF 주석으로 저장. 테스트 .NET 294개 Linux 통과. Windows 재확인 필요.
 - **웹앱(첫 버전)**: ASP.NET Core 서버(127.0.0.1:5180) + React 화면. 비교(나란히·겹쳐 보기·같이 이동·표시 수정·PDF 내려받기)와 투명 PNG가 동작. Owner가 Windows에서 실행 확인(최근 피드백 반영분은 Windows 재확인 전). 화면은 **확정 전 디자인**이라 다시 맞춰야 한다.
 - **데스크톱(WPF)**: 마크업 작업 공간이 있으나 유지만 한다. 새 개발은 웹.
 - **시안 확정**: A 배치 + 포커스 모드(F11) + S1 Slate 스킨, 영어 기본. `design/screens/index.html`.
@@ -47,7 +48,7 @@ samk83/sampdf 저장소의 claude/project-thread-5mv5zs 브랜치에서 이어�
 ## 확정된 큰 결정 (자세한 것은 docs/DECISIONS.md)
 - 비교·검토 두 모드 모두 **오토캐드식 명령창**: 모든 메뉴를 명령으로 부름, 별칭(L, C, REC, RC, H, T, M, CO, E, LA, DI…), 좌표 입력(`100,200`, `@500<90`), Enter 반복·Esc 취소. 단축키는 오토캐드 방식으로 통일.
 - **작도 1단계**: 선·폴리선·원·사각형·리비전 구름·글자·이동·복사·지우기, 내 레이어, 직교·격자, 내가 그린 것에 오스냅, 해칭(경계 그리기, 무늬 5개).
-- **작도 2단계(나중)**: PDF 도면 선에 오스냅, 안쪽 클릭 해칭, PDF 원래 레이어 켜고 끄기, 축척 맞추기·거리 재기. MuPDF.NET에 `GetDrawings`·`GetOcgs`/`SetLayer`·선/원/폴리선 주석 API가 있는 것은 확인했지만 **실제 도면으로 시험하지 않았다**.
+- **작도 2단계(나중)**: PDF 도면 선에 오스냅, 안쪽 클릭 해칭, PDF 원래 레이어 켜고 끄기, 축척 맞추기·거리 재기. 엔진이 PDFium으로 바뀌어 선 추출은 PDFium 페이지 객체 API(`FPDFPage_CountObjects`/`FPDFPath_*`)나 PDFsharp 내용 스트림 파싱으로 다시 설계해야 한다. **아직 시험하지 않았다**.
 - 그린 것은 **PDF 주석(편집 가능)**으로 저장, 녹여 넣기는 내보낼 때 선택.
 - 도면은 CAD에서 뽑은 PDF가 기본.
 - **기본 언어 영어**, 다국어(한국어 등) 적용 예정. 명령 이름은 모든 언어에서 영어.

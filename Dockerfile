@@ -23,10 +23,10 @@ RUN dotnet publish src/DrawingReview.Web -c Release -o /app \
  && rm -rf /app/wwwroot
 COPY --from=web /repo/web-dist /app/wwwroot
 
-# 3) 실행 이미지: OpenCV가 쓰는 시스템 부품만 더한다
+# 3) 실행 이미지: OpenCV가 쓰는 시스템 부품 + 한글 글꼴(fonts-nanum: PDF에 글꼴이 안 들어 있는 한글을 PDFium이 그릴 때 쓴다)
 FROM ${RUNTIME_BASE}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      libgtk-3-0 libfreetype6 libharfbuzz0b libdrm2 libx11-6 libatomic1 \
+      libgtk-3-0 libfreetype6 libharfbuzz0b libdrm2 libx11-6 libatomic1 fonts-nanum \
  && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=server /app ./

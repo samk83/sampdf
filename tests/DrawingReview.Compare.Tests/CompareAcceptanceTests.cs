@@ -1,7 +1,7 @@
 using DrawingReview.Compare;
 using DrawingReview.Compare.Model;
 using DrawingReview.Engine.Geometry;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Xunit.Abstractions;
 using R = DrawingReview.TestData.ComparePairs.Revision;
@@ -11,7 +11,7 @@ namespace DrawingReview.Compare.Tests;
 /// <summary>Drawing Difference Checker 기획서 12장 검수 조건.</summary>
 public class CompareAcceptanceTests(ITestOutputHelper output)
 {
-    private static readonly MuPdfEngine Engine = new();
+    private static readonly PdfiumEngine Engine = new();
 
     private CompareResult Run(byte[] oldPdf, byte[] newPdf, CompareSettings? settings = null, AlignmentResult? alignment = null)
     {

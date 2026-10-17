@@ -1,7 +1,7 @@
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App.Core.Tests;
 
@@ -11,7 +11,7 @@ public class ReviewListTests
     {
         var dir = new TempDir();
         var dialogs = new FakeDialogs();
-        var vm = new MainViewModel(new MuPdfEngine(), dialogs);
+        var vm = new MainViewModel(new PdfiumEngine(), dialogs);
         var doc = (await vm.OpenPathAsync(dir.WritePlanSet()))!;
         await doc.AddMarkupAsync(0, new RectangleDraft(new PageRect(500, 500, 600, 600)) { Subject = "Structural", Comment = "check beam", Author = "Sam" });
         var b = await doc.AddMarkupAsync(0, new CloudDraft([new(100, 100), new(200, 100), new(200, 200)], 2) { Subject = "Coordination", Comment = "duct, beam", Author = "Kim" });

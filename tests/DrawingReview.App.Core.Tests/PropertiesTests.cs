@@ -2,7 +2,7 @@ using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App.Core.Tests;
 
@@ -11,7 +11,7 @@ public class PropertiesTests
     private static async Task<(MainViewModel Vm, DocumentViewModel Doc, TempDir Dir)> OpenAsync()
     {
         var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var doc = (await vm.OpenPathAsync(dir.WritePlanSet()))!;
         return (vm, doc, dir);
     }

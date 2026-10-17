@@ -3,7 +3,7 @@ using ACadSharp.IO;
 using DrawingReview.App.Core.Comparison;
 using DrawingReview.Cad;
 using DrawingReview.Compare.Model;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Rev = DrawingReview.TestData.CadSamples.Rev;
 
@@ -18,7 +18,7 @@ public class CadCompareViewModelTests
         var oldPath = CadSamples.Save(CadSamples.Build(new Rev()), dir.File("S-101 rev A.dxf"));
         var newPath = CadSamples.Save(CadSamples.Build(newRev), dir.File("S-101 rev B.dwg"));
         var dialogs = new FakeDialogs();
-        var vm = new CompareViewModel(new MuPdfEngine(), dialogs);
+        var vm = new CompareViewModel(new PdfiumEngine(), dialogs);
         Assert.True(await vm.OpenCadAsync(oldPath, newPath), string.Join("\n", dialogs.Errors));
         return (vm, dir, dialogs, oldPath, newPath);
     }
@@ -94,7 +94,7 @@ public class CadCompareViewModelTests
         vm.SaveProject(project);
         vm.Dispose();
 
-        using var vm2 = new CompareViewModel(new MuPdfEngine(), new FakeDialogs());
+        using var vm2 = new CompareViewModel(new PdfiumEngine(), new FakeDialogs());
         Assert.True(await vm2.LoadProjectAsync(project));
         Assert.True(vm2.IsCadMode);
         var c = Assert.Single(vm2.Changes);
@@ -109,7 +109,7 @@ public class CadCompareViewModelTests
         var bad = dir.File("bad.dwg");
         await File.WriteAllTextAsync(bad, "not a drawing");
         var dialogs = new FakeDialogs();
-        using var vm = new CompareViewModel(new MuPdfEngine(), dialogs);
+        using var vm = new CompareViewModel(new PdfiumEngine(), dialogs);
         Assert.False(await vm.OpenCadAsync(bad, bad));
         Assert.Single(dialogs.Errors);
         Assert.False(vm.IsCadMode);

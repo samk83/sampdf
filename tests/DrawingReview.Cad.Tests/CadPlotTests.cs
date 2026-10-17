@@ -1,5 +1,5 @@
 using DrawingReview.Engine.Geometry;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Rev = DrawingReview.TestData.CadSamples.Rev;
 
@@ -46,7 +46,7 @@ public class CadPlotTests : IDisposable
         var d = Load(new Rev());
         var map = CadPageMapping.Fit(CadPlotter.Extents(d));
         var page = CadPlotter.Plot(d, map);
-        var engine = new MuPdfEngine();
+        var engine = new PdfiumEngine();
         var path = Path.Combine(_dir, "plot.pdf");
         engine.WriteVectorPdf(path, [page]);
 

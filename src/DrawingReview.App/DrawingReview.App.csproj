@@ -11,7 +11,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>DrawingReview</AssemblyName>
     <RootNamespace>DrawingReview.App</RootNamespace>
-    <!-- 64비트 Windows용 MuPDF 네이티브 파일을 출력 폴더에 넣는다. -->
+    <!-- 64비트 Windows용 네이티브 파일(PDFium·OpenCV)을 출력 폴더에 넣는다. -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>false</SelfContained>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>

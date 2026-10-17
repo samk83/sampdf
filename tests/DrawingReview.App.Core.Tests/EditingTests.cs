@@ -2,7 +2,7 @@ using DrawingReview.App.Core.Editing;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using Pages = DrawingReview.TestData.VirtualDrawings.PlanSetPages;
 
 namespace DrawingReview.App.Core.Tests;
@@ -120,7 +120,7 @@ public class MarkupEditingTests
     private static async Task<(DocumentViewModel Doc, TempDir Dir)> OpenAsync()
     {
         var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var doc = (await vm.OpenPathAsync(dir.WritePlanSet()))!;
         return (doc, dir);
     }
@@ -225,7 +225,7 @@ public class MarkupEditingTests
     {
         var dir = new TempDir();
         using var _ = dir;
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var path = dir.WritePlanSet();
         var doc = (await vm.OpenPathAsync(path))!;
         var a = await doc.AddMarkupAsync(2, Rect);

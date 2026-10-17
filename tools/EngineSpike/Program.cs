@@ -7,7 +7,7 @@ using System.Text;
 using DrawingReview.Engine.Documents;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using Pages = DrawingReview.TestData.VirtualDrawings.PlanSetPages;
 
@@ -19,11 +19,11 @@ var previewDir = Path.Combine(outDir, "previews");
 Directory.CreateDirectory(samplesDir);
 Directory.CreateDirectory(previewDir);
 
-var engine = new MuPdfEngine();
+var engine = new PdfiumEngine();
 var report = new StringBuilder();
 report.AppendLine("# Stage 0 validation run");
 report.AppendLine();
-report.AppendLine($"- Engine: {engine.Name} (MuPDF.NET {typeof(MuPDF.NET.Document).Assembly.GetName().Version})");
+report.AppendLine($"- Engine: {engine.Name} (PDFsharp {typeof(PdfSharp.Pdf.PdfDocument).Assembly.GetName().Version})");
 report.AppendLine($"- Runtime: .NET {Environment.Version}, {System.Runtime.InteropServices.RuntimeInformation.OSDescription}");
 report.AppendLine($"- Run at: {DateTimeOffset.Now:yyyy-MM-dd HH:mm zzz}");
 report.AppendLine();

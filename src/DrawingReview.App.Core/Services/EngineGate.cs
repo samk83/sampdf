@@ -2,7 +2,7 @@ namespace DrawingReview.App.Core.Services;
 
 /// <summary>
 /// 한 문서에 대한 PDF 엔진 호출을 한 번에 하나씩, 화면(UI) 스레드 밖에서 실행한다.
-/// MuPDF 문서 객체는 여러 스레드가 동시에 쓰면 안 되고, 렌더링은 오래 걸릴 수 있어 화면이 멈추면 안 되기 때문이다.
+/// PDF 엔진 문서 객체는 여러 스레드가 동시에 쓰면 안 되고, 렌더링은 오래 걸릴 수 있어 화면이 멈추면 안 되기 때문이다.
 /// </summary>
 public sealed class EngineGate : IDisposable
 {

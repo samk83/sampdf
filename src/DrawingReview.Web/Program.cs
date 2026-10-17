@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.Web.Api;
 using DrawingReview.Web.Services;
 using Microsoft.AspNetCore.Http.Features;
@@ -26,8 +26,8 @@ builder.Services.Configure<FormOptions>(o => o.MultipartBodyLengthLimit = MaxUpl
 
 builder.Services.AddSingleton(hosting);
 builder.Services.AddSingleton(TimeProvider.System);
-builder.Services.AddSingleton<MuPdfEngine>();
-builder.Services.AddSingleton(sp => new DocumentStore(sp.GetRequiredService<MuPdfEngine>(), sp.GetRequiredService<TimeProvider>())
+builder.Services.AddSingleton<PdfiumEngine>();
+builder.Services.AddSingleton(sp => new DocumentStore(sp.GetRequiredService<PdfiumEngine>(), sp.GetRequiredService<TimeProvider>())
 {
     MaxTotalBytes = hosting.IsWeb ? Math.Max(1, hosting.MaxTotalMb) * 1024L * 1024 : long.MaxValue,
 });

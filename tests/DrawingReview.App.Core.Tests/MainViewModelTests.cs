@@ -1,14 +1,13 @@
 using DrawingReview.App.Core.Tools;
 using DrawingReview.App.Core.ViewModels;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
-using MuPDF.NET;
 
 namespace DrawingReview.App.Core.Tests;
 
 public class MainViewModelTests
 {
-    private static MainViewModel Make(FakeDialogs dialogs) => new(new MuPdfEngine(), dialogs);
+    private static MainViewModel Make(FakeDialogs dialogs) => new(new PdfiumEngine(), dialogs);
 
     [Fact]
     public async Task Open_adds_tab_with_pages_and_activates_it()
@@ -57,8 +56,7 @@ public class MainViewModelTests
     {
         using var dir = new TempDir();
         var path = dir.File("locked.pdf");
-        using (var raw = new Document(stream: VirtualDrawings.CreatePlanSet(), fileType: "pdf"))
-            raw.Save(path, encryption: (int)PdfCrypt.PDF_ENCRYPT_AES_256, ownerPW: "o", userPW: "u");
+        PdfTools.SaveEncrypted(VirtualDrawings.CreatePlanSet(), path, ownerPassword: "o", userPassword: "u");
 
         var dialogs = new FakeDialogs();
         dialogs.Passwords.Enqueue("wrong");
@@ -120,7 +118,7 @@ public class DocumentViewModelTests
     private static async Task<(MainViewModel Vm, DocumentViewModel Doc, TempDir Dir)> OpenAsync()
     {
         var dir = new TempDir();
-        var vm = new MainViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm = new MainViewModel(new PdfiumEngine(), new FakeDialogs());
         var doc = (await vm.OpenPathAsync(dir.WritePlanSet()))!;
         return (vm, doc, dir);
     }

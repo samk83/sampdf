@@ -2,7 +2,7 @@ using DrawingReview.App.Core.Comparison;
 using DrawingReview.Compare.Model;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 using DrawingReview.TestData;
 using R = DrawingReview.TestData.ComparePairs.Revision;
 
@@ -18,7 +18,7 @@ public class CompareViewModelTests
         await File.WriteAllBytesAsync(oldPath, ComparePairs.Sheet());
         await File.WriteAllBytesAsync(newPath, ComparePairs.Sheet(revision));
         var dialogs = new FakeDialogs();
-        var vm = new CompareViewModel(new MuPdfEngine(), dialogs);
+        var vm = new CompareViewModel(new PdfiumEngine(), dialogs);
         Assert.True(await vm.OpenAsync(oldPath, newPath));
         return (vm, dir, dialogs, oldPath, newPath);
     }
@@ -91,7 +91,7 @@ public class CompareViewModelTests
         var outPath = dir.File("compared.pdf");
         dialogs.SavePath = outPath;
         await vm.ExportPdfAsync();
-        using var exported = new MuPdfEngine().Open(outPath);
+        using var exported = new PdfiumEngine().Open(outPath);
         var cloudOut = Assert.Single(exported.GetMarkups(0), m => m.Kind == MarkupKind.Cloud);
         Assert.True(cloudOut.Bounds.Inflate(1).Contains(change.Bounds));
         Assert.Equal(newBytes, await File.ReadAllBytesAsync(newPath));
@@ -148,7 +148,7 @@ public class CompareViewModelTests
         var alignment = vm.Alignment!;
         vm.Dispose();
 
-        var vm2 = new CompareViewModel(new MuPdfEngine(), new FakeDialogs());
+        var vm2 = new CompareViewModel(new PdfiumEngine(), new FakeDialogs());
         using var _v2 = vm2;
         Assert.True(await vm2.LoadProjectAsync(project));
         Assert.Equal(3, vm2.Changes.Count);
@@ -168,7 +168,7 @@ public class CompareViewModelTests
         var oldBytes = ComparePairs.Sheet();
         await File.WriteAllBytesAsync(oldPath, oldBytes);
         await File.WriteAllBytesAsync(newPath, ComparePairs.Transformed(oldBytes, 0.9, 0, 40, 30));
-        using var vm = new CompareViewModel(new MuPdfEngine(), new FakeDialogs());
+        using var vm = new CompareViewModel(new PdfiumEngine(), new FakeDialogs());
         await vm.OpenAsync(oldPath, newPath);
 
         vm.BeginManualAlignmentCommand.Execute(null);

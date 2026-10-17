@@ -1,4 +1,6 @@
-# 0단계 엔진 검증 결과 (MuPDF.NET)
+# 0단계 엔진 검증 결과 (MuPDF.NET — 역사 기록)
+
+> **2026-10-17**: 엔진을 PDFium + PDFsharp로 교체했다. 아래는 MuPDF.NET 시절 검증 기록이며, 새 엔진은 같은 검증 실행기(`tools/EngineSpike`)와 자동 테스트 294개로 다시 확인했다 (`docs/CHANGELOG.md`). 결과 파일 `validation/output/*`는 새 엔진으로 다시 만든 것이다.
 
 기획서 12장 "0단계 — 엔진 검증"의 결과 기록이다. 실행 결과 원본은 `validation/output/report.md`에 있다.
 

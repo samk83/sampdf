@@ -481,7 +481,6 @@ export const en = {
   'home.category.pdf': 'PDF Essentials',
   'home.category.image': 'Image & Conversion',
   'home.web': 'Web version',
-  'home.source': 'This app is open source (AGPL-3.0). View the source code.',
   'home.privacy': 'Your files are processed on our server only to run the tool and are never shared. Temporary copies are deleted right after processing, and your open files are deleted after 30 minutes without use.',
   'apps.status.ready': 'Ready',
   'apps.status.experimental': 'Experimental',

@@ -2,7 +2,7 @@ using DrawingReview.App.Core.Services;
 using DrawingReview.App.Core.ViewModels;
 using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
-using DrawingReview.Engine.MuPdf;
+using DrawingReview.Engine.Pdfium;
 
 namespace DrawingReview.App.Core.Tests;
 
@@ -13,7 +13,7 @@ public class RecoveryTests
     private static (MainViewModel Vm, FakeDialogs Dialogs) Make(TempDir dir)
     {
         var dialogs = new FakeDialogs();
-        var vm = new MainViewModel(new MuPdfEngine(), dialogs) { Recovery = new RecoveryService(dir.File("recovery")) };
+        var vm = new MainViewModel(new PdfiumEngine(), dialogs) { Recovery = new RecoveryService(dir.File("recovery")) };
         return (vm, dialogs);
     }
 

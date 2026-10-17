@@ -6,7 +6,7 @@
 
 | 프로젝트 | 역할 | 실행 환경 |
 |---|---|---|
-| `src/DrawingReview.Engine` | PDF 엔진 경계와 MuPDF 구현. 화면과 무관한 PDF 처리 | Windows·Linux |
+| `src/DrawingReview.Engine` | PDF 엔진 경계와 PDFium + PDFsharp 구현. 화면과 무관한 PDF 처리 | Windows·Linux |
 | `tests/DrawingReview.Engine.Tests` | 엔진 자동 테스트 | Windows·Linux |
 | `tests/DrawingReview.TestData` | 가상 도면 생성기: PDF (`VirtualDrawings`, `ComparePairs`), CAD (`CadSamples`) (테스트·검증 도구 공용) | Windows·Linux |
 | `tools/EngineSpike` | 0단계 검증 실행기: 샘플·결과 PDF·보고서 생성 | Windows·Linux |
@@ -30,16 +30,20 @@
 | 마크업 입력 모델 (`*Draft`) | `Markups/MarkupDraft.cs` | 좌표 모델, `MarkupStyle` | `IPdfDocument.AddMarkup` |
 | 마크업 조회 모델 (`MarkupInfo`, `MarkupKind`) | `Markups/MarkupInfo.cs` | 좌표 모델 | `GetMarkups`, (향후) Review List |
 | 스타일·색상 (`MarkupStyle`, `RgbColor`) | `Markups/MarkupStyle.cs` | — | 마크업 입력 모델, (향후) Saved Tools |
-| 안전 저장 (임시 파일 → 검증 → 교체) | `Persistence/SafeFileSaver.cs` | — | `MuPdfDocument.SaveTo`, (향후) 프로젝트 데이터 저장 |
-| MuPDF 열기 (메모리로 읽어 파일 잠금 없음). 그림(PNG·JPG·TIFF·BMP)은 PDF로 바꿔 연다 | `MuPdf/MuPdfEngine.cs` | — | 앱의 문서 열기, 웹 비교 |
-| 문서 조작 (페이지 정보, 렌더링, 검색, 주석 조회·삭제, 저장, 보안 정보) | `MuPdf/MuPdfDocument.cs` | `SafeFileSaver`, `MuPdfCoordinates` | `IPdfDocument` 사용처 전체 |
-| 마크업 → 표준 PDF 주석 변환 | `MuPdf/MuPdfMarkupWriter.cs` | `MuPdfCoordinates` | `MuPdfDocument.AddMarkup` |
-| 보이는 좌표 ↔ MuPDF/PDF 좌표 변환 (회전·CropBox 보정) | `MuPdf/MuPdfCoordinates.cs` | — | Writer, Document |
-| 벡터 페이지 모델 (선·글자) | `Vector/VectorPage.cs` | 좌표 모델, `RgbColor` | `CadPlotter`, `WriteVectorPdf` |
-| 벡터 페이지 → 새 PDF (`IPdfEngine.WriteVectorPdf`) | `MuPdf/MuPdfVectorWriter.cs` | `KoreanCidFont`, `SafeFileSaver` | `CadComparison` |
-| Windows 한글 깨짐 보정 (MuPDF.NET 문자열 콜백을 UTF-8로 다시 등록) | `MuPdf/MuPdfUtf8Fix.cs` | — | `MuPdfEngine` 정적 생성자 (엔진을 처음 쓸 때 한 번) |
-| 책갈피 제목을 PDF 객체에서 직접 읽기 (Windows 한글 깨짐 우회) | `MuPdf/MuPdfOutlineTitles.cs` | — | `MuPdfDocument.GetOutline` |
-| 한글 글자용 CID 글꼴 참조 (글꼴 파일 미포함) | `MuPdf/KoreanCidFont.cs` | — | `MuPdfVectorWriter`, TestData `KoreanText` |
+| 안전 저장 (임시 파일 → 검증 → 교체) | `Persistence/SafeFileSaver.cs` | — | `PdfiumDocument.SaveTo`, (향후) 프로젝트 데이터 저장 |
+| 엔진 입구: 열기(메모리로 읽어 파일 잠금 없음), 그림(PNG·JPG·TIFF·BMP)→PDF, 벡터 PDF 쓰기 | `Pdfium/PdfiumEngine.cs` | `PdfiumDocument`, `ImagePdfBuilder`, `VectorPdfWriter` | 앱의 문서 열기, 웹 비교 |
+| PDFium 직접 호출 선언 (그리기·글자·검색·책갈피·암호 해제 사본) + 전역 잠금 | `Pdfium/PdfiumNative.cs` | bblanchon.PDFium 바이너리 | `PdfiumView` |
+| 읽기 뷰: 페이지 수·회전·CropBox, 그리기, 단어(가로·세로 이어 붙임), 검색, 책갈피, 라벨 | `Pdfium/PdfiumView.cs` | `PdfiumNative`, `PageGeometry` | `PdfiumDocument` |
+| 문서 조작 (주석 추가·조회·수정·삭제, 상태·잠금, 증분 저장, 평탄화, 암호 문서 편집·재암호화, 보안 정보) | `Pdfium/PdfiumDocument.cs` | PDFsharp, `AnnotationWriter/Reader`, `ChangeTracker`, `IncrementalWriter`, `Flattener`, `SafeFileSaver` | `IPdfDocument` 사용처 전체 |
+| 보이는 좌표 ↔ PDF 좌표 변환 (회전·CropBox 보정) | `Pdf/PageGeometry.cs` | — | Writer, Reader, View |
+| 마크업 → 표준 PDF 주석 사전 (/Rect·/L·/Vertices·/InkList·/CL·/BS·/DRKind…) | `Pdf/AnnotationWriter.cs` | `AppearanceBuilder`, `StandardFonts` | `PdfiumDocument.AddMarkup` |
+| 주석 외형(/AP) 내용 스트림 생성 (구름 호, 화살촉, 글 줄바꿈, 반투명) | `Pdf/AppearanceBuilder.cs`, `Pdf/TextLayout.cs` | `StandardFonts` | `AnnotationWriter` |
+| PDF 주석 → `MarkupInfo` (종류 판별, 상태·잠금 읽기) | `Pdf/AnnotationReader.cs` | `PageGeometry` | `PdfiumDocument.GetMarkups` |
+| 바뀐 객체 기억 → 파일 끝에 증분으로 덧붙이기 (xref 표/스트림) | `Pdf/ChangeTracker.cs`, `Pdf/IncrementalWriter.cs` | PDFsharp | `PdfiumDocument.Sync` |
+| 주석 평탄화 (외형을 페이지 내용으로 녹여 넣기) | `Pdf/Flattener.cs` | — | `ExportFlattened` |
+| 그림 → 한 장 PDF (JPEG 원본 넣기, 그 밖은 Flate RGB, DPI 읽기) | `Pdf/ImagePdfBuilder.cs`, `Pdf/PngEncoder.cs` | OpenCvSharp | `OpenImage` |
+| 벡터 페이지 → 새 PDF (`IPdfEngine.WriteVectorPdf`) | `Pdf/VectorPdfWriter.cs` | `StandardFonts`, `SafeFileSaver` | `CadComparison` |
+| 표준 글꼴: Helvetica(폭 표) + 한글 Adobe-Korea1 CID 글꼴 참조 (글꼴 파일 미포함) | `Pdf/StandardFonts.cs` | — | `AppearanceBuilder`, `VectorPdfWriter` |
 
 ## 마크업 종류별 PDF 저장 형식
 

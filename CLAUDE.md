@@ -27,7 +27,7 @@ Sam이 혼자 쓰는 도면 검토 프로그램. Bluebeam Revu처럼 PDF 도면�
 - 필요한 도구·자료·로그인은 작업할 때 Owner에게 요청한다 (무엇이·왜·어떻게).
 
 ## 기술 선택
-- 엔진: C# .NET 8, MuPDF.NET(PDF), OpenCvSharp(비교), ACadSharp(DWG, 웹에서는 안 씀)
+- 엔진: C# .NET 8, PDFium(그리기·글자, bblanchon 바이너리 + 자체 P/Invoke) + PDFsharp 6.2.4(PDF 객체 편집, MIT — 6.5+는 AGPL이라 올리지 않음) + 자체 주석·외형 작성기, OpenCvSharp(비교·그림 디코딩), ACadSharp(DWG, 웹에서는 안 씀). 코드는 비공개(All rights reserved)
 - 웹: ASP.NET Core 서버(127.0.0.1:5180) + React·TypeScript·Tailwind·lucide-react (`web/` → 빌드 결과 `src/DrawingReview.Web/wwwroot`)
 - 데스크톱(WPF, `src/DrawingReview.App`)은 유지만 하고 새 개발은 웹에서 한다.
 - 실행 환경: Windows PC 브라우저. 개발·검증은 Linux 클라우드 세션 (Windows 확인은 Owner)

@@ -3,7 +3,6 @@ using DrawingReview.Engine.Geometry;
 using DrawingReview.Engine.Markups;
 using DrawingReview.Engine.Persistence;
 using DrawingReview.TestData;
-using MuPDF.NET;
 using Xunit.Abstractions;
 using static DrawingReview.Engine.Tests.TestHelpers;
 using Pages = DrawingReview.TestData.VirtualDrawings.PlanSetPages;
@@ -45,14 +44,14 @@ public class DocumentTests(PlanSetFixture fixture, ITestOutputHelper output) : I
         });
 
         var png = doc.RenderPagePng(pageIndex, zoom: 0.5);
-        var pix = new Pixmap(png);
+        var pix = PngImage.Decode(png);
         var info = doc.GetPageInfo(pageIndex);
-        Assert.InRange(pix.W, (int)(info.Width * 0.5) - 1, (int)(info.Width * 0.5) + 1);
+        Assert.InRange(pix.Width, (int)(info.Width * 0.5) - 1, (int)(info.Width * 0.5) + 1);
 
         bool IsRed(double x, double y)
         {
             var p = pix.GetPixel((int)(x * 0.5), (int)(y * 0.5));
-            return p[0] > 200 && p[1] < 80 && p[2] < 80;
+            return p.R > 200 && p.G < 80 && p.B < 80;
         }
         Assert.True(IsRed(rect.Center.X, rect.Center.Y), "markup center should be red");
         Assert.False(IsRed(rect.X0 - 40, rect.Y0 - 40), "outside the markup should not be red");
@@ -64,9 +63,9 @@ public class DocumentTests(PlanSetFixture fixture, ITestOutputHelper output) : I
         using var doc = PdfEngine.Open(fixture.PlanSet);
         var rect = new PageRect(200, 150, 320, 230);
         doc.AddMarkup(Pages.FloorPlan, new RectangleDraft(rect) { Style = MarkupStyle.Default with { FillColor = RgbColor.Red } });
-        var pix = new Pixmap(doc.RenderPagePng(Pages.FloorPlan, 0.5, includeMarkups: false));
+        var pix = PngImage.Decode(doc.RenderPagePng(Pages.FloorPlan, 0.5, includeMarkups: false));
         var p = pix.GetPixel(130, 95);
-        Assert.False(p[0] > 200 && p[1] < 80, "markup must not be drawn when excluded");
+        Assert.False(p.R > 200 && p.G < 80, "markup must not be drawn when excluded");
     }
 
     [Fact]
@@ -107,8 +106,7 @@ public class DocumentTests(PlanSetFixture fixture, ITestOutputHelper output) : I
     {
         using var dir = new TempDir();
         var path = dir.File("locked.pdf");
-        using (var raw = new Document(stream: fixture.PlanSet, fileType: "pdf"))
-            raw.Save(path, encryption: (int)PdfCrypt.PDF_ENCRYPT_AES_256, ownerPW: "owner", userPW: "user");
+        PdfTools.SaveEncrypted(fixture.PlanSet, path, ownerPassword: "owner", userPassword: "user");
 
         using var doc = PdfEngine.Open(path);
         Assert.True(doc.Security.NeedsPassword);
@@ -234,9 +232,9 @@ public class FlattenTests(PlanSetFixture fixture) : IClassFixture<PlanSetFixture
         Assert.Equal(doc.PageCount, reopened.PageCount);
         Assert.DoesNotContain(reopened.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
         // 주석 없이 렌더링해도 빨간 사각형이 보인다 = 페이지 내용으로 들어감
-        var pix = new Pixmap(reopened.RenderPagePng(Pages.FloorPlan, 0.5, includeMarkups: false));
+        var pix = PngImage.Decode(reopened.RenderPagePng(Pages.FloorPlan, 0.5, includeMarkups: false));
         var p = pix.GetPixel(130, 95);
-        Assert.True(p[0] > 200 && p[1] < 80, "flattened markup should be part of page content");
+        Assert.True(p.R > 200 && p.G < 80, "flattened markup should be part of page content");
         // 열린 문서에는 주석이 그대로 남아 있다
         Assert.Contains(doc.GetMarkups(Pages.FloorPlan), m => m.Kind == MarkupKind.Rectangle);
     }
