@@ -2,7 +2,17 @@
 
 작업 단위마다 무엇을, 왜 바꿨는지와 확인 결과를 남긴다. 최신 항목이 위에 온다.
 
-## 2026-10-17 — 보완 시안 (PC/웹 같은 화면, Owner 확인 대기)
+## 2026-10-17 — 시작 화면을 확정 시안(r2-01)으로 + 기능별 주소
+
+**무엇을**: Owner가 보완 시안을 확정("확정됨 이대로 진행"). 앱 시작 화면을 `r2-01-home-pc/web`대로 바꿈: 기능 카드 24개를 갈래 제목 없이 한 격자(넓은 화면 6열), 카드 = 아이콘 + 상태 · 이름 · 설명 2줄(Ready 파란 테두리), 검색 칸 Ctrl+K, 갈래 버튼에 개수, "2 ready · 22 coming soon", 최근 파일 + 놓는 칸 나란히(웹은 "이번 접속에서 연 파일"), 왼쪽 메뉴에서 Tool sets 빼고 "Remove Background", 웹 상태 표시줄 "Web · files deleted after 30 min idle", 개인정보 안내 문장 짧게. **기능별 주소** `/tools/<id>` (`apps/toolUrl.ts`): 그 주소로 들어오면 기능을 열고, 탭을 옮기면 주소창이 바뀜. 안 쓰게 된 `shell/notYet.ts`와 글자 5개 삭제. 사용 한도 브랜치(`claude/project-thread-xyshvf`)를 합침.
+
+**왜**: 배포 전에 PC·웹 화면을 확정 시안으로 맞추고, 한 서버 안에서 기능마다 링크를 줄 수 있게 (설계서 11-3·11-5, DECISIONS 2026-10-17).
+
+**확인**: 웹 테스트 **135개 통과**(새 2개: 주소 읽기·탭→주소), `tsc -b` 통과. 헤드리스 Chromium(Vite 개발 서버)으로 PC 1440·1280, 웹 1440 캡처 확인. Ctrl+K → 검색 칸, "split" 검색 → 카드 1개, 누르면 주소 `/tools/split-pdf`, Home 탭 → `/`, `/tools/merge-pdf`로 열면 안내 탭, `/tools/drawing-compare`로 열면 비교 탭. Windows 브라우저·C# 서버(`MapFallbackToFile`)로 주소 직접 열기는 미확인.
+
+**못 한 것**: 로그인·Free 플랜 칸(로그인 만들 때), 최근 파일 목록 채우기(U5).
+
+## 2026-10-17 — 보완 시안 (PC/웹 같은 화면, 같은 날 확정)
 
 **무엇을**: PRD 변경 뒤 시안 없이 만들어졌거나 시안이 없던 화면을 **PC 버전과 웹 버전 두 모습**으로 그림 (`design/screens/r2-*.html`, 생성 스크립트 `design/source/screens_v2.py`). 시작 화면 v2(24개 기능 카드·검색·갈래), 기능 안내 탭(Coming soon), 작은 작업 탭(Merge PDF 옵션·결과), 파일 열기(PC 열기 창 / 웹 올리기), 로그인·Free/Pro(웹만). 두 버전이 다른 곳은 노란 점선과 `PC only`/`Web only` 표시. 나란히 보는 보드 `design/screens/review-r2.html` (비공개 링크 https://claude.ai/artifact/8mXBKdCtrLrwNZ2HRtR9Bc). 기존 02~12는 "그 탭에 맞는 리본 탭만"(설계서 11-3)을 반영해 다시 생성 (리본 탭 줄만 바뀜, `chrome.RIBBON_BY_KIND`).
 
