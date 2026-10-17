@@ -32,7 +32,9 @@ builder.Services.AddSingleton(sp => new DocumentStore(sp.GetRequiredService<Pdfi
     MaxTotalBytes = hosting.IsWeb ? Math.Max(1, hosting.MaxTotalMb) * 1024L * 1024 : long.MaxValue,
 });
 builder.Services.AddSingleton<CompareStore>();
+builder.Services.AddSingleton<UsageMeter>();
 if (hosting.IsWeb) builder.Services.AddHostedService<ExpirySweeper>();
+if (hosting.IsWeb && hosting.MonthlyLimitHours > 0) builder.Services.AddHostedService<UsageSaver>();
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase);
 
 var app = builder.Build();
@@ -49,6 +51,30 @@ if (hosting.IsWeb)
         h["Content-Security-Policy"] = "frame-ancestors 'none'";
         return next();
     });
+}
+// 웹 모드 월 사용량: 요청이 처리 중인 시간을 센다 (Services/UsageMeter.cs). 정적 파일도 서버 시간을 쓰므로 맨 앞에서.
+var usage = app.Services.GetRequiredService<UsageMeter>();
+if (usage.Enabled)
+{
+    app.Use(async (context, next) =>
+    {
+        using (usage.Track())
+        {
+            // 안전장치: 한도의 1.2배를 넘으면 상태 확인 말고는 서버 작업을 하지 않는다
+            var path = context.Request.Path;
+            if (path.StartsWithSegments("/api") && !path.StartsWithSegments("/api/health") && !path.StartsWithSegments("/api/usage")
+                && usage.IsOverHardLimit)
+            {
+                context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                await context.Response.WriteAsJsonAsync(Endpoints.Error(usage.LimitMessage()));
+                return;
+            }
+            await next();
+        }
+    });
+    // Cloud Run은 서버를 켜는 시간도 과금한다 (테스트는 시험 프로그램 전체 시간이 잡혀서 뺀다)
+    if (!app.Environment.IsEnvironment("Testing"))
+        app.Lifetime.ApplicationStarted.Register(() => usage.AddStartup(DateTime.Now - Process.GetCurrentProcess().StartTime));
 }
 app.Use((context, next) => Owners.Assign(context, hosting, next));
 
